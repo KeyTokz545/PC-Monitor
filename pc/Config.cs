@@ -1,0 +1,156 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace PCMonitor;
+
+public sealed class AppEntry
+{
+    public string Name { get; set; } = "";
+    public string Icon { get; set; } = "🧩";
+    public string Open { get; set; } = "";
+    public string Close { get; set; }
+}
+
+/// <summary>Réglages, enregistrés dans %AppData%\PCMonitor\config.json.</summary>
+public sealed class AppConfig
+{
+    public int Port { get; set; } = 8765;
+    public int DiscoveryPort { get; set; } = 8766;
+    public string Token { get; set; } = "";
+    public string LatencyHost { get; set; } = "1.1.1.1";
+    public int LatencyPort { get; set; } = 443;
+    public List<string> Modes { get; set; } = new() { "silent", "balanced", "turbo" };
+    public Dictionary<string, string> ModeNames { get; set; } = new();
+    public string LastMode { get; set; } = "";
+    /// <summary>Ventilateurs à 100 % dans ce mode (courbe plate envoyée au BIOS).</summary>
+    public Dictionary<string, bool> FansMax { get; set; } = new() { ["turbo"] = true };
+    /// <summary>Turbo Boost Windows par mode : 0 désactivé, 1 activé, 2 agressif.</summary>
+    public Dictionary<string, int> CpuBoost { get; set; } = new() { ["silent"] = 1, ["balanced"] = 2, ["turbo"] = 2 };
+    /// <summary>Programmes lancés en même temps que PC Monitor (ThrottleStop, Afterburner…).</summary>
+    public List<string> LaunchWith { get; set; } = new();
+    public bool FirstRunDone { get; set; }
+    public List<AppEntry> Apps { get; set; } = DefaultApps();
+
+    static List<AppEntry> DefaultApps() => new()
+    {
+        new AppEntry { Name = "Steam", Icon = "🎮", Open = "steam://open/main", Close = "steam.exe" },
+        new AppEntry { Name = "Discord", Icon = "💬", Open = @"%LOCALAPPDATA%\Discord\Update.exe --processStart Discord.exe", Close = "Discord.exe" },
+        new AppEntry { Name = "Spotify", Icon = "🎵", Open = "spotify:", Close = "Spotify.exe" },
+        new AppEntry { Name = "YouTube", Icon = "📺", Open = "https://www.youtube.com" },
+    };
+
+    [JsonIgnore] public static readonly object Gate = new object();
+
+    static readonly JsonSerializerOptions Opts = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    };
+
+    public static string FilePath => Path.Combine(Log.Dir, "config.json");
+
+    public string ModeLabel(string id) =>
+        ModeNames != null && ModeNames.TryGetValue(id, out var n) && !string.IsNullOrWhiteSpace(n) ? n : ModeDefs.Label(id);
+
+    public static AppConfig Load()
+    {
+        AppConfig cfg = null;
+        try
+        {
+            if (File.Exists(FilePath))
+            {
+                cfg = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(FilePath), Opts);
+            }
+            else
+            {
+                // Première fois : on reprend les réglages de l'ancienne version Python
+                // si config.json est posé à côté de PCMonitor.exe (même clé, mêmes applis).
+                var old = Path.Combine(AppContext.BaseDirectory, "config.json");
+                if (File.Exists(old))
+                {
+                    cfg = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(old), Opts);
+                    Log.Info("Réglages importés depuis " + old);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Error("Lecture de config.json", e);
+            try { File.Copy(FilePath, FilePath + ".abime", true); } catch { }
+        }
+
+        cfg ??= new AppConfig();
+        cfg.Modes = (cfg.Modes ?? new()).Where(ModeDefs.Known).Distinct().ToList();
+        if (cfg.Modes.Count == 0) cfg.Modes = new() { "silent", "balanced", "turbo" };
+        cfg.ModeNames ??= new();
+        cfg.FansMax ??= new();
+        cfg.CpuBoost ??= new();
+        cfg.LaunchWith ??= new();
+        cfg.Apps ??= new();
+        cfg.Apps = cfg.Apps.Where(a => a != null && !string.IsNullOrWhiteSpace(a.Open)).ToList();
+        if (string.IsNullOrWhiteSpace(cfg.Token)) cfg.Token = NewToken();
+        cfg.Save();
+        return cfg;
+    }
+
+    public static string NewToken() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+
+    public void Save()
+    {
+        lock (Gate)
+        {
+            try
+            {
+                Directory.CreateDirectory(Log.Dir);
+                var tmp = FilePath + ".tmp";
+                File.WriteAllText(tmp, JsonSerializer.Serialize(this, Opts));
+                File.Move(tmp, FilePath, true);
+            }
+            catch (Exception e)
+            {
+                Log.Error("Écriture de config.json", e);
+            }
+        }
+    }
+}
+
+public static class ModeDefs
+{
+    public static readonly string[] Order = { "silent", "balanced", "turbo" };
+
+    public static bool Known(string id) => Array.IndexOf(Order, id) >= 0;
+
+    public static string Label(string id) => id switch
+    {
+        "silent" => "Silencieux",
+        "balanced" => "Équilibré",
+        "turbo" => "Turbo",
+        _ => id,
+    };
+
+    /// <summary>Valeur ASUS du mode : 0 équilibré, 1 turbo, 2 silencieux.</summary>
+    public static int AsusValue(string id) => id switch
+    {
+        "silent" => 2,
+        "turbo" => 1,
+        _ => 0,
+    };
+
+    /// <summary>Touche F16/F17/F18 utilisée par G-Helper (solution de secours).</summary>
+    public static byte GHelperKey(string id) => id switch
+    {
+        "silent" => 0x7F,
+        "turbo" => 0x81,
+        _ => 0x80,
+    };
+}

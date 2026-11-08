@@ -1,0 +1,84 @@
+name: Compilation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Logiciel PC (.exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Compiler PCMonitor.exe
+        run: >
+          dotnet publish pc/PCMonitor.csproj -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -p:DebugType=none -o out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PCMonitor-exe
+          path: out/PCMonitor.exe
+          if-no-files-found: error
+
+  android:
+    name: Appli Android (.apk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Compiler PCMonitor.apk
+        run: gradle -p android assembleRelease --no-daemon --stacktrace
+
+      - name: Renommer
+        run: cp android/app/build/outputs/apk/release/app-release.apk PCMonitor.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PCMonitor-apk
+          path: PCMonitor.apk
+          if-no-files-found: error
+
+  release:
+    name: Publier la dernière version
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Remplacer la release « latest »
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release delete latest --yes --cleanup-tag -R "$REPO" || true
+          gh release create latest dist/PCMonitor.exe dist/PCMonitor.apk -R "$REPO" \
+            --target "${{ github.sha }}" \
+            --title "PC Monitor (compilation ${{ github.run_number }})" \
+            --notes "PCMonitor.exe : logiciel pour le PC Windows. PCMonitor.apk : appli pour le téléphone Android. Voir le README pour l'installation."

@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.keytokz.pcmonitor'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.keytokz.pcmonitor'
+        minSdk 26
+        targetSdk 35
+        // le numéro de compilation GitHub fait monter la version à chaque build
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger())
+        versionName '2.0'
+    }
+
+    signingConfigs {
+        // clé fixe : chaque nouvelle version s'installe par-dessus l'ancienne
+        pcmonitor {
+            storeFile file('pcmonitor.keystore')
+            storePassword 'pcmonitor'
+            keyAlias 'pcmonitor'
+            keyPassword 'pcmonitor'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.pcmonitor
+        }
+        release {
+            signingConfig signingConfigs.pcmonitor
+            minifyEnabled false
+        }
+    }
+
+    lint {
+        // pas de vérification bloquante : la compilation se fait sur GitHub sans intervention
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

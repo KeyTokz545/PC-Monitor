@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PC Monitor">
+<meta name="theme-color" content="#0E1822">
+<link rel="apple-touch-icon" href="/icon.png">
+<title>PC Monitor</title>
+<style>
+:root{
+  --ink:#0E1822; --panel:#15212D; --raise:#1C2A38; --line:#243444;
+  --text:#E4ECF2; --muted:#7F93A6; --faint:#4A5D6F;
+  --cool:#4FC3E0; --amber:#FFB547; --hot:#FF5A4E;
+  --num: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ui: system-ui, -apple-system, "SF Pro Text", "Segoe UI", sans-serif;
+  --r-outer:18px; --r-inner:11px; --gap:10px;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--ink);color:var(--text);font:15px/1.35 var(--ui);
+  -webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+
+/* ---------- Cadre de l'appli ---------- */
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;grid-template-areas:"head" "main" "nav"}
+.head{grid-area:head;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"pc meta" "modes modes";
+  align-items:center;column-gap:12px;row-gap:8px;
+  padding:calc(var(--safe-t) + 8px) calc(var(--safe-r) + 12px) 10px calc(var(--safe-l) + 12px)}
+.head .modes{grid-area:modes;margin:0}
+body:not([data-view="v-mon"]) .head .modes{display:none}
+.pc{grid-area:pc;display:flex;align-items:center;gap:8px;min-width:0;font-weight:600;padding-left:4px}
+.pc span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none;transition:background .3s}
+.dot.on{background:var(--cool);box-shadow:0 0 0 3px rgba(79,195,224,.18)}
+.dot.off{background:var(--hot)}
+.meta{grid-area:meta;display:flex;gap:14px;color:var(--muted);font-size:14px;white-space:nowrap;padding-right:4px}
+.meta .num{font-weight:600;color:var(--text)}
+main{grid-area:main;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 calc(var(--safe-r) + 12px) 12px calc(var(--safe-l) + 12px)}
+.view{display:none}
+.view.active{display:block}
+
+.nav{grid-area:nav;display:flex;justify-content:space-around;border-top:1px solid var(--line);background:var(--ink);
+  padding:6px calc(var(--safe-r) + 8px) calc(var(--safe-b) + 4px) calc(var(--safe-l) + 8px)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 14px;color:var(--faint);font-size:11px;font-weight:600}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected="true"]{color:var(--text)}
+
+/* ---------- Bandeaux d'info ---------- */
+.notes{display:flex;flex-direction:column;gap:6px;margin-bottom:var(--gap)}
+.notes:empty{display:none}
+.note{background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.35);color:#FFD9A0;border-radius:var(--r-inner);
+  padding:8px 12px;font-size:13px}
+.note.bad{background:rgba(255,90,78,.1);border-color:rgba(255,90,78,.4);color:#FFC2BC}
+
+/* ---------- Selecteur de mode ---------- */
+.modes{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--r-outer);padding:4px;margin-bottom:var(--gap)}
+.thumb{position:absolute;top:4px;bottom:4px;left:4px;border-radius:14px;background:var(--raise);
+  border:1px solid var(--line);transition:transform .28s cubic-bezier(.3,.7,.2,1),border-color .28s,opacity .2s;opacity:0}
+.thumb.show{opacity:1}
+.thumb[data-mode="silent"]{border-color:rgba(79,195,224,.7)}
+.thumb[data-mode="turbo"]{border-color:rgba(255,90,78,.75)}
+.thumb[data-mode="balanced"]{border-color:rgba(255,181,71,.6)}
+.thumb[data-mode^="custom"]{border-color:rgba(228,236,242,.55)}
+.modes.many .mode{font-size:13.5px;gap:5px}
+@media (max-width:440px){.modes.many .mode svg{display:none}}
+.mode{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:7px;height:40px;
+  border-radius:14px;color:var(--muted);font-weight:600;font-size:15px}
+.mode svg{width:17px;height:17px}
+.mode.on{color:var(--text)}
+.mode.pending{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+
+/* ---------- Grille de monitoring ---------- */
+.grid{display:grid;gap:var(--gap);grid-template-columns:1fr 1fr;
+  grid-template-areas:"cpu gpu" "net net" "ram sys"}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-outer);padding:12px 14px;
+  min-width:0;min-height:0;overflow:hidden;container-type:inline-size}
+.c-cpu{grid-area:cpu}.c-gpu{grid-area:gpu}.c-net{grid-area:net}.c-ram{grid-area:ram}.c-sys{grid-area:sys}
+.card h2{font-size:15px;font-weight:600;display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.card h2 small{font-size:12px;font-weight:500;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Cadran de temperature : la piece maitresse */
+.chip{display:flex;flex-direction:column;align-items:center;gap:6px}
+.dial{position:relative;width:100%;max-width:136px;aspect-ratio:1;container-type:inline-size}
+.dial svg{width:100%;height:100%;display:block}
+.dial .read{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:6%}
+.dial .t{font-size:27cqi;line-height:1}
+.dial .t sup{font-size:.42em;font-weight:600;vertical-align:.95em;margin-left:1px;color:var(--muted)}
+.dial .lbl{font-size:max(11px,9cqi);color:var(--muted);margin-top:2px}
+.stats{width:100%;display:grid;gap:5px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px}
+.row .muted{white-space:nowrap}
+.row .num{font-size:15px;white-space:nowrap}
+.bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:-1px}
+.bar i{display:block;height:100%;width:0;background:var(--muted);border-radius:2px;transition:width .5s}
+.spark{width:100%;height:30px;display:block;margin-top:6px}
+@container (min-width:225px){
+  .chip{flex-direction:row;align-items:center;gap:12px}
+  .dial{width:46%;flex:none}
+  .stats{flex:1}
+}
+
+/* Reseau */
+.net{display:grid;gap:12px}
+.speeds{display:flex;flex-wrap:wrap;column-gap:18px;row-gap:6px}
+.speed .num{font-size:24px;line-height:1.1;white-space:nowrap}
+.speed .muted{font-size:12px}
+.lat{display:grid;gap:6px}
+.lat .big{font-size:30px;line-height:1}
+.lat .big small{font-size:14px;color:var(--muted);font-weight:600;margin-left:2px}
+.lat-sub{font-size:12px;color:var(--muted)}
+.lathist{height:26px;display:flex;align-items:flex-end;gap:2px}
+.lathist i{flex:1;min-height:2px;border-radius:1px;background:var(--cool);opacity:.85}
+.wifi{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:5px}
+.wifi .ssid{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;min-width:0}
+.wifi .ssid span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bars{display:flex;align-items:flex-end;gap:2px;height:14px;flex:none}
+.bars i{width:4px;border-radius:1px;background:var(--line)}
+.bars i.on{background:var(--text)}
+@container (min-width:360px){
+  .net{grid-template-columns:1fr 1fr;column-gap:18px}
+  .wifi{border-top:0;padding-top:0;border-left:1px solid var(--line);padding-left:16px;grid-column:2;grid-row:1 / span 2;align-content:start}
+}
+
+/* Memoire / systeme */
+.ram-big{font-size:24px;line-height:1.15}
+.ram-big small{font-size:14px;color:var(--muted);font-weight:600}
+.c-ram .bar{height:6px;margin:8px 0 6px;border-radius:3px}
+.c-ram .bar i{border-radius:3px}
+.c-sys .stats{gap:6px}
+
+/* ---------- Controles ---------- */
+.section{margin-bottom:18px}
+.section h3{font-size:13px;font-weight:600;color:var(--muted);margin:2px 4px 8px}
+.btns{display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+.btns.four{grid-template-columns:repeat(2,1fr)}
+.btn{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-outer);min-height:84px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:600;
+  color:var(--text);transition:transform .08s,background .15s}
+.btn svg{width:28px;height:28px}
+.btn:active{transform:scale(.96);background:var(--raise)}
+.btn.danger svg{color:var(--hot)}
+.hint{font-size:12px;color:var(--muted);margin:10px 4px 0;line-height:1.45}
+
+/* ---------- Applis ---------- */
+.apps{display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+.appt{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-outer);overflow:hidden;display:flex;flex-direction:column}
+.appt .open{flex:1;padding:16px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.appt .open:active{background:var(--raise)}
+.appt .ico{font-size:34px;line-height:1}
+.appt .nm{font-size:14px;font-weight:600;line-height:1.2}
+.appt .close{border-top:1px solid var(--line);padding:9px;font-size:13px;color:var(--muted)}
+.appt .close:active{background:var(--raise);color:var(--hot)}
+.empty{color:var(--muted);font-size:14px;padding:20px 4px;line-height:1.5}
+.apps-bar{display:flex;align-items:center;justify-content:space-between;margin:0 4px 8px}
+.apps-bar h3{font-size:13px;font-weight:600;color:var(--muted)}
+.link{color:var(--cool);font-weight:600;font-size:15px;padding:6px 2px}
+.appt.add{border-style:dashed;background:transparent}
+.appt.add .nm{color:var(--cool)}
+.appt.add .ico svg{width:34px;height:34px;color:var(--cool)}
+.appt .remove{border-top:1px solid var(--line);padding:9px;font-size:13px;font-weight:600;color:var(--hot)}
+.apps.editing .appt .open .ico{animation:wig .5s ease-in-out infinite alternate}
+@keyframes wig{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+/* Selecteur d'applis */
+.picker{position:fixed;inset:0;z-index:25;background:var(--ink);display:none;flex-direction:column;
+  padding:calc(var(--safe-t) + 10px) calc(var(--safe-r) + 14px) 0 calc(var(--safe-l) + 14px)}
+.picker.show{display:flex}
+.pk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pk-head p{font-size:18px;font-weight:700}
+.pk-tools{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+#pk-search{flex:1;min-width:0;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel);
+  color:var(--text);font:16px var(--ui);padding:0 12px;-webkit-user-select:text;user-select:text;outline:none}
+#pk-search:focus{border-color:var(--cool)}
+.icogrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.icogrid button{aspect-ratio:1;border-radius:12px;background:var(--raise);font-size:24px}
+.icogrid button:active{background:var(--line)}
+.sheet .acts.one{grid-template-columns:1fr}
+.pk-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--safe-b) + 16px)}
+.pk-group{font-size:13px;font-weight:600;color:var(--muted);margin:12px 4px 4px}
+.pk-item{width:100%;display:flex;align-items:center;gap:12px;padding:11px 8px;text-align:left;border-bottom:1px solid var(--line)}
+.pk-item:active{background:var(--panel)}
+.pk-item .ico{font-size:22px;width:30px;text-align:center;flex:none}
+.pk-item .nm{flex:1;min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk-item .add{font-size:14px;font-weight:600;color:var(--cool);flex:none}
+.pk-item.added .add{color:var(--muted)}
+.pk-empty{color:var(--muted);padding:18px 4px;font-size:14px;line-height:1.5}
+
+/* ---------- Toast & confirmation ---------- */
+.toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 76px);transform:translate(-50%,20px);opacity:0;
+  background:var(--raise);border:1px solid var(--line);border-radius:14px;padding:10px 16px;font-size:14px;font-weight:500;
+  max-width:calc(100% - 32px);pointer-events:none;transition:opacity .2s,transform .2s;z-index:40}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.bad{border-color:rgba(255,90,78,.5)}
+.sheet{position:fixed;inset:0;background:rgba(5,10,15,.6);display:none;align-items:flex-end;justify-content:center;z-index:30;
+  padding:16px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 16px) calc(var(--safe-l) + 16px)}
+.sheet.show{display:flex}
+.sheet .box{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;
+  animation:up .22s cubic-bezier(.3,.7,.2,1)}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+.sheet p{font-size:17px;font-weight:600;margin-bottom:4px}
+.sheet .sub{font-size:14px;color:var(--muted);margin-bottom:16px}
+.sheet .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheet .acts button{height:48px;border-radius:14px;background:var(--raise);font-weight:600}
+.sheet .acts .yes{background:var(--hot);color:#1A0A08}
+
+/* ---------- Paysage (telephone pose a cote du PC) ---------- */
+@media (orientation:landscape) and (max-height:520px){
+  .app{grid-template-columns:auto 1fr;grid-template-rows:auto 1fr;grid-template-areas:"nav head" "nav main"}
+  .nav{flex-direction:column;justify-content:center;gap:6px;border-top:0;border-right:1px solid var(--line);
+    padding:calc(var(--safe-t) + 6px) 4px calc(var(--safe-b) + 6px) calc(var(--safe-l) + 4px)}
+  .tab{padding:6px 6px;font-size:10px}
+  .tab svg{width:22px;height:22px}
+  .head{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pc modes meta";
+    padding:6px calc(var(--safe-r) + 10px) 6px 10px;column-gap:14px}
+  .head .modes{width:100%;max-width:520px;justify-self:center;padding:3px}
+  .thumb{top:3px;bottom:3px;left:3px}
+  .mode{height:30px;font-size:14px;gap:6px}
+  .mode svg{width:15px;height:15px}
+  .meta{font-size:13px;gap:10px}
+  main{padding:0 calc(var(--safe-r) + 10px) calc(var(--safe-b) + 6px) 10px}
+  #v-mon.active{height:100%;display:flex;flex-direction:column}
+  .notes{margin-bottom:6px;flex:none}
+  .note{padding:5px 10px;font-size:12px}
+  .grid{flex:1;min-height:270px;gap:8px;grid-template-columns:1fr 1fr 1.15fr .9fr;grid-template-rows:1fr 1fr;
+    grid-template-areas:"cpu gpu net ram" "cpu gpu net sys"}
+  .card{padding:9px 11px;display:flex;flex-direction:column}
+  .card h2{margin-bottom:2px;font-size:14px}
+  .card h2 small{font-size:11px}
+  .c-cpu .chip,.c-gpu .chip{flex:1;justify-content:space-between;gap:4px}
+  .chip .dial{max-width:min(118px,100%)}
+  .chip .row{font-size:12px}
+  .chip .row .num{font-size:13.5px}
+  .stats{gap:3px}
+  .spark{height:22px;margin-top:4px;flex:none}
+  .net{gap:7px}
+  .speeds{column-gap:12px;row-gap:2px}
+  .speed .num{font-size:17px}
+  .speed .muted{font-size:11px}
+  .lat .big{font-size:24px}
+  .lat{gap:4px}
+  .lathist{height:16px}
+  .lat-sub{font-size:11px}
+  .wifi{gap:2px;padding-top:7px}
+  .wifi .ssid{font-size:13px}
+  .wifi .row{font-size:12px}
+  .wifi .row .num{font-size:13px}
+  .ram-big{font-size:20px}
+  .ram-big small{font-size:12px}
+  .c-ram .bar{margin:5px 0 4px}
+  .c-ram .row,.c-sys .row{font-size:12px}
+  .c-ram .row .num,.c-sys .row .num{font-size:13px}
+  .c-sys .stats{gap:3px}
+  .btns{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
+  .btns.four{grid-template-columns:repeat(4,1fr)}
+  .btn{min-height:70px}
+  .toast{bottom:calc(var(--safe-b) + 14px)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body data-view="v-mon">
+<div class="app">
+  <header class="head">
+    <div class="pc"><span class="dot" id="dot"></span><span id="pcname">PC</span></div>
+    <div class="meta"><span id="power"></span><span class="num" id="clock">--:--</span></div>
+    <div class="modes" id="modes" role="radiogroup" aria-label="Mode de performance"><div class="thumb" id="thumb"></div></div>
+  </header>
+
+  <main>
+    <!-- Monitoring -->
+    <section class="view active" id="v-mon" aria-label="Monitoring">
+      <div class="notes" id="notes"></div>
+      <div class="grid">
+        <article class="card c-cpu">
+          <h2>CPU <small id="cpu-name"></small></h2>
+          <div class="chip">
+            <div class="dial" id="cpu-dial"></div>
+            <div class="stats">
+              <div class="row"><span class="muted">Charge</span><span class="num" id="cpu-load">–</span></div>
+              <div class="bar"><i id="cpu-loadbar"></i></div>
+              <div class="row"><span class="muted">Conso</span><span class="num" id="cpu-power">–</span></div>
+              <div class="row"><span class="muted">Fréquence</span><span class="num" id="cpu-clock">–</span></div>
+            </div>
+          </div>
+          <canvas class="spark" id="cpu-spark"></canvas>
+        </article>
+
+        <article class="card c-gpu">
+          <h2>GPU <small id="gpu-name"></small></h2>
+          <div class="chip">
+            <div class="dial" id="gpu-dial"></div>
+            <div class="stats">
+              <div class="row"><span class="muted">Charge</span><span class="num" id="gpu-load">–</span></div>
+              <div class="bar"><i id="gpu-loadbar"></i></div>
+              <div class="row"><span class="muted">Conso</span><span class="num" id="gpu-power">–</span></div>
+              <div class="row"><span class="muted">VRAM</span><span class="num" id="gpu-vram">–</span></div>
+            </div>
+          </div>
+          <canvas class="spark" id="gpu-spark"></canvas>
+        </article>
+
+        <article class="card c-net">
+          <h2>Connexion <small id="nic-name"></small></h2>
+          <div class="net">
+            <div class="speeds">
+              <div class="speed"><div class="num" id="down">–</div><div class="muted">Réception</div></div>
+              <div class="speed"><div class="num" id="up">–</div><div class="muted">Envoi</div></div>
+            </div>
+            <div class="lat">
+              <div class="big num" id="lat">–<small>ms</small></div>
+              <div class="lathist" id="lathist" aria-hidden="true"></div>
+              <div class="lat-sub" id="lat-sub">Latence</div>
+            </div>
+            <div class="wifi" id="wifi"></div>
+          </div>
+        </article>
+
+        <article class="card c-ram">
+          <h2>Mémoire</h2>
+          <div class="ram-big num" id="ram">–</div>
+          <div class="bar"><i id="ram-bar"></i></div>
+          <div class="row"><span class="muted">Utilisée</span><span class="num" id="ram-pct">–</span></div>
+        </article>
+
+        <article class="card c-sys">
+          <h2>Système</h2>
+          <div class="stats" id="sys"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Controles -->
+    <section class="view" id="v-ctl" aria-label="Contrôles">
+      <div class="section">
+        <h3>Son du PC</h3>
+        <div class="btns">
+          <button class="btn" data-act="vol_down" data-repeat><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 12h5"/></svg>Moins fort</button>
+          <button class="btn" data-act="vol_mute"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>Couper</button>
+          <button class="btn" data-act="vol_up" data-repeat><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 12h5M18.5 9.5v5"/></svg>Plus fort</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Musique et vidéos</h3>
+        <div class="btns">
+          <button class="btn" data-act="prev"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>Précédent</button>
+          <button class="btn" data-act="play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5l9 7-9 7zM15 5h2v14h-2zM19 5h2v14h-2z"/></svg>Lecture / pause</button>
+          <button class="btn" data-act="next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>Suivant</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>PC</h3>
+        <div class="btns four">
+          <button class="btn" data-act="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V7.5a3.5 3.5 0 017 0v3"/></svg>Verrouiller</button>
+          <button class="btn" data-act="sleep" data-yes="Mettre en veille" data-confirm="Mettre le PC en veille ?" data-sub="Le tableau de bord sera coupé jusqu'au réveil du PC."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 119.5 5a6 6 0 009.5 9.5z"/></svg>Veille</button>
+          <button class="btn danger" data-act="restart" data-yes="Redémarrer" data-confirm="Redémarrer le PC ?" data-sub="Pense à enregistrer ton travail. Redémarrage dans 5 secondes."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.6-5.9"/><path d="M20 4v5h-5"/></svg>Redémarrer</button>
+          <button class="btn danger" data-act="shutdown" data-yes="Éteindre" data-confirm="Éteindre le PC ?" data-sub="Pense à enregistrer ton travail. Arrêt dans 5 secondes."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3.5v8"/><path d="M7 6.5a7.5 7.5 0 1010 0"/></svg>Éteindre</button>
+        </div>
+        <p class="hint">Les touches de son et de lecture agissent comme les touches multimédia du clavier : elles pilotent Spotify, YouTube, Netflix et les autres lecteurs.</p>
+      </div>
+    </section>
+
+    <!-- Applis -->
+    <section class="view" id="v-apps" aria-label="Applis">
+      <div class="apps-bar"><h3>Applis du PC</h3><button class="link" id="apps-edit">Modifier</button></div>
+      <div class="apps" id="apps"></div>
+      <p class="hint" id="apps-hint"></p>
+    </section>
+  </main>
+
+  <nav class="nav" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-view="v-mon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4.5 17a8.5 8.5 0 1115 0"/><path d="M12 13l4-4.5"/><circle cx="12" cy="13" r="1.2" fill="currentColor"/></svg>Monitoring</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="v-ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><rect x="3" y="13" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="10" y="7" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="17" y="11" width="4" height="3" rx="1" fill="var(--ink)"/></svg>Contrôles</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="v-apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Applis</button>
+  </nav>
+</div>
+
+<div class="picker" id="picker" role="dialog" aria-modal="true" aria-labelledby="pk-title">
+  <div class="pk-head"><p id="pk-title">Ajouter une appli</p><button class="link" id="pk-close">Terminé</button></div>
+  <div class="pk-tools">
+    <input id="pk-search" type="search" placeholder="Rechercher" autocomplete="off" autocorrect="off" enterkeyhint="search">
+    <button class="link" id="pk-refresh">Actualiser</button>
+  </div>
+  <div class="pk-list" id="pk-list"></div>
+</div>
+<div class="sheet" id="icosheet">
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="ico-q">
+    <p id="ico-q">Icône</p><div class="sub">Choisis l'icône affichée sur la tuile.</div>
+    <div class="icogrid" id="icogrid"></div>
+    <div class="acts one"><button id="ico-no">Annuler</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="sheet" id="sheet">
+  <div class="box" role="alertdialog" aria-modal="true">
+    <p id="sheet-q"></p><div class="sub" id="sheet-sub"></div>
+    <div class="acts"><button id="sheet-no">Annuler</button><button class="yes" id="sheet-yes">OK</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+// La cle est dans ?k=123456 ; on la retrouve aussi si l'adresse a ete mal tapee (/k=123456)
+let KEY = params.get("k") || ((decodeURIComponent(location.href).match(/k=(\d{4,})/) || [])[1]) || "";
+try { if (KEY) localStorage.setItem("pcmon-k", KEY); else KEY = localStorage.getItem("pcmon-k") || ""; } catch (e) {}
+
+const MODE_ICONS = {
+  silent: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 119.5 5a6 6 0 009.5 9.5z"/></svg>',
+  balanced: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4.5 17a8.5 8.5 0 1115 0"/><path d="M12 13V7.5"/></svg>',
+  turbo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c3.9 0 6.5-2.6 6.5-6.2 0-3.3-2.4-5.3-3.6-8.3-1.6 1.6-2 3.2-2 4.7C11.4 9.6 10 7.3 10.3 3.5 7.6 5.6 5.5 9.4 5.5 14.8 5.5 18.4 8.1 21 12 21z"/></svg>',
+  custom1: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 8h9M18 8h1M5 16h1M10 16h9"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/></svg>'
+};
+MODE_ICONS.custom2 = MODE_ICONS.custom1;
+MODE_ICONS.custom1 = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2c-.6-2.9.1-5.6 2.6-6.4 2.2-.7 3.4 1.6 2 3.2-1.1 1.3-2.8 2.3-4.6 3.2"/><path d="M13.6 12.9c2.8 1 4.7 3 4.2 5.6-.5 2.2-3.1 2.3-3.8.3-.6-1.6-.6-3.6-.4-5.9"/><path d="M10.4 12.9c-2.2 2-4.9 2.7-6.8.9-1.7-1.6-.3-3.8 1.8-3.4 1.7.3 3.3 1.3 5 2.5"/></svg>';
+
+/* ---------- Utilitaires ---------- */
+const nf = (v, d = 0) => v == null || isNaN(v) ? "–" :
+  Number(v).toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+function speed(b) {
+  if (b == null) return "–";
+  if (b < 1024) return nf(b) + " o/s";
+  if (b < 1024 * 1024) { const k = b / 1024; return nf(k, k < 100 ? 1 : 0) + " Ko/s"; }
+  const m = b / 1048576; return nf(m, m < 100 ? 1 : 0) + " Mo/s";
+}
+function since(s) {
+  if (s == null) return "–";
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? `${d} j ${h} h` : h ? `${h} h ${String(m).padStart(2, "0")}` : `${m} min`;
+}
+const shortName = n => (n || "").replace(/^(Intel|AMD)\s+(Core|Ryzen)\s+/i, "").replace(/^NVIDIA\s+GeForce\s+/i, "")
+  .replace(/^AMD\s+Radeon\s+/i, "Radeon ").replace(/\(R\)|\(TM\)/gi, "").trim();
+
+const STOPS = [[50, [79, 195, 224]], [72, [255, 181, 71]], [90, [255, 90, 78]]];
+function thermal(t) {
+  if (t == null) return "var(--faint)";
+  if (t <= STOPS[0][0]) return `rgb(${STOPS[0][1]})`;
+  for (let i = 1; i < STOPS.length; i++) {
+    if (t <= STOPS[i][0]) {
+      const [a, ca] = STOPS[i - 1], [b, cb] = STOPS[i], f = (t - a) / (b - a);
+      return `rgb(${ca.map((c, j) => Math.round(c + (cb[j] - c) * f))})`;
+    }
+  }
+  return `rgb(${STOPS[STOPS.length - 1][1]})`;
+}
+const latColor = ms => ms == null ? "var(--hot)" : ms <= 40 ? "var(--cool)" : ms <= 80 ? "var(--amber)" : "var(--hot)";
+
+async function api(path, body) {
+  const url = path + (path.includes("?") ? "&" : "?") + "k=" + encodeURIComponent(KEY);
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 3000);
+  try {
+    const r = await fetch(url, body ? { method: "POST", body: JSON.stringify(body), signal: ctl.signal,
+      headers: { "Content-Type": "application/json" } } : { signal: ctl.signal, cache: "no-store" });
+    if (r.status === 401) throw Object.assign(new Error("auth"), { auth: true });
+    return await r.json();
+  } finally { clearTimeout(tm); }
+}
+
+/* ---------- Cadrans ---------- */
+const R = 50, C = 2 * Math.PI * R, SWEEP = C * 0.75, TMIN = 30, TMAX = 100;
+function buildDial(el, label) {
+  let ticks = "";
+  for (let t = TMIN; t <= TMAX; t += 10) {
+    const a = (135 + (t - TMIN) / (TMAX - TMIN) * 270) * Math.PI / 180, r1 = 59.5, r2 = t % 20 === 0 ? 56.5 : 57.8;
+    ticks += `<line x1="${60 + r1 * Math.cos(a)}" y1="${60 + r1 * Math.sin(a)}" x2="${60 + r2 * Math.cos(a)}" y2="${60 + r2 * Math.sin(a)}"/>`;
+  }
+  el.innerHTML = `<svg viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--line)" stroke-width="8" stroke-linecap="round"
+      stroke-dasharray="${SWEEP} ${C}" transform="rotate(135 60 60)"/>
+    <circle class="val" cx="60" cy="60" r="${R}" fill="none" stroke="var(--faint)" stroke-width="8" stroke-linecap="round"
+      stroke-dasharray="0 ${C}" transform="rotate(135 60 60)" style="transition:stroke-dasharray .6s,stroke .6s"/>
+    <g stroke="var(--faint)" stroke-width="1.4" stroke-linecap="round">${ticks}</g>
+    <line class="peak" x1="60" y1="5" x2="60" y2="15" stroke="var(--text)" stroke-width="2" stroke-linecap="round" opacity="0"/>
+  </svg><div class="read"><div class="t num">–</div><div class="lbl">${label}</div></div>`;
+  return { val: el.querySelector(".val"), peak: el.querySelector(".peak"), t: el.querySelector(".t"), max: null };
+}
+function setDial(d, temp) {
+  if (temp == null) { d.t.textContent = "–"; d.val.setAttribute("stroke-dasharray", `0 ${C}`); return; }
+  const f = Math.max(0, Math.min(1, (temp - TMIN) / (TMAX - TMIN)));
+  d.val.setAttribute("stroke-dasharray", `${Math.max(0.01, SWEEP * f)} ${C}`);
+  d.val.setAttribute("stroke", thermal(temp));
+  d.t.innerHTML = `${Math.round(temp)}<sup>°C</sup>`;
+  d.max = d.max == null ? temp : Math.max(d.max, temp);
+  const fm = Math.max(0, Math.min(1, (d.max - TMIN) / (TMAX - TMIN))), ang = 135 + fm * 270 + 90;
+  d.peak.setAttribute("transform", `rotate(${ang} 60 60)`);
+  d.peak.setAttribute("opacity", ".9");
+}
+const dials = { cpu: buildDial($("cpu-dial"), ""), gpu: buildDial($("gpu-dial"), "") };
+dials.cpu.lbl = $("cpu-dial").querySelector(".lbl"); dials.gpu.lbl = $("gpu-dial").querySelector(".lbl");
+
+/* ---------- Courbes ---------- */
+const hist = { cpu: [], gpu: [] }, HMAX = 150;
+function drawSpark(canvas, data) {
+  const w = canvas.clientWidth, h = canvas.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (!w || !h) return;
+  if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  const g = canvas.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const pts = data.filter(v => v != null); if (pts.length < 2) return;
+  const lo = Math.min(...pts) - 3, hi = Math.max(...pts) + 3, n = Math.min(HMAX, Math.max(data.length, 40)) - 1;
+  const x = i => w - (data.length - 1 - i) / n * w, y = v => h - 2 - (v - lo) / (hi - lo) * (h - 4);
+  g.beginPath(); let started = false;
+  data.forEach((v, i) => { if (v == null) return; started ? g.lineTo(x(i), y(v)) : (g.moveTo(x(i), y(v)), started = true); });
+  g.strokeStyle = "rgba(127,147,166,.85)"; g.lineWidth = 1.5; g.lineJoin = "round"; g.stroke();
+  const last = data[data.length - 1];
+  if (last != null) { g.fillStyle = thermal(last); g.beginPath(); g.arc(x(data.length - 1) - 2, y(last), 2.6, 0, 7); g.fill(); }
+}
+
+/* ---------- Modes ---------- */
+let MODES = [], modeState = { current: null, pending: null, until: 0 };
+function buildModes(list) {
+  MODES = list;
+  const box = $("modes");
+  box.querySelectorAll(".mode").forEach(b => b.remove());
+  list.forEach(m => {
+    const b = document.createElement("button");
+    b.className = "mode"; b.dataset.mode = m.id; b.setAttribute("role", "radio");
+    b.innerHTML = (MODE_ICONS[m.id] || "") + `<span>${m.label}</span>`;
+    b.addEventListener("click", () => setMode(m.id));
+    box.appendChild(b);
+  });
+  $("thumb").style.width = `calc((100% - 8px) / ${list.length})`;
+  box.classList.toggle("many", list.length >= 4);
+}
+function paintModes() {
+  const shown = modeState.pending || modeState.current;
+  const idx = MODES.findIndex(m => m.id === shown), th = $("thumb");
+  th.classList.toggle("show", idx >= 0);
+  if (idx >= 0) { th.style.transform = `translateX(${idx * 100}%)`; th.dataset.mode = shown; }
+  $("modes").querySelectorAll(".mode").forEach(b => {
+    b.classList.toggle("on", b.dataset.mode === shown);
+    b.classList.toggle("pending", b.dataset.mode === modeState.pending);
+    b.setAttribute("aria-checked", b.dataset.mode === shown);
+  });
+}
+async function setMode(id) {
+  modeState.pending = id; modeState.until = Date.now() + 4000; paintModes();
+  try { const r = await api("/api/action", { action: "mode", mode: id }); toast(r.msg || "OK", !r.ok); }
+  catch (e) { toast("Le PC ne répond pas", true); modeState.pending = null; paintModes(); }
+}
+
+/* ---------- Rendu des stats ---------- */
+function setBar(el, pct, color) { el.style.width = (pct == null ? 0 : Math.max(0, Math.min(100, pct))) + "%"; if (color) el.style.background = color; }
+function render(s) {
+  $("pcname").textContent = s.pc || "PC";
+  // alimentation
+  const p = s.power || {};
+  $("power").textContent = p.ac === true ? (p.battery != null && p.battery < 100 ? `En charge ${p.battery} %` : "Secteur")
+    : p.ac === false ? `Batterie ${p.battery ?? "–"} %` : "";
+  // CPU / GPU
+  const c = s.cpu || {}, g = s.gpu || {};
+  $("cpu-name").textContent = shortName(c.name); $("gpu-name").textContent = shortName(g.name);
+  setDial(dials.cpu, c.temp); setDial(dials.gpu, g.temp);
+  dials.cpu.lbl.textContent = dials.cpu.max != null ? `max ${Math.round(dials.cpu.max)}°` : "";
+  dials.gpu.lbl.textContent = dials.gpu.max != null ? `max ${Math.round(dials.gpu.max)}°` : "";
+  $("cpu-load").textContent = c.load != null ? nf(c.load) + " %" : "–"; setBar($("cpu-loadbar"), c.load);
+  $("cpu-power").textContent = c.power != null ? nf(c.power) + " W" : "–";
+  $("cpu-clock").textContent = c.clock != null ? nf(c.clock, 1) + " GHz" : "–";
+  $("gpu-load").textContent = g.load != null ? nf(g.load) + " %" : "–"; setBar($("gpu-loadbar"), g.load);
+  $("gpu-power").textContent = g.power != null ? nf(g.power) + " W" : "–";
+  $("gpu-vram").textContent = g.vram_used != null ? nf(g.vram_used, 1) + (g.vram_total ? " / " + nf(g.vram_total) : "") + " Go" : "–";
+  for (const k of ["cpu", "gpu"]) { hist[k].push(s[k]?.temp ?? null); if (hist[k].length > HMAX) hist[k].shift(); }
+  drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu);
+  // Reseau
+  const n = s.net || {};
+  $("nic-name").textContent = n.nic || "";
+  $("down").textContent = speed(n.down); $("up").textContent = speed(n.up);
+  const lat = $("lat");
+  lat.innerHTML = (n.latency == null ? "–" : nf(n.latency)) + "<small>ms</small>";
+  lat.style.color = n.history && n.history.length ? latColor(n.latency) : "";
+  const sub = [];
+  if (n.jitter != null) sub.push(`gigue ${n.jitter}\u00a0ms`);
+  if (n.loss) sub.push(`perte ${n.loss}\u00a0%`);
+  $("lat-sub").textContent = "Latence" + (sub.length ? ` (${sub.join(", ")})` : "");
+  const H = n.history || [], hmax = Math.max(60, ...H.filter(v => v != null));
+  $("lathist").innerHTML = H.map(v => `<i style="height:${v == null ? 100 : Math.max(6, v / hmax * 100)}%;background:${latColor(v)}"></i>`).join("");
+  renderWifi(n.wifi);
+  // Memoire
+  const r = s.ram || {};
+  $("ram").innerHTML = r.used != null ? `${nf(r.used, 1)}<small> / ${nf(r.total)} Go</small>` : "–";
+  setBar($("ram-bar"), r.load, r.load > 85 ? "var(--amber)" : "var(--muted)");
+  $("ram-pct").textContent = r.load != null ? nf(r.load) + " %" : "–";
+  // Systeme
+  const rows = [];
+  const disks = (s.disks || []).slice(0, 2);
+  disks.forEach((d, i) => rows.push([disks.length > 1 ? `SSD ${i + 1}` : "SSD", `${d.temp}°C`,
+    d.temp >= 70 ? "var(--hot)" : d.temp >= 60 ? "var(--amber)" : ""]));
+  (s.fans || []).slice(0, 2).forEach(f => rows.push([f.name, nf(f.rpm) + " tr/min"]));
+  rows.push(["En marche", since(s.uptime)]);
+  $("sys").innerHTML = rows.map(([k, v, col]) =>
+    `<div class="row"><span class="muted">${esc(k)}</span><span class="num"${col ? ` style="color:${col}"` : ""}>${esc(v)}</span></div>`).join("");
+  // Mode
+  const m = s.mode || {};
+  modeState.current = m.current;
+  if (modeState.pending && (m.current === modeState.pending || Date.now() > modeState.until)) modeState.pending = null;
+  paintModes();
+  // Bandeaux
+  const notes = [];
+  if (s.demo) notes.push(["Mode démo : les valeurs sont fausses.", ""]);
+  if (s.lhm && !s.lhm.ok) notes.push([s.app === "pcmonitor"
+    ? "Capteurs indisponibles : vérifie que le pilote PawnIO est installé et que PC Monitor tourne en administrateur."
+    : "Températures indisponibles : lance LibreHardwareMonitor en administrateur et active Options > Remote Web Server > Run.", "bad"]);
+  if (!s.demo && s.lhm && s.lhm.ok && c.temp == null) notes.push(["Température CPU vide : installe le pilote PawnIO (pawnio.eu) sur le PC, puis relance LibreHardwareMonitor en administrateur.", ""]);
+  if (m.ghelper_running === false) notes.push(["G-Helper n'est pas lancé sur le PC : les modes ne changeront pas.", ""]);
+  if (m.control_ok === false) notes.push(["Modes ASUS indisponibles : PC Monitor n'a pas accès au pilote ASUS (ATKACPI).", ""]);
+  setNotes(notes);
+}
+function renderWifi(w) {
+  const el = $("wifi");
+  if (!w) { el.innerHTML = `<div class="row"><span class="muted">Wi-Fi</span><span>non connecté ou câble</span></div>`; return; }
+  if (w.error) { el.innerHTML = `<div class="row"><span class="muted">${esc(w.error)}</span></div>`; return; }
+  const lvl = w.signal == null ? 0 : w.signal >= 80 ? 4 : w.signal >= 60 ? 3 : w.signal >= 40 ? 2 : 1;
+  const bars = [5, 8, 11, 14].map((h, i) => `<i class="${i < lvl ? "on" : ""}" style="height:${h}px"></i>`).join("");
+  const rows = [["Signal", w.signal != null ? w.signal + " %" : "–"]];
+  if (w.band || w.channel) rows.push(["Bande", [w.band, w.channel && "canal " + w.channel].filter(Boolean).join(", ")]);
+  if (w.rx != null) rows.push(["Lien", nf(w.rx) + " Mb/s"]);
+  el.innerHTML = `<div class="ssid"><div class="bars">${bars}</div><span>${esc(w.ssid || "Wi-Fi")}</span></div>` +
+    rows.map(([k, v]) => `<div class="row"><span class="muted">${k}</span><span class="num">${esc(v)}</span></div>`).join("");
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let lastNotes = "";
+function setNotes(list) {
+  const html = list.map(([t, cls]) => `<div class="note ${cls}">${esc(t)}</div>`).join("");
+  if (html !== lastNotes) { $("notes").innerHTML = html; lastNotes = html; }
+}
+
+/* ---------- Boucle ---------- */
+let fails = 0, busy = false;
+async function tick() {
+  if (busy || document.hidden) return; busy = true;
+  try {
+    const s = await api("/api/stats");
+    if (s && s.cpu) { render(s); fails = 0; $("dot").className = "dot on"; }
+  } catch (e) {
+    fails++;
+    if (e.auth) { setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]); $("dot").className = "dot off"; }
+    else if (fails >= 2) { $("dot").className = "dot off";
+      setNotes([["PC injoignable : vérifie que PC Monitor tourne sur le PC et que le téléphone est sur le même Wi-Fi.", "bad"]]); }
+  } finally { busy = false; }
+}
+async function init() {
+  try {
+    const cfg = await api("/api/config");
+    $("pcname").textContent = cfg.pc || "PC";
+    buildModes(cfg.modes || []); buildApps(cfg.apps || []);
+  } catch (e) {
+    buildModes([{ id: "silent", label: "Silencieux" }, { id: "balanced", label: "Équilibré" }, { id: "turbo", label: "Turbo" }]);
+    if (e.auth) setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]);
+    setTimeout(init, 4000);
+  }
+  tick();
+}
+setInterval(tick, 1000);
+const clock = () => { $("clock").textContent = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); };
+clock(); setInterval(clock, 1000);
+
+/* ---------- Applis ---------- */
+let APPS = [], editing = false;
+const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+function buildApps(list) {
+  APPS = list;
+  const box = $("apps");
+  if (!list.length) editing = false;
+  box.classList.toggle("editing", editing);
+  $("apps-edit").textContent = editing ? "Terminé" : "Modifier";
+  $("apps-edit").style.visibility = list.length ? "visible" : "hidden";
+  box.innerHTML = list.map((a, i) => `<div class="appt">
+    <button class="open" data-i="${i}"><span class="ico">${esc(a.icon)}</span><span class="nm">${esc(a.name)}</span></button>
+    ${editing ? `<button class="remove" data-i="${i}">Retirer</button>` : a.can_close ? `<button class="close" data-i="${i}">Fermer</button>` : ""}</div>`).join("")
+    + (editing ? "" : `<div class="appt add"><button class="open" id="add-app"><span class="ico">${PLUS}</span><span class="nm">Ajouter</span></button></div>`);
+  $("apps-hint").textContent = editing
+    ? "Touche une appli pour changer son icône. « Retirer » l'enlève de cette liste seulement : rien n'est désinstallé du PC."
+    : "« Ajouter » liste les jeux Steam et les programmes du Bureau et du menu Démarrer du PC.";
+  box.querySelectorAll(".open[data-i]").forEach(b => b.addEventListener("click", () =>
+    editing ? openIcons(+b.dataset.i) : act({ action: "app_open", index: +b.dataset.i })));
+  box.querySelectorAll(".close").forEach(b => b.addEventListener("click", () =>
+    confirmSheet(`Fermer ${list[+b.dataset.i].name} ?`, "Le programme sera fermé de force : ce qui n'est pas enregistré sera perdu.",
+      () => act({ action: "app_close", index: +b.dataset.i }), "Fermer")));
+  box.querySelectorAll(".remove").forEach(b => b.addEventListener("click", () =>
+    confirmSheet(`Retirer ${list[+b.dataset.i].name} ?`, "L'appli disparaît de cette liste. Rien n'est désinstallé du PC.",
+      async () => { await act({ action: "app_remove", index: +b.dataset.i }); reloadApps(); }, "Retirer")));
+  const add = $("add-app"); if (add) add.addEventListener("click", openPicker);
+}
+async function reloadApps() { try { const cfg = await api("/api/config"); buildApps(cfg.apps || []); } catch (e) {} }
+$("apps-edit").addEventListener("click", () => { editing = !editing; buildApps(APPS); });
+
+/* Changer l'icone d'une appli (mode Modifier) */
+const ICON_CHOICES = ["🎮", "🕹️", "🔫", "🎯", "🏎️", "⚽", "🪓", "🧟", "🚀", "🐉", "💬", "🎵",
+  "📺", "🎥", "🌐", "🛠️", "📄", "📁", "🧩", "⭐", "🔥", "💀", "🏆", "⚙️"];
+function openIcons(i) {
+  $("ico-q").textContent = `Icône de ${APPS[i].name}`;
+  $("icogrid").innerHTML = ICON_CHOICES.map(e => `<button data-e="${e}" aria-label="${e}">${e}</button>`).join("");
+  $("icogrid").querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
+    $("icosheet").classList.remove("show");
+    await act({ action: "app_update", index: i, icon: b.dataset.e }, true); reloadApps(); }));
+  $("icosheet").classList.add("show");
+}
+$("ico-no").addEventListener("click", () => $("icosheet").classList.remove("show"));
+$("icosheet").addEventListener("click", e => { if (e.target.id === "icosheet") $("icosheet").classList.remove("show"); });
+
+/* Selecteur : jeux et programmes trouves sur le PC */
+let catalog = [], pkTimer = null, pkLoading = false;
+const norm = t => (t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function openPicker() { $("pk-search").value = ""; $("picker").classList.add("show"); loadCatalog(false); }
+function closePicker() { $("picker").classList.remove("show"); clearTimeout(pkTimer); $("pk-search").blur(); reloadApps(); }
+async function loadCatalog(refresh) {
+  clearTimeout(pkTimer);
+  try {
+    const r = await api("/api/catalog" + (refresh ? "?refresh=1" : ""));
+    catalog = r.items || []; pkLoading = !!r.loading; renderCatalog();
+    if (pkLoading && $("picker").classList.contains("show")) pkTimer = setTimeout(() => loadCatalog(false), 1500);
+  } catch (e) { $("pk-list").innerHTML = `<p class="pk-empty">Le PC ne répond pas. Vérifie que le serveur tourne.</p>`; }
+}
+function renderCatalog() {
+  const q = norm($("pk-search").value.trim());
+  const items = catalog.filter(it => !q || norm(it.name).includes(q));
+  let html = pkLoading ? `<p class="pk-empty">Recherche des jeux et programmes du PC…</p>` : "";
+  if (!items.length && !pkLoading) html = `<p class="pk-empty">${q ? "Aucun résultat pour cette recherche." : "Aucune appli trouvée sur le PC."}</p>`;
+  let grp = "";
+  for (const it of items) {
+    if (it.src !== grp) { grp = it.src; html += `<div class="pk-group">${esc(grp === "Steam" ? "Jeux Steam" : grp)}</div>`; }
+    html += `<button class="pk-item${it.added ? " added" : ""}" data-id="${it.id}"><span class="ico">${esc(it.icon)}</span>` +
+      `<span class="nm">${esc(it.name)}</span><span class="add">${it.added ? "Ajouté" : "Ajouter"}</span></button>`;
+  }
+  $("pk-list").innerHTML = html;
+  $("pk-list").querySelectorAll(".pk-item").forEach(b => b.addEventListener("click", () => addFromCatalog(+b.dataset.id, b)));
+}
+async function addFromCatalog(id, btn) {
+  const it = catalog.find(x => x.id === id); if (!it || it.added) return;
+  try {
+    const r = await api("/api/action", { action: "app_add", id });
+    toast(r.msg || "Ajouté", !r.ok);
+    if (r.ok) { it.added = true; btn.classList.add("added"); btn.querySelector(".add").textContent = "Ajouté"; }
+  } catch (e) { toast("Le PC ne répond pas", true); }
+}
+$("pk-close").addEventListener("click", closePicker);
+$("pk-refresh").addEventListener("click", () => { pkLoading = true; renderCatalog(); loadCatalog(true); });
+$("pk-search").addEventListener("input", renderCatalog);
+
+/* ---------- Actions ---------- */
+async function act(body, quiet) {
+  try { const r = await api("/api/action", body); if (!quiet || !r.ok) toast(r.msg || (r.ok ? "Fait" : "Échec"), !r.ok); }
+  catch (e) { toast(e.auth ? "Clé invalide" : "Le PC ne répond pas", true); }
+}
+document.querySelectorAll("[data-act]").forEach(b => {
+  const a = b.dataset.act;
+  if (b.dataset.confirm) { b.addEventListener("click", () => confirmSheet(b.dataset.confirm, b.dataset.sub || "", () => act({ action: a }), b.dataset.yes)); return; }
+  if (b.hasAttribute("data-repeat")) {
+    let t1, t2;
+    const stop = () => { clearTimeout(t1); clearInterval(t2); };
+    b.addEventListener("pointerdown", e => { e.preventDefault(); act({ action: a }, true);
+      t1 = setTimeout(() => { t2 = setInterval(() => act({ action: a }, true), 160); }, 420); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, stop));
+    return;
+  }
+  b.addEventListener("click", () => act({ action: a }, ["vol_mute", "play", "next", "prev"].includes(a)));
+});
+
+let toastT;
+function toast(msg, bad) {
+  const t = $("toast"); t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
+  clearTimeout(toastT); toastT = setTimeout(() => t.className = "toast" + (bad ? " bad" : ""), 2200);
+}
+function confirmSheet(q, sub, yes, label) {
+  $("sheet-q").textContent = q; $("sheet-sub").textContent = sub; $("sheet-yes").textContent = label || "OK";
+  $("sheet").classList.add("show");
+  const close = () => $("sheet").classList.remove("show");
+  $("sheet-no").onclick = close; $("sheet").onclick = e => { if (e.target.id === "sheet") close(); };
+  $("sheet-yes").onclick = () => { close(); yes(); };
+}
+
+/* ---------- Onglets ---------- */
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === t.dataset.view));
+  document.body.dataset.view = t.dataset.view;
+  if (t.dataset.view === "v-mon") { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); }
+}));
+window.addEventListener("resize", () => { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); });
+
+/* ---------- Appli Android : toucher le nom du PC ouvre les réglages de connexion ---------- */
+const IN_APP = typeof window.AndroidApp !== "undefined";
+if (IN_APP) {
+  document.querySelector(".pc").style.cursor = "pointer";
+  document.querySelector(".pc").addEventListener("click", () => { try { window.AndroidApp.openSetup(); } catch (e) {} });
+}
+
+/* ---------- Ecran toujours allume (iOS 18.4+ en appli d'accueil) ---------- */
+let wake = null;
+async function keepAwake() {
+  try { if ("wakeLock" in navigator && !wake) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => wake = null); } } catch (e) {}
+}
+document.addEventListener("pointerdown", keepAwake, { once: false, passive: true });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { keepAwake(); tick(); } });
+
+init();
+</script>
+</body>
+</html>
