@@ -51,7 +51,7 @@ public static class Keyboard
             {
                 try
                 {
-                    if (!Pids.Contains(d.ProductID) || !d.CanOpen || d.GetMaxFeatureReportLength() <= 0) continue;
+                    if (!Pids.Contains(d.ProductID) || d.GetMaxFeatureReportLength() <= 0) continue;
                     if (d.GetReportDescriptor().TryGetReport(ReportType.Feature, reportId, out _)) list.Add(d);
                 }
                 catch
