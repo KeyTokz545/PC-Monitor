@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -18,6 +19,7 @@ public sealed class TrayApp : ApplicationContext
     readonly Collector collector;
     readonly ModeService modes;
     readonly Controls controls;
+    readonly GameWatcher games;
     readonly WebServer web;
     readonly Discovery discovery;
     readonly NotifyIcon tray;
@@ -31,6 +33,7 @@ public sealed class TrayApp : ApplicationContext
     {
         ui = new Control();
         ui.CreateControl();
+        ScreenColor.OnUi = f => ui.InvokeRequired ? (bool)ui.Invoke(f) : f();
         icon = LoadIcon();
 
         cfg = AppConfig.Load();
@@ -41,8 +44,9 @@ public sealed class TrayApp : ApplicationContext
         collector = new Collector(cfg, sensors, asus);
         collector.Start();
 
-        controls = new Controls(cfg, asus, modes);
-        web = new WebServer(cfg, collector, new Actions(cfg, modes, asus), controls);
+        games = new GameWatcher(cfg, modes);
+        controls = new Controls(cfg, asus, modes, games);
+        web = new WebServer(cfg, collector, new Actions(cfg, modes, asus, games), controls);
         string webError = null;
         try
         {
@@ -67,6 +71,7 @@ public sealed class TrayApp : ApplicationContext
 
         modes.Changed += _ => UpdateTip();
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
+        SystemEvents.DisplaySettingsChanged += OnDisplayChanged;
 
         Catalog.Refresh();
         Task.Run(async () =>
@@ -76,6 +81,7 @@ public sealed class TrayApp : ApplicationContext
             await Task.Delay(2500);
             modes.Reapply();
             controls.Reapply();
+            games.Start();
             await Task.Delay(1500);
             LaunchTools();
         });
@@ -189,6 +195,20 @@ public sealed class TrayApp : ApplicationContext
             Balloon(msg);
         });
         m.Items.Add(gpu);
+        var colors = new ToolStripMenuItem("Couleurs de l'écran");
+        List<string> names;
+        lock (AppConfig.Gate) names = cfg.ColorProfiles.Select(c => c.Name).ToList();
+        foreach (var n in names)
+        {
+            var name = n;
+            var item = new ToolStripMenuItem(name) { Checked = string.Equals(cfg.ActiveColor, name, StringComparison.OrdinalIgnoreCase) };
+            item.Click += (s, e) => Task.Run(() => { var (ok, msg) = Tweaks.SetColor(cfg, name); if (!ok) Balloon(msg); });
+            colors.DropDownItems.Add(item);
+        }
+        m.Items.Add(colors);
+        var winkey = new ToolStripMenuItem("Bloquer la touche Windows") { Checked = WinKey.Enabled };
+        winkey.Click += (s, e) => Task.Run(() => Tweaks.SetWinKey(cfg, !WinKey.Enabled));
+        m.Items.Add(winkey);
         m.Items.Add(new ToolStripSeparator());
 
         var launch = new ToolStripMenuItem("Lancer avec PC Monitor");
@@ -264,11 +284,26 @@ public sealed class TrayApp : ApplicationContext
         }
     }
 
+    void OnDisplayChanged(object sender, EventArgs e)
+    {
+        // Windows remet la table gamma à zéro quand l'écran change (fréquence, écran externe…)
+        Task.Run(async () =>
+        {
+            await Task.Delay(1500);
+            ScreenColor.Reapply();
+        });
+    }
+
     protected override void ExitThreadCore()
     {
         try
         {
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+            SystemEvents.DisplaySettingsChanged -= OnDisplayChanged;
+            games.Stop();
+            Fps.Stop();
+            WinKey.Set(false);
+            ScreenColor.Reset();
             tipTimer.Stop();
             tray.Visible = false;
             tray.Dispose();

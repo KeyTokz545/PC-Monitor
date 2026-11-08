@@ -22,6 +22,8 @@ public sealed class KeyboardSettings
     public bool Keys { get; set; } = true;
     public bool Bar { get; set; } = true;
     public bool Logo { get; set; } = true;
+    /// <summary>Couleurs des 4 zones du clavier (de gauche à droite), ou null pour une seule couleur.</summary>
+    public List<string> Zones { get; set; }
 }
 
 public static class Keyboard
@@ -106,6 +108,7 @@ public static class Keyboard
             {
                 using var stream = d.Open();
                 foreach (var m in messages) stream.Write(m);
+                Log.Info($"Aura {d.ProductID:X4} : " + string.Join(" | ", messages.Select(m => BitConverter.ToString(m, 0, Math.Min(m.Length, 13)))));
             }
             catch (Exception e)
             {
@@ -135,26 +138,42 @@ public static class Keyboard
         return (255, 42, 42);
     }
 
-    static byte[] EffectMessage(KeyboardSettings s)
+    static byte Speed(KeyboardSettings s) => s.Speed switch { 0 => 0xE1, 2 => 0xF5, _ => 0xEB };
+
+    static byte[] EffectMessage(KeyboardSettings s, byte zone, string color)
     {
-        var (r, g, b) = Rgb(s.Color);
+        var (r, g, b) = Rgb(color);
         var (r2, g2, b2) = Rgb(s.Color2);
-        byte speed = s.Speed switch { 0 => 0xE1, 2 => 0xF5, _ => 0xEB };
         var msg = new byte[17];
         msg[0] = AuraId;
         msg[1] = 0xB3;
-        msg[2] = 0x00; // zone
+        msg[2] = zone;
         msg[3] = (byte)s.Mode;
         msg[4] = r;
         msg[5] = g;
         msg[6] = b;
-        msg[7] = speed;
+        msg[7] = Speed(s);
         msg[8] = 0x00; // direction
         msg[9] = (r == 0 && g == 0 && b == 0) ? (byte)0xFF : (s.Mode == 1 ? (byte)0x01 : (byte)0x00);
         msg[10] = r2;
         msg[11] = g2;
         msg[12] = b2;
         return msg;
+    }
+
+    /// <summary>
+    /// Messages d'effet. Les claviers 4 zones (ROG 2018-2019, comme le Scar II) gardent une couleur par zone pour
+    /// les effets fixe, respiration et stroboscope : la zone 0 seule ne suffit pas et le clavier reste noir.
+    /// On envoie donc la zone 0 puis les zones 1 à 4.
+    /// </summary>
+    static List<byte[]> EffectMessages(KeyboardSettings s)
+    {
+        var list = new List<byte[]> { EffectMessage(s, 0, s.Color) };
+        bool usesColor = s.Mode == 0 || s.Mode == 1 || s.Mode == 10;
+        if (usesColor)
+            for (byte z = 1; z <= 4; z++)
+                list.Add(EffectMessage(s, z, s.Zones != null && s.Zones.Count == 4 ? s.Zones[z - 1] : s.Color));
+        return list;
     }
 
     static byte[] PowerMessage(KeyboardSettings s)
@@ -178,7 +197,11 @@ public static class Keyboard
             if (!Modes.Contains(s.Mode)) s.Mode = 0;
             s.Brightness = Math.Clamp(s.Brightness, 0, 3);
             s.Speed = Math.Clamp(s.Speed, 0, 2);
-            WriteAura(EffectMessage(s), new byte[] { AuraId, 0xB5, 0, 0, 0 }, new byte[] { AuraId, 0xB4 });
+            if (s.Zones != null && (s.Zones.Count != 4 || s.Zones.Any(z => z == null))) s.Zones = null;
+            var msgs = EffectMessages(s);
+            msgs.Add(new byte[] { AuraId, 0xB5, 0, 0, 0 });
+            msgs.Add(new byte[] { AuraId, 0xB4 });
+            WriteAura(msgs.ToArray());
             WriteAura(PowerMessage(s));
             WriteInput(new byte[] { InputId, 0xBA, 0xC5, 0xC4, (byte)s.Brightness });
         }

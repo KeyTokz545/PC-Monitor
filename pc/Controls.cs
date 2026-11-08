@@ -10,14 +10,16 @@ public sealed class Controls
     readonly AppConfig cfg;
     readonly Asus asus;
     readonly ModeService modes;
+    readonly GameWatcher games;
     bool? batterySupported;
     bool? overdriveSupported;
 
-    public Controls(AppConfig cfg, Asus asus, ModeService modes)
+    public Controls(AppConfig cfg, Asus asus, ModeService modes, GameWatcher games)
     {
         this.cfg = cfg;
         this.asus = asus;
         this.modes = modes;
+        this.games = games;
     }
 
     public bool BatterySupported => batterySupported ??= asus.Connected && asus.IsSupported(Asus.BatteryLimit);
@@ -33,6 +35,7 @@ public sealed class Controls
         ["keys"] = k.Keys,
         ["bar"] = k.Bar,
         ["logo"] = k.Logo,
+        ["zones"] = k.Zones,
     };
 
     public Dictionary<string, object> State()
@@ -86,6 +89,44 @@ public sealed class Controls
             ["current"] = string.IsNullOrEmpty(cfg.LastMode) ? null : cfg.LastMode,
             ["modes"] = fanModes,
         };
+
+        lock (AppConfig.Gate)
+        {
+            d["color"] = new Dictionary<string, object>
+            {
+                ["active"] = cfg.ActiveColor,
+                ["profiles"] = cfg.ColorProfiles.Select(c => new Dictionary<string, object>
+                {
+                    ["name"] = c.Name,
+                    ["gamma"] = c.Gamma,
+                    ["contrast"] = c.Contrast,
+                    ["brightness"] = c.Brightness,
+                    ["temperature"] = c.Temperature,
+                    ["saturation"] = c.Saturation,
+                }).ToList(),
+                ["error"] = ScreenColor.LastError,
+            };
+            d["games"] = new Dictionary<string, object>
+            {
+                ["profiles"] = cfg.Games.Select(g => new Dictionary<string, object>
+                {
+                    ["exe"] = g.Exe,
+                    ["name"] = g.Name,
+                    ["enabled"] = g.Enabled,
+                    ["mode"] = g.Mode,
+                    ["gpu"] = g.Gpu,
+                    ["color"] = g.Color,
+                    ["winkey"] = g.WinKey,
+                }).ToList(),
+                ["active"] = games.ActiveName,
+                ["active_exe"] = games.ActiveExe,
+                ["since"] = games.Since.HasValue ? (object)(long)(DateTime.Now - games.Since.Value).TotalSeconds : null,
+            };
+        }
+        d["winkey"] = WinKey.Enabled;
+        d["timer"] = Tweaks.TimerAt.HasValue
+            ? new Dictionary<string, object> { ["what"] = Tweaks.TimerWhat, ["left"] = (long)Math.Max(0, (Tweaks.TimerAt.Value - DateTime.Now).TotalSeconds) }
+            : null;
         return d;
     }
 
@@ -107,5 +148,15 @@ public sealed class Controls
             if (cfg.BatteryLimit >= 40 && cfg.BatteryLimit <= 100 && BatterySupported) asus.Set(Asus.BatteryLimit, cfg.BatteryLimit);
         }
         catch (Exception e) { Log.Error("Limite de charge au démarrage", e); }
+        try
+        {
+            if (!string.Equals(cfg.ActiveColor, ScreenColor.NormalName, StringComparison.OrdinalIgnoreCase)) Tweaks.SetColor(cfg, cfg.ActiveColor);
+        }
+        catch (Exception e) { Log.Error("Couleurs au démarrage", e); }
+        try
+        {
+            if (cfg.WinKeyLock && !WinKey.Enabled) WinKey.Set(true);
+        }
+        catch (Exception e) { Log.Error("Touche Windows au démarrage", e); }
     }
 }

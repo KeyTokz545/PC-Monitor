@@ -158,6 +158,14 @@ public sealed class WebServer
                     SendJson(ctx, 200, controls.State());
                     return;
 
+                case "/api/game":
+                    SendJson(ctx, 200, Fps.State());
+                    return;
+
+                case "/api/procs":
+                    SendJson(ctx, 200, new Dictionary<string, object> { ["items"] = GameWatcher.RunningApps() });
+                    return;
+
                 case "/api/catalog":
                     if (ctx.Request.QueryString["refresh"] == "1" || (Catalog.Items.Count == 0 && !Catalog.Loading)) Catalog.Refresh();
                     HashSet<string> opens;

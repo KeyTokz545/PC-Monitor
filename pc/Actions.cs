@@ -12,12 +12,34 @@ public sealed class Actions
     readonly AppConfig cfg;
     readonly ModeService modes;
     readonly Asus asus;
+    readonly GameWatcher games;
 
-    public Actions(AppConfig cfg, ModeService modes, Asus asus)
+    public Actions(AppConfig cfg, ModeService modes, Asus asus, GameWatcher games)
     {
         this.cfg = cfg;
         this.modes = modes;
         this.asus = asus;
+        this.games = games;
+    }
+
+    static double D(JsonElement b, string name, double fallback) =>
+        b.ValueKind == JsonValueKind.Object && b.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out var x) ? x : fallback;
+
+    static bool IsNull(JsonElement b, string name) =>
+        b.ValueKind == JsonValueKind.Object && b.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Null;
+
+    /// <summary>Liste de couleurs « #RRGGBB ».</summary>
+    static List<string> Colors(JsonElement b, string name)
+    {
+        if (b.ValueKind != JsonValueKind.Object || !b.TryGetProperty(name, out var v) || v.ValueKind != JsonValueKind.Array) return null;
+        var list = new List<string>();
+        foreach (var x in v.EnumerateArray())
+        {
+            var c = x.ValueKind == JsonValueKind.String ? x.GetString() : null;
+            if (c == null || !System.Text.RegularExpressions.Regex.IsMatch(c, "^#[0-9A-Fa-f]{6}$")) return null;
+            list.Add(c.ToUpperInvariant());
+        }
+        return list;
     }
 
     static bool? B(JsonElement b, string name) =>
@@ -177,6 +199,8 @@ public sealed class Actions
                     if (B(body, "keys") is bool keys) k.Keys = keys;
                     if (B(body, "bar") is bool bar) k.Bar = bar;
                     if (B(body, "logo") is bool logo) k.Logo = logo;
+                    if (IsNull(body, "zones")) k.Zones = null;
+                    else if (Colors(body, "zones") is { Count: 4 } zones) k.Zones = zones;
                     cfg.Keyboard = k;
                 }
                 var (ok, msg) = Keyboard.Apply(k);
@@ -202,16 +226,7 @@ public sealed class Actions
             case "gpu_limit":
             {
                 var on = B(body, "on") ?? cfg.GpuLimit.On;
-                int mhz = I(body, "mhz");
-                if (mhz < 0) mhz = cfg.GpuLimit.Mhz;
-                mhz = Math.Clamp(mhz, 300, 3000);
-                var (ok, msg) = Gpu.SetLimit(on ? mhz : 0);
-                if (ok)
-                {
-                    cfg.GpuLimit.On = on;
-                    cfg.GpuLimit.Mhz = mhz;
-                    cfg.Save();
-                }
+                var (ok, msg) = Tweaks.SetGpu(cfg, on, I(body, "mhz"));
                 return R(ok, msg);
             }
 
@@ -243,6 +258,145 @@ public sealed class Actions
                     return R(ok, enabled ? $"Courbe {label} appliquée" + (msg.Contains('(') ? msg[msg.IndexOf('(')..].Insert(0, " ") : "") : $"Courbe d'usine en mode {label}");
                 }
                 return R(true, enabled ? $"Courbe {label} enregistrée (appliquée en mode {label})" : $"Courbe d'usine en mode {label}");
+            }
+
+            // ---------------------------------------------------------------- couleurs de l'écran
+            case "color_apply":
+            {
+                var (ok, msg) = Tweaks.SetColor(cfg, S(body, "name"));
+                return R(ok, msg);
+            }
+            case "color_save":
+            {
+                var name = (S(body, "name") ?? "").Trim();
+                if (name.Length == 0) return R(false, "Donne un nom au profil");
+                if (string.Equals(name, ScreenColor.NormalName, StringComparison.OrdinalIgnoreCase))
+                    return R(false, "Le profil Normal ne se modifie pas : crée un nouveau profil");
+                var p = new ColorProfile
+                {
+                    Name = name,
+                    Gamma = D(body, "gamma", 1),
+                    Contrast = (int)Math.Round(D(body, "contrast", 100)),
+                    Brightness = (int)Math.Round(D(body, "brightness", 0)),
+                    Temperature = (int)Math.Round(D(body, "temperature", 6500)),
+                    Saturation = (int)Math.Round(D(body, "saturation", 100)),
+                }.Clamp();
+                var old = S(body, "old");
+                lock (AppConfig.Gate)
+                {
+                    var i = cfg.ColorProfiles.FindIndex(c => string.Equals(c.Name, old ?? p.Name, StringComparison.OrdinalIgnoreCase));
+                    if (i < 0) i = cfg.ColorProfiles.FindIndex(c => string.Equals(c.Name, p.Name, StringComparison.OrdinalIgnoreCase));
+                    if (i == 0) return R(false, "Le profil Normal ne se modifie pas");
+                    if (i > 0) cfg.ColorProfiles[i] = p;
+                    else
+                    {
+                        if (cfg.ColorProfiles.Count >= 12) return R(false, "12 profils maximum");
+                        cfg.ColorProfiles.Add(p);
+                    }
+                    if (old != null && string.Equals(cfg.ActiveColor, old, StringComparison.OrdinalIgnoreCase)) cfg.ActiveColor = p.Name;
+                    foreach (var g in cfg.Games)
+                        if (old != null && string.Equals(g.Color, old, StringComparison.OrdinalIgnoreCase)) g.Color = p.Name;
+                }
+                cfg.Save();
+                if (B(body, "apply") ?? true)
+                {
+                    var (ok, msg) = Tweaks.SetColor(cfg, p.Name);
+                    return R(ok, B(body, "quiet") == true && ok ? null : msg);
+                }
+                return R(true, $"Profil {p.Name} enregistré");
+            }
+            case "color_preview":
+            {
+                // aperçu en direct pendant qu'on bouge les curseurs (rien n'est enregistré)
+                var p = new ColorProfile
+                {
+                    Name = S(body, "name") ?? "Aperçu",
+                    Gamma = D(body, "gamma", 1),
+                    Contrast = (int)Math.Round(D(body, "contrast", 100)),
+                    Brightness = (int)Math.Round(D(body, "brightness", 0)),
+                    Temperature = (int)Math.Round(D(body, "temperature", 6500)),
+                    Saturation = (int)Math.Round(D(body, "saturation", 100)),
+                };
+                var (ok, msg) = ScreenColor.Apply(p);
+                return R(ok, ok ? null : msg);
+            }
+            case "color_delete":
+            {
+                var name = S(body, "name");
+                bool wasActive;
+                lock (AppConfig.Gate)
+                {
+                    var i = cfg.ColorProfiles.FindIndex(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+                    if (i <= 0) return R(false, i == 0 ? "Le profil Normal ne se supprime pas" : "Profil introuvable");
+                    cfg.ColorProfiles.RemoveAt(i);
+                    wasActive = string.Equals(cfg.ActiveColor, name, StringComparison.OrdinalIgnoreCase);
+                    foreach (var g in cfg.Games)
+                        if (string.Equals(g.Color, name, StringComparison.OrdinalIgnoreCase)) g.Color = null;
+                }
+                cfg.Save();
+                if (wasActive) Tweaks.SetColor(cfg, ScreenColor.NormalName);
+                return R(true, $"Profil {name} supprimé");
+            }
+
+            // ---------------------------------------------------------------- jeu
+            case "winkey_set":
+            {
+                var (ok, msg) = Tweaks.SetWinKey(cfg, B(body, "on") ?? !cfg.WinKeyLock);
+                return R(ok, msg);
+            }
+            case "capture":
+            {
+                var (ok, msg) = WinKey.Capture(S(body, "what"), S(body, "tool"));
+                return R(ok, msg);
+            }
+            case "game_save":
+            {
+                var exe = (S(body, "exe") ?? "").Trim();
+                if (GameProfile.Norm(exe).Length == 0) return R(false, "Indique le programme du jeu (ex. cod.exe)");
+                if (!exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) exe += ".exe";
+                var name = (S(body, "name") ?? "").Trim();
+                if (name.Length == 0) name = exe[..^4];
+                var mode = S(body, "mode");
+                var color = S(body, "color");
+                var g = new GameProfile
+                {
+                    Exe = Cut(exe, 80),
+                    Name = Cut(name, 40),
+                    Enabled = B(body, "enabled") ?? true,
+                    Mode = ModeDefs.Known(mode) ? mode : null,
+                    Gpu = B(body, "gpu"),
+                    Color = string.IsNullOrWhiteSpace(color) ? null : color,
+                    WinKey = B(body, "winkey") ?? false,
+                };
+                var old = S(body, "old");
+                lock (AppConfig.Gate)
+                {
+                    var i = cfg.Games.FindIndex(x => GameProfile.Norm(x.Exe) == GameProfile.Norm(old ?? exe));
+                    if (i < 0) i = cfg.Games.FindIndex(x => GameProfile.Norm(x.Exe) == GameProfile.Norm(exe));
+                    if (i >= 0) cfg.Games[i] = g;
+                    else
+                    {
+                        if (cfg.Games.Count >= 30) return R(false, "30 jeux maximum");
+                        cfg.Games.Add(g);
+                    }
+                }
+                cfg.Save();
+                return R(true, $"Profil {g.Name} enregistré : il s'appliquera au prochain lancement du jeu");
+            }
+            case "game_remove":
+            {
+                var exe = GameProfile.Norm(S(body, "exe"));
+                int n;
+                lock (AppConfig.Gate) n = cfg.Games.RemoveAll(x => GameProfile.Norm(x.Exe) == exe);
+                cfg.Save();
+                return R(n > 0, n > 0 ? "Profil de jeu supprimé" : "Profil introuvable");
+            }
+
+            // ---------------------------------------------------------------- minuteur
+            case "timer_set":
+            {
+                var (ok, msg) = Tweaks.SetTimer(I(body, "minutes"), S(body, "what"));
+                return R(ok, msg);
             }
 
             case "lock":

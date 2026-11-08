@@ -11,7 +11,7 @@
     <RootNamespace>PCMonitor</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <Product>PC Monitor</Product>
     <Company>KeyTokz545</Company>
     <Description>Monitoring et contrôle du PC depuis un téléphone</Description>
@@ -26,6 +26,7 @@
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.28" />
   </ItemGroup>
 
   <ItemGroup>

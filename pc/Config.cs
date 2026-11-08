@@ -69,6 +69,12 @@ public sealed class AppConfig
     public Dictionary<string, int> CpuBoost { get; set; } = new() { ["silent"] = 1, ["balanced"] = 2, ["turbo"] = 2 };
     /// <summary>Programmes lancés en même temps que PC Monitor (ThrottleStop, Afterburner…).</summary>
     public List<string> LaunchWith { get; set; } = new();
+    /// <summary>Profils de couleur de l'écran (le premier est toujours « Normal »).</summary>
+    public List<ColorProfile> ColorProfiles { get; set; }
+    public string ActiveColor { get; set; } = ScreenColor.NormalName;
+    /// <summary>Profils de jeu appliqués automatiquement au lancement du jeu.</summary>
+    public List<GameProfile> Games { get; set; } = new();
+    public bool WinKeyLock { get; set; }
     public bool FirstRunDone { get; set; }
     public List<AppEntry> Apps { get; set; } = DefaultApps();
 
@@ -137,6 +143,14 @@ public sealed class AppConfig
                 cfg.FanCurves[kv.Key] = FanProfile.Full();
         cfg.FansMax.Clear();
         cfg.CpuBoost ??= new();
+        if (cfg.ColorProfiles == null || cfg.ColorProfiles.Count == 0) cfg.ColorProfiles = ColorProfile.Defaults();
+        cfg.ColorProfiles = cfg.ColorProfiles.Where(c => c != null).Select(c => c.Clamp())
+            .Where(c => !string.Equals(c.Name, ScreenColor.NormalName, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        cfg.ColorProfiles.Insert(0, new ColorProfile());
+        if (!cfg.ColorProfiles.Any(c => string.Equals(c.Name, cfg.ActiveColor, StringComparison.OrdinalIgnoreCase)))
+            cfg.ActiveColor = ScreenColor.NormalName;
+        cfg.Games = (cfg.Games ?? new()).Where(g => g != null && !string.IsNullOrWhiteSpace(g.Exe)).ToList();
         cfg.LaunchWith ??= new();
         cfg.Apps ??= new();
         cfg.Apps = cfg.Apps.Where(a => a != null && !string.IsNullOrWhiteSpace(a.Open)).ToList();
