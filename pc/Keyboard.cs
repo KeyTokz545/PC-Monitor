@@ -24,6 +24,11 @@ public sealed class KeyboardSettings
     public bool Logo { get; set; } = true;
     /// <summary>Couleurs des 4 zones du clavier (de gauche à droite), ou null pour une seule couleur.</summary>
     public List<string> Zones { get; set; }
+    /// <summary>
+    /// Façon d'envoyer les messages au clavier : 1 = comme G-Helper (rapports de sortie), 2 = comme rogauracore
+    /// et OpenRGB pour les ROG 2018-2019 (rapports « feature »), 3 = comme 2 mais uniquement zone par zone.
+    /// </summary>
+    public int Method { get; set; } = 2;
 }
 
 public static class Keyboard
@@ -100,29 +105,50 @@ public static class Keyboard
         }
     }
 
-    static void WriteAura(params byte[][] messages)
+    /// <summary>Identifiant USB du clavier trouvé (pour le journal et le téléphone).</summary>
+    public static string DeviceId { get; private set; }
+
+    static void WriteAura(bool feature, params byte[][] messages)
     {
         foreach (var d in Find(AuraId))
         {
             try
             {
+                DeviceId = $"{d.ProductID:X4}";
                 using var stream = d.Open();
-                foreach (var m in messages) stream.Write(m);
-                Log.Info($"Aura {d.ProductID:X4} : " + string.Join(" | ", messages.Select(m => BitConverter.ToString(m, 0, Math.Min(m.Length, 13)))));
+                int len = feature ? d.GetMaxFeatureReportLength() : 0;
+                foreach (var m in messages)
+                {
+                    if (feature)
+                    {
+                        var payload = new byte[Math.Max(len, m.Length)];
+                        Array.Copy(m, payload, m.Length);
+                        stream.SetFeature(payload);
+                    }
+                    else stream.Write(m);
+                }
+                Log.Info($"Aura {d.ProductID:X4} ({(feature ? "feature" : "sortie")}) : " +
+                         string.Join(" | ", messages.Select(m => BitConverter.ToString(m, 0, Math.Min(m.Length, 13)))));
             }
             catch (Exception e)
             {
-                Log.Error($"Clavier (Aura {d.ProductID:X})", e);
+                Log.Error($"Clavier (Aura {d.ProductID:X}, {(feature ? "feature" : "sortie")})", e);
             }
         }
     }
 
-    static void Init()
+    static int initializedMethod;
+
+    static void Init(int method)
     {
-        if (initialized) return;
+        if (initialized && initializedMethod == method) return;
         initialized = true;
+        initializedMethod = method;
         var hello = Encoding.ASCII.GetBytes("ASUS Tech.Inc.");
-        WriteAura(new byte[] { AuraId, 0xB9 }, new[] { AuraId }.Concat(hello).ToArray());
+        if (method == 1)
+            WriteAura(false, new byte[] { AuraId, 0xB9 }, new[] { AuraId }.Concat(hello).ToArray());
+        else // séquence de réveil de rogauracore pour les claviers Aura Core 2018-2019
+            WriteAura(true, new byte[] { AuraId, 0xB9 }, new[] { AuraId }.Concat(hello).ToArray(), new byte[] { AuraId, 0x05, 0x20, 0x31, 0x00, 0x08 });
         WriteInput(new[] { InputId }.Concat(hello).ToArray());
     }
 
@@ -143,7 +169,8 @@ public static class Keyboard
     static byte[] EffectMessage(KeyboardSettings s, byte zone, string color)
     {
         var (r, g, b) = Rgb(color);
-        var (r2, g2, b2) = Rgb(s.Color2);
+        // Certains claviers prennent la 2e couleur pour l'effet fixe : on y remet la même (comme G-Helper en mode direct).
+        var (r2, g2, b2) = Rgb(color);
         var msg = new byte[17];
         msg[0] = AuraId;
         msg[1] = 0xB3;
@@ -152,7 +179,7 @@ public static class Keyboard
         msg[4] = r;
         msg[5] = g;
         msg[6] = b;
-        msg[7] = Speed(s);
+        msg[7] = s.Method == 3 && s.Mode == 0 ? (byte)0x00 : Speed(s);
         msg[8] = 0x00; // direction
         msg[9] = (r == 0 && g == 0 && b == 0) ? (byte)0xFF : (s.Mode == 1 ? (byte)0x01 : (byte)0x00);
         msg[10] = r2;
@@ -168,8 +195,9 @@ public static class Keyboard
     /// </summary>
     static List<byte[]> EffectMessages(KeyboardSettings s)
     {
-        var list = new List<byte[]> { EffectMessage(s, 0, s.Color) };
         bool usesColor = s.Mode == 0 || s.Mode == 1 || s.Mode == 10;
+        var list = new List<byte[]>();
+        if (!(usesColor && s.Method == 3)) list.Add(EffectMessage(s, 0, s.Zones != null && s.Zones.Count == 4 ? s.Zones[0] : s.Color));
         if (usesColor)
             for (byte z = 1; z <= 4; z++)
                 list.Add(EffectMessage(s, z, s.Zones != null && s.Zones.Count == 4 ? s.Zones[z - 1] : s.Color));
@@ -193,16 +221,18 @@ public static class Keyboard
         if (!Supported) return (false, "Éclairage ASUS introuvable sur ce PC");
         lock (Gate)
         {
-            Init();
+            if (s.Method < 1 || s.Method > 3) s.Method = 2;
+            bool feature = s.Method != 1;
+            Init(s.Method);
             if (!Modes.Contains(s.Mode)) s.Mode = 0;
             s.Brightness = Math.Clamp(s.Brightness, 0, 3);
             s.Speed = Math.Clamp(s.Speed, 0, 2);
             if (s.Zones != null && (s.Zones.Count != 4 || s.Zones.Any(z => z == null))) s.Zones = null;
+            WriteAura(feature, PowerMessage(s));
             var msgs = EffectMessages(s);
             msgs.Add(new byte[] { AuraId, 0xB5, 0, 0, 0 });
             msgs.Add(new byte[] { AuraId, 0xB4 });
-            WriteAura(msgs.ToArray());
-            WriteAura(PowerMessage(s));
+            WriteAura(feature, msgs.ToArray());
             WriteInput(new byte[] { InputId, 0xBA, 0xC5, 0xC4, (byte)s.Brightness });
         }
         return (true, "Éclairage mis à jour");

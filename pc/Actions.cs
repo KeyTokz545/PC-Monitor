@@ -199,6 +199,7 @@ public sealed class Actions
                     if (B(body, "keys") is bool keys) k.Keys = keys;
                     if (B(body, "bar") is bool bar) k.Bar = bar;
                     if (B(body, "logo") is bool logo) k.Logo = logo;
+                    if (Has(body, "method")) k.Method = Math.Clamp(I(body, "method"), 1, 3);
                     if (IsNull(body, "zones")) k.Zones = null;
                     else if (Colors(body, "zones") is { Count: 4 } zones) k.Zones = zones;
                     cfg.Keyboard = k;

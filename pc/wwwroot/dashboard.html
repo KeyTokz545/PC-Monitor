@@ -638,6 +638,9 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
             <div class="trow"><span>Clavier</span><button class="switch" data-zone="keys" role="switch" aria-checked="true" aria-label="Clavier"></button></div>
             <div class="trow"><span>Bandeau lumineux</span><button class="switch" data-zone="bar" role="switch" aria-checked="true" aria-label="Bandeau lumineux"></button></div>
             <div class="trow"><span>Logo</span><button class="switch" data-zone="logo" role="switch" aria-checked="true" aria-label="Logo"></button></div>
+            <div class="sub-h">Compatibilité du clavier</div>
+            <div class="seg small" id="kb-method"><button data-v="1">Méthode 1</button><button data-v="2">Méthode 2</button><button data-v="3">Méthode 3</button></div>
+            <p class="hint in" id="kb-hint">Si l'effet Fixe reste noir, mets l'effet Fixe puis essaie une autre méthode : le clavier se met à jour tout de suite.</p>
           </div>
         </div>
 
@@ -1216,6 +1219,7 @@ function kbSend(patch) {
 $("kb-bright").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) kbSend({ brightness: +b.dataset.v }); });
 $("kb-mode").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) kbSend({ mode: +b.dataset.v }); });
 $("kb-speed").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) kbSend({ speed: +b.dataset.v }); });
+$("kb-method").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) kbSend({ method: +b.dataset.v }); });
 document.querySelectorAll("[data-zone]").forEach(sw => sw.addEventListener("click", () => {
   const on = !isOn(sw); setSwitch(sw, on); kbSend({ [sw.dataset.zone]: on });
 }));
@@ -1248,6 +1252,8 @@ function renderKeyboard() {
   press($("kb-bright"), k.brightness);
   press($("kb-mode"), k.mode);
   press($("kb-speed"), k.speed);
+  press($("kb-method"), k.method || 2);
+  $("kb-hint").textContent = "Si l'effet Fixe reste noir, mets l'effet Fixe puis essaie une autre méthode : le clavier se met à jour tout de suite." + (k.device ? ` (clavier ASUS ${k.device})` : "");
   const usesColor = k.mode === 0 || k.mode === 1 || k.mode === 10;
   $("kb-color-wrap").hidden = !usesColor;
   $("kb-speed-wrap").hidden = k.mode === 0;

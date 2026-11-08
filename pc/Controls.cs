@@ -36,6 +36,8 @@ public sealed class Controls
         ["bar"] = k.Bar,
         ["logo"] = k.Logo,
         ["zones"] = k.Zones,
+        ["method"] = k.Method,
+        ["device"] = Keyboard.DeviceId,
     };
 
     public Dictionary<string, object> State()
