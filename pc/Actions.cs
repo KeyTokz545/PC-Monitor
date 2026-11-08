@@ -11,11 +11,29 @@ public sealed class Actions
 {
     readonly AppConfig cfg;
     readonly ModeService modes;
+    readonly Asus asus;
 
-    public Actions(AppConfig cfg, ModeService modes)
+    public Actions(AppConfig cfg, ModeService modes, Asus asus)
     {
         this.cfg = cfg;
         this.modes = modes;
+        this.asus = asus;
+    }
+
+    static bool? B(JsonElement b, string name) =>
+        b.ValueKind == JsonValueKind.Object && b.TryGetProperty(name, out var v) && (v.ValueKind == JsonValueKind.True || v.ValueKind == JsonValueKind.False)
+            ? v.GetBoolean() : null;
+
+    static bool Has(JsonElement b, string name) => b.ValueKind == JsonValueKind.Object && b.TryGetProperty(name, out _);
+
+    static List<int> L(JsonElement b, string name)
+    {
+        if (b.ValueKind != JsonValueKind.Object || !b.TryGetProperty(name, out var v) || v.ValueKind != JsonValueKind.Array) return null;
+        var list = new List<int>();
+        foreach (var x in v.EnumerateArray())
+            if (x.ValueKind == JsonValueKind.Number && x.TryGetInt32(out var n)) list.Add(n);
+            else return null;
+        return list;
     }
 
     static string S(JsonElement b, string name) =>
@@ -105,6 +123,126 @@ public sealed class Actions
                 }
                 cfg.Save();
                 return R(true, $"{removed.Name} retiré");
+            }
+
+            // ---------------------------------------------------------------- son
+            case "volume_set":
+                Audio.SetVolume(I(body, "value"));
+                return R(true);
+            case "mute_toggle":
+                return R(true, Audio.ToggleMute() ? "Son coupé" : "Son rétabli");
+            case "mic_toggle":
+            {
+                var muted = Audio.ToggleMic();
+                if (asus.Connected) asus.Set(Asus.MicMuteLed, muted ? 1 : 0);
+                return R(true, muted ? "Micro coupé" : "Micro activé");
+            }
+            case "output_set":
+            {
+                var ok = Audio.SetOutput(S(body, "id"));
+                return R(ok, ok ? "Sortie audio changée" : "Impossible de changer la sortie audio");
+            }
+
+            // ---------------------------------------------------------------- écran
+            case "brightness_set":
+                return R(Display.SetBrightness(I(body, "value")));
+            case "refresh_set":
+            {
+                int hz = I(body, "value");
+                var ok = hz > 0 && Display.SetRefresh(hz);
+                return R(ok, ok ? $"Écran à {hz} Hz" : "Fréquence refusée par l'écran");
+            }
+            case "overdrive_set":
+            {
+                var on = B(body, "on") ?? false;
+                var ok = asus.Connected && asus.Set(Asus.ScreenOverdrive, on ? 1 : 0) == 1;
+                return R(ok, ok ? (on ? "Overdrive activé" : "Overdrive désactivé") : "Overdrive non pris en charge");
+            }
+            case "screen_off":
+                Task.Run(async () => { await Task.Delay(600); Display.Off(); });
+                return R(true, "Écran éteint");
+
+            // ---------------------------------------------------------------- clavier
+            case "kb_set":
+            {
+                KeyboardSettings k;
+                lock (AppConfig.Gate)
+                {
+                    k = cfg.Keyboard ?? new KeyboardSettings();
+                    if (Has(body, "brightness")) k.Brightness = I(body, "brightness");
+                    if (Has(body, "mode")) k.Mode = I(body, "mode");
+                    if (Has(body, "speed")) k.Speed = I(body, "speed");
+                    if (S(body, "color") is string c1) k.Color = c1;
+                    if (S(body, "color2") is string c2) k.Color2 = c2;
+                    if (B(body, "keys") is bool keys) k.Keys = keys;
+                    if (B(body, "bar") is bool bar) k.Bar = bar;
+                    if (B(body, "logo") is bool logo) k.Logo = logo;
+                    cfg.Keyboard = k;
+                }
+                var (ok, msg) = Keyboard.Apply(k);
+                cfg.Save();
+                return R(ok, ok ? null : msg);
+            }
+
+            // ---------------------------------------------------------------- batterie
+            case "battery_set":
+            {
+                int v = I(body, "value");
+                if (v < 40 || v > 100) return R(false, "Valeur entre 40 et 100 %");
+                var ok = asus.Connected && asus.Set(Asus.BatteryLimit, v) == 1;
+                if (ok)
+                {
+                    cfg.BatteryLimit = v;
+                    cfg.Save();
+                }
+                return R(ok, ok ? (v >= 100 ? "Charge complète autorisée" : $"Charge limitée à {v} %") : "Limite de charge non prise en charge");
+            }
+
+            // ---------------------------------------------------------------- GPU
+            case "gpu_limit":
+            {
+                var on = B(body, "on") ?? cfg.GpuLimit.On;
+                int mhz = I(body, "mhz");
+                if (mhz < 0) mhz = cfg.GpuLimit.Mhz;
+                mhz = Math.Clamp(mhz, 300, 3000);
+                var (ok, msg) = Gpu.SetLimit(on ? mhz : 0);
+                if (ok)
+                {
+                    cfg.GpuLimit.On = on;
+                    cfg.GpuLimit.Mhz = mhz;
+                    cfg.Save();
+                }
+                return R(ok, msg);
+            }
+
+            // ---------------------------------------------------------------- ventilateurs
+            case "fan_curve":
+            {
+                var mode = S(body, "mode");
+                if (!ModeDefs.Known(mode)) return R(false, "Mode inconnu");
+                var cpu = L(body, "cpu");
+                var gpu = L(body, "gpu");
+                var enabled = B(body, "enabled") ?? true;
+                if (enabled && (!Asus.IsValidCurve(FanProfile.ToBytes(cpu)) || !Asus.IsValidCurve(FanProfile.ToBytes(gpu))))
+                    return R(false, "Courbe invalide");
+                lock (AppConfig.Gate)
+                {
+                    cfg.FanCurves.TryGetValue(mode, out var old);
+                    cfg.FanCurves[mode] = new FanProfile
+                    {
+                        Enabled = enabled,
+                        Cpu = cpu ?? old?.Cpu ?? new List<int>(),
+                        Gpu = gpu ?? old?.Gpu ?? new List<int>(),
+                    };
+                }
+                cfg.Save();
+                var label = cfg.ModeLabel(mode);
+                if (cfg.LastMode == mode)
+                {
+                    var (ok, msg) = modes.Apply(mode);
+                    return R(ok, enabled ? $"Courbe {label} appliquée" + (msg.Contains('(') ? msg[msg.IndexOf('(')..].Insert(0, " ") : "") : $"Courbe d'usine en mode {label}");
+                }
+                return R(true, enabled ? $"Courbe {label} enregistrée (appliquée en mode {label})" : $"Courbe d'usine en mode {label}");
             }
 
             case "lock":

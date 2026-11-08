@@ -17,16 +17,18 @@ public sealed class WebServer
     readonly AppConfig cfg;
     readonly Collector collector;
     readonly Actions actions;
+    readonly Controls controls;
     HttpListener listener;
 
     static readonly byte[] Page = Resource("dashboard.html");
     static readonly byte[] IconPng = Resource("icon.png");
 
-    public WebServer(AppConfig cfg, Collector collector, Actions actions)
+    public WebServer(AppConfig cfg, Collector collector, Actions actions, Controls controls)
     {
         this.cfg = cfg;
         this.collector = collector;
         this.actions = actions;
+        this.controls = controls;
     }
 
     public static byte[] Resource(string name)
@@ -150,6 +152,10 @@ public sealed class WebServer
                         ["apps"] = apps,
                         ["version"] = Program.Version,
                     });
+                    return;
+
+                case "/api/controls":
+                    SendJson(ctx, 200, controls.State());
                     return;
 
                 case "/api/catalog":

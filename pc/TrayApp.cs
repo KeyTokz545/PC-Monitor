@@ -17,6 +17,7 @@ public sealed class TrayApp : ApplicationContext
     readonly Sensors sensors;
     readonly Collector collector;
     readonly ModeService modes;
+    readonly Controls controls;
     readonly WebServer web;
     readonly Discovery discovery;
     readonly NotifyIcon tray;
@@ -40,7 +41,8 @@ public sealed class TrayApp : ApplicationContext
         collector = new Collector(cfg, sensors, asus);
         collector.Start();
 
-        web = new WebServer(cfg, collector, new Actions(cfg, modes));
+        controls = new Controls(cfg, asus, modes);
+        web = new WebServer(cfg, collector, new Actions(cfg, modes, asus), controls);
         string webError = null;
         try
         {
@@ -73,6 +75,7 @@ public sealed class TrayApp : ApplicationContext
             startupEnabled = Startup.IsEnabled();
             await Task.Delay(2500);
             modes.Reapply();
+            controls.Reapply();
             await Task.Delay(1500);
             LaunchTools();
         });
@@ -160,15 +163,32 @@ public sealed class TrayApp : ApplicationContext
             item.Click += (s, e) => Task.Run(() => Balloon(modes.Apply(mode).Message));
             m.Items.Add(item);
         }
-        var fansOn = cfg.FansMax.TryGetValue("turbo", out var f) && f;
+        var fansOn = cfg.FanCurves.TryGetValue("turbo", out var turboCurve) && turboCurve.IsFull;
         var fans = new ToolStripMenuItem("Ventilos à fond en Turbo") { Checked = fansOn };
         fans.Click += (s, e) =>
         {
-            cfg.FansMax["turbo"] = !fansOn;
+            lock (AppConfig.Gate)
+            {
+                if (fansOn) cfg.FanCurves.Remove("turbo");
+                else cfg.FanCurves["turbo"] = FanProfile.Full();
+            }
             cfg.Save();
             if (cfg.LastMode == "turbo") Task.Run(() => modes.Apply("turbo"));
         };
         m.Items.Add(fans);
+        var gpu = new ToolStripMenuItem($"Limiter le GPU à {cfg.GpuLimit.Mhz} MHz") { Checked = cfg.GpuLimit.On };
+        gpu.Click += (s, e) => Task.Run(() =>
+        {
+            var on = !cfg.GpuLimit.On;
+            var (ok, msg) = Gpu.SetLimit(on ? cfg.GpuLimit.Mhz : 0);
+            if (ok)
+            {
+                cfg.GpuLimit.On = on;
+                cfg.Save();
+            }
+            Balloon(msg);
+        });
+        m.Items.Add(gpu);
         m.Items.Add(new ToolStripSeparator());
 
         var launch = new ToolStripMenuItem("Lancer avec PC Monitor");
@@ -239,6 +259,7 @@ public sealed class TrayApp : ApplicationContext
             {
                 await Task.Delay(delay);
                 modes.Reapply();
+                if (e.Mode == PowerModes.Resume) controls.Reapply();
             });
         }
     }

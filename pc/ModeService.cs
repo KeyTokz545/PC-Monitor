@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace PCMonitor;
@@ -35,21 +37,26 @@ public sealed class ModeService
                 ok = asus.SetPerformanceMode(ModeDefs.AsusValue(mode)) == 1;
                 Log.Info($"Mode {mode} : {(ok ? "OK" : "refusé par le BIOS")}");
 
-                if (ok && cfg.FansMax.TryGetValue(mode, out var max) && max)
+                if (ok && cfg.FanCurves.TryGetValue(mode, out var profile) && profile.Enabled)
                 {
-                    Thread.Sleep(150);
-                    int c = asus.SetFanCurve(false, FullFans), g = asus.SetFanCurve(true, FullFans);
-                    if (c != 1 || g != 1)
+                    var cpu = FanProfile.ToBytes(profile.Cpu);
+                    var gpu = FanProfile.ToBytes(profile.Gpu);
+                    if (Asus.IsValidCurve(cpu) && Asus.IsValidCurve(gpu))
                     {
-                        c = asus.SetFanRange(false, FullFans);
-                        g = asus.SetFanRange(true, FullFans);
+                        Thread.Sleep(150);
+                        int c = asus.SetFanCurve(false, cpu), g = asus.SetFanCurve(true, gpu);
                         if (c != 1 || g != 1)
                         {
-                            asus.SetPerformanceMode(ModeDefs.AsusValue(mode)); // remet la courbe d'origine
-                            extra = " (ventilos à fond non pris en charge par ce PC)";
+                            c = asus.SetFanRange(false, cpu);
+                            g = asus.SetFanRange(true, gpu);
+                            if (c != 1 || g != 1)
+                            {
+                                asus.SetPerformanceMode(ModeDefs.AsusValue(mode)); // remet la courbe d'origine
+                                extra = " (courbe des ventilos refusée par ce PC)";
+                            }
                         }
+                        Log.Info($"Courbe ventilos {mode} : CPU={c} GPU={g}");
                     }
-                    Log.Info($"Ventilos à fond : CPU={c} GPU={g}");
                 }
             }
             else if (Win.IsRunning("GHelper.exe"))
@@ -75,6 +82,34 @@ public sealed class ModeService
                 try { Changed?.Invoke(mode); } catch { }
             }
             return (ok, ok ? $"Mode {label}{extra}" : $"Le PC a refusé le mode {label}");
+        }
+    }
+
+    static readonly Dictionary<string, int[]> Presets = new()
+    {
+        ["silent"] = new[] { 0, 0, 10, 20, 30, 45, 60, 80 },
+        ["balanced"] = new[] { 0, 10, 20, 30, 45, 60, 75, 90 },
+        ["turbo"] = new[] { 20, 30, 40, 55, 70, 85, 95, 100 },
+    };
+
+    readonly Dictionary<string, (List<int> Cpu, List<int> Gpu)> defaults = new();
+
+    /// <summary>Courbes d'usine du mode (lues dans le BIOS, sinon valeurs typiques).</summary>
+    public (List<int> Cpu, List<int> Gpu) DefaultCurves(string mode)
+    {
+        lock (defaults)
+        {
+            if (defaults.TryGetValue(mode, out var d)) return d;
+            List<int> Read(bool gpu)
+            {
+                var c = asus.Connected ? asus.GetFanCurve(gpu, ModeDefs.AsusValue(mode)) : null;
+                if (c != null) return c.Select(x => (int)x).ToList();
+                var speeds = Presets.TryGetValue(mode, out var p) ? p : Presets["balanced"];
+                return FanProfile.Temps.Concat(speeds).ToList();
+            }
+            d = (Read(false), Read(true));
+            defaults[mode] = d;
+            return d;
         }
     }
 

@@ -22,6 +22,11 @@ public sealed class Asus : IDisposable
     public const uint DevsCpuFanCurve = 0x00110024;
     public const uint DevsGpuFanCurve = 0x00110025;
 
+    public const uint BatteryLimit = 0x00120057;
+    public const uint ScreenOverdrive = 0x00050019;
+    public const uint ScreenOverdriveSupport = 0x00050020;
+    public const uint MicMuteLed = 0x00040017;
+
     const uint GENERIC_READ = 0x80000000, GENERIC_WRITE = 0x40000000;
     const uint FILE_SHARE_READ = 1, FILE_SHARE_WRITE = 2, OPEN_EXISTING = 3, FILE_ATTRIBUTE_NORMAL = 0x80;
 
@@ -118,6 +123,34 @@ public sealed class Asus : IDisposable
         if (curve == null || curve.Length != 16) return -1;
         return Set(gpu ? DevsGpuFanCurve : DevsCpuFanCurve, (byte[])curve.Clone());
     }
+
+    /// <summary>
+    /// Courbe d'usine du BIOS pour un mode (0 équilibré, 1 turbo, 2 silencieux).
+    /// Renvoie null si le BIOS ne la donne pas.
+    /// </summary>
+    public byte[] GetFanCurve(bool gpu, int asusMode)
+    {
+        uint fanMode = asusMode == 1 ? 2u : asusMode == 2 ? 1u : 0u; // ASUS inverse turbo et silencieux ici
+        var args = new byte[8];
+        BitConverter.GetBytes(gpu ? DevsGpuFanCurve : DevsCpuFanCurve).CopyTo(args, 0);
+        BitConverter.GetBytes(fanMode).CopyTo(args, 4);
+        var curve = Call(DSTS, args);
+        return IsValidCurve(curve) ? curve : null;
+    }
+
+    public static bool IsValidCurve(byte[] c)
+    {
+        if (c == null || c.Length != 16) return false;
+        for (int i = 0; i < 8; i++)
+        {
+            if (c[i] < 20 || c[i] > 120) return false;
+            if (i > 0 && c[i] < c[i - 1]) return false;
+            if (c[8 + i] > 100) return false;
+        }
+        return true;
+    }
+
+    public bool OverdriveSupported => Get(ScreenOverdriveSupport) == 1;
 
     /// <summary>Autre méthode pour certains modèles : vitesse mini/maxi seulement.</summary>
     public int SetFanRange(bool gpu, byte[] curve)

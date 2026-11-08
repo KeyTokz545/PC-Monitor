@@ -17,6 +17,34 @@ public sealed class AppEntry
     public string Close { get; set; }
 }
 
+/// <summary>Courbe de ventilateurs d'un mode : 8 températures (°C) puis 8 vitesses (%), pour le CPU et le GPU.</summary>
+public sealed class FanProfile
+{
+    public bool Enabled { get; set; }
+    public List<int> Cpu { get; set; } = new();
+    public List<int> Gpu { get; set; } = new();
+
+    public static readonly int[] Temps = { 30, 40, 50, 60, 70, 80, 90, 100 };
+
+    public static FanProfile Full() => new()
+    {
+        Enabled = true,
+        Cpu = Temps.Concat(Enumerable.Repeat(100, 8)).ToList(),
+        Gpu = Temps.Concat(Enumerable.Repeat(100, 8)).ToList(),
+    };
+
+    public bool IsFull => Enabled && Cpu.Count == 16 && Gpu.Count == 16 && Cpu.Skip(8).All(v => v >= 100) && Gpu.Skip(8).All(v => v >= 100);
+
+    public static byte[] ToBytes(List<int> curve) =>
+        curve != null && curve.Count == 16 ? curve.Select((v, i) => (byte)Math.Clamp(v, 0, i < 8 ? 120 : 100)).ToArray() : null;
+}
+
+public sealed class GpuLimitSettings
+{
+    public bool On { get; set; }
+    public int Mhz { get; set; } = 1755;
+}
+
 /// <summary>Réglages, enregistrés dans %AppData%\PCMonitor\config.json.</summary>
 public sealed class AppConfig
 {
@@ -28,8 +56,15 @@ public sealed class AppConfig
     public List<string> Modes { get; set; } = new() { "silent", "balanced", "turbo" };
     public Dictionary<string, string> ModeNames { get; set; } = new();
     public string LastMode { get; set; } = "";
-    /// <summary>Ventilateurs à 100 % dans ce mode (courbe plate envoyée au BIOS).</summary>
+    /// <summary>Ancien réglage « ventilos à fond » (converti en courbe au chargement).</summary>
     public Dictionary<string, bool> FansMax { get; set; } = new() { ["turbo"] = true };
+    /// <summary>Courbes de ventilateurs personnalisées, par mode.</summary>
+    public Dictionary<string, FanProfile> FanCurves { get; set; } = new();
+    public GpuLimitSettings GpuLimit { get; set; } = new();
+    /// <summary>Éclairage du clavier (null tant qu'il n'a jamais été réglé depuis PC Monitor).</summary>
+    public KeyboardSettings Keyboard { get; set; }
+    /// <summary>Limite de charge de la batterie en % (0 = ne pas y toucher).</summary>
+    public int BatteryLimit { get; set; }
     /// <summary>Turbo Boost Windows par mode : 0 désactivé, 1 activé, 2 agressif.</summary>
     public Dictionary<string, int> CpuBoost { get; set; } = new() { ["silent"] = 1, ["balanced"] = 2, ["turbo"] = 2 };
     /// <summary>Programmes lancés en même temps que PC Monitor (ThrottleStop, Afterburner…).</summary>
@@ -94,6 +129,13 @@ public sealed class AppConfig
         if (cfg.Modes.Count == 0) cfg.Modes = new() { "silent", "balanced", "turbo" };
         cfg.ModeNames ??= new();
         cfg.FansMax ??= new();
+        cfg.FanCurves ??= new();
+        cfg.GpuLimit ??= new GpuLimitSettings();
+        // « Ventilos à fond » de la version 2.0 : devient une courbe à 100 %
+        foreach (var kv in cfg.FansMax.Where(kv => kv.Value).ToList())
+            if (!cfg.FanCurves.ContainsKey(kv.Key))
+                cfg.FanCurves[kv.Key] = FanProfile.Full();
+        cfg.FansMax.Clear();
         cfg.CpuBoost ??= new();
         cfg.LaunchWith ??= new();
         cfg.Apps ??= new();
