@@ -28,6 +28,7 @@ Clic droit sur l'icône près de l'horloge :
 
 - **Connecter un téléphone** : QR code pour l'iPhone, code à 6 chiffres pour l'appli Android.
 - **Silencieux / Équilibré / Turbo**, et **Ventilos à fond en Turbo**.
+- **Couleurs de l'écran** et **Bloquer la touche Windows**.
 - **Lancer avec PC Monitor** : ThrottleStop et MSI Afterburner démarrent en même temps.
 - **Démarrer avec Windows**, **Ouvrir le dossier des réglages** (réglages et journal), **Quitter**.
 
@@ -48,6 +49,17 @@ batterie** (charge limitée à 85 %).
 
 Clic droit sur l'icône → **Connecter un téléphone**, vise le QR code avec l'appareil photo, puis dans
 Safari : Partager → **Sur l'écran d'accueil**.
+
+## Onglet Jeu (2.2)
+
+- **FPS** en direct (1 % et 0,1 % bas, temps par image) pour les jeux DirectX 9 à 12, sans rien
+  injecter dans le jeu : PC Monitor lit les événements « Present » de Windows, comme PresentMon.
+- **Couleurs de l'écran** : profils (gamma, contraste, luminosité, température, saturation).
+  La saturation passe par le filtre couleur de Windows ; le reste par la table gamma de la carte graphique.
+- **Profils de jeu automatiques** : au lancement du jeu (ex. `cod.exe`), mode, bridage GPU, couleurs et
+  blocage de la touche Windows s'appliquent seuls, puis tout revient comme avant à sa fermeture.
+- **Captures** : capture d'écran, clip et enregistrement (Xbox Game Bar ou NVIDIA).
+- **Minuteur** d'arrêt ou de mise en veille (onglet Contrôles).
 
 ## Bon à savoir
 

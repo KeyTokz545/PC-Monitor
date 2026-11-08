@@ -51,7 +51,7 @@ main{grid-area:main;overflow-y:auto;-webkit-overflow-scrolling:touch;
 
 .nav{grid-area:nav;display:flex;justify-content:space-around;border-top:1px solid var(--line);background:var(--ink);
   padding:6px calc(var(--safe-r) + 8px) calc(var(--safe-b) + 4px) calc(var(--safe-l) + 8px)}
-.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 14px;color:var(--faint);font-size:11px;font-weight:600}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;min-width:0;color:var(--faint);font-size:11px;font-weight:600}
 .tab svg{width:24px;height:24px}
 .tab[aria-selected="true"]{color:var(--text)}
 
@@ -302,6 +302,54 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;bac
 .card.off{display:none}
 body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);animation:pulse 1s ease-in-out infinite}
 
+/* ---------- Jeu ---------- */
+.fps-top{display:flex;align-items:center;gap:14px}
+.fps-main{flex:1;min-width:0}
+.fps-app{font-size:13px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fps{font-size:clamp(48px,15vw,66px);line-height:1;letter-spacing:-.03em}
+.fps small{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-top:2px}
+.fps-side{width:50%;max-width:200px;flex:none}
+.ftgraph{width:100%;height:64px;display:block;margin-top:10px}
+.graph-cap{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--muted);margin-top:3px;white-space:nowrap}
+#fps-hist{height:34px;margin-top:10px}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:var(--gap)}
+.hud div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px 6px 8px;text-align:center;min-width:0}
+.hud .num{display:block;font-size:20px;line-height:1.15;white-space:nowrap}
+.hud small{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btns.three{grid-template-columns:repeat(3,1fr)}
+.btn.sm{min-height:72px;font-size:12.5px;gap:5px;background:var(--raise)}
+.btn.sm svg{width:24px;height:24px}
+.cap-tool{margin-top:10px}
+.field{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--text);
+  font:16px var(--ui);padding:0 12px;-webkit-user-select:text;user-select:text;outline:none}
+.field:focus{border-color:var(--cool)}
+.srow .lab{width:88px;flex:none;font-size:14px;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pair .wide{margin-top:12px}
+.danger-l{color:var(--hot);display:block;margin:10px auto 0;font-size:14px}
+.danger-l[hidden]{display:none}
+#col-list .dot-c{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:0}
+.grow{display:flex;align-items:center;gap:12px;min-height:58px;border-top:1px solid var(--line)}
+.grow:first-child{border-top:0}
+.grow .gtxt{flex:1;min-width:0;text-align:left;padding:6px 0}
+.grow .gtxt b{display:block;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grow .gtxt > span{display:block;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grow .live{color:var(--cool);font-weight:700}
+.sheet .acts .ok{background:var(--cool);color:var(--ink)}
+.sheet .acts{margin-top:16px}
+#g-running button{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#game-active{margin-bottom:var(--gap);background:rgba(79,195,224,.1);border-color:rgba(79,195,224,.4);color:var(--text)}
+#game-active[hidden]{display:none}
+.kb-zones{display:flex;gap:8px;margin:2px 0 10px}
+.kb-zones button{flex:1;height:38px;border-radius:10px;border:2px solid transparent;font-weight:700;font-size:13px;color:#0E1822;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.kb-zones button[aria-pressed="true"]{border-color:var(--text)}
+.kb-zones[hidden]{display:none}
+.seg.zmode{margin-bottom:10px}
+
+.panel.timer{margin-top:var(--gap)}
+#timer-min{margin-top:10px}
+
 /* ---------- Paysage (telephone pose a cote du PC) ---------- */
 @media (orientation:landscape) and (max-height:520px){
   .app{grid-template-columns:auto 1fr;grid-template-rows:auto 1fr;grid-template-areas:"nav head" "nav main"}
@@ -434,6 +482,90 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
       </div>
     </section>
 
+    <!-- Jeu : FPS, raccourcis, couleurs de l'écran, profils automatiques -->
+    <section class="view" id="v-game" aria-label="Jeu">
+      <div class="note" id="game-active" hidden></div>
+      <div class="cols">
+        <div class="section">
+          <h3>En jeu</h3>
+          <div class="panel fpsbox">
+            <div class="fps-top">
+              <div class="fps-main">
+                <div class="fps-app" id="fps-app">Compteur d'images…</div>
+                <div class="fps num"><span id="fps-num">–</span><small>FPS</small></div>
+              </div>
+              <div class="stats fps-side">
+                <div class="row"><span class="muted">1 % bas</span><span class="num" id="fps-low1">–</span></div>
+                <div class="row"><span class="muted">0,1 % bas</span><span class="num" id="fps-low01">–</span></div>
+                <div class="row"><span class="muted">Moyenne</span><span class="num" id="fps-avg">–</span></div>
+                <div class="row"><span class="muted">Image</span><span class="num" id="fps-ft">–</span></div>
+              </div>
+            </div>
+            <canvas class="ftgraph" id="ft-graph" aria-label="Temps par image"></canvas>
+            <div class="graph-cap"><span id="ft-left">Temps par image</span><span id="ft-cap">les pics = saccades</span></div>
+            <canvas class="spark" id="fps-hist" aria-label="FPS sur 2 minutes"></canvas>
+            <div class="graph-cap"><span>FPS sur 2 min</span><span id="hist-cap"></span></div>
+            <p class="hint in" id="fps-hint">Lance un jeu : les FPS s'affichent ici (jeux DirectX 9 à 12).</p>
+            <button class="link" id="fps-add" hidden>Créer un profil pour ce jeu</button>
+          </div>
+          <div class="hud" id="hud">
+            <div><span class="num" id="h-cpu">–</span><small>CPU</small></div>
+            <div><span class="num" id="h-gpu">–</span><small>GPU</small></div>
+            <div><span class="num" id="h-gload">–</span><small>Charge GPU</small></div>
+            <div><span class="num" id="h-gclk">–</span><small>Fréquence GPU</small></div>
+            <div><span class="num" id="h-vram">–</span><small>VRAM</small></div>
+            <div><span class="num" id="h-ping">–</span><small>Ping</small></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Raccourcis</h3>
+          <div class="panel">
+            <div class="seg" id="g-modes"></div>
+            <div class="trow"><div><div>Brider le GPU</div><div class="muted small" id="q-gpu-sub">à 1755 MHz</div></div><button class="switch" id="q-gpu" role="switch" aria-checked="false" aria-label="Brider le GPU"></button></div>
+            <div class="trow"><div><div>Bloquer la touche Windows</div><div class="muted small">Plus de retour au bureau par erreur</div></div><button class="switch" id="q-winkey" role="switch" aria-checked="false" aria-label="Bloquer la touche Windows"></button></div>
+            <div class="sub-h">Capturer</div>
+            <div class="btns three">
+              <button class="btn sm" data-cap="shot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 015.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0120 8.5v9a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>Capture</button>
+              <button class="btn sm" data-cap="clip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><path d="M20 12a8 8 0 11-2.3-5.6"/><path d="M20 4v4h-4"/></svg>Garder le clip</button>
+              <button class="btn sm" data-cap="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6" fill="var(--hot)" stroke="none"/></svg>Enregistrer</button>
+            </div>
+            <div class="seg small cap-tool" id="cap-tool"><button data-v="gamebar">Xbox Game Bar</button><button data-v="nvidia">NVIDIA</button></div>
+            <p class="hint in" id="cap-hint"></p>
+          </div>
+        </div>
+
+        <div class="section" id="sec-color">
+          <h3>Couleurs de l'écran</h3>
+          <div class="panel">
+            <div class="chips" id="col-list"></div>
+            <div id="col-edit" hidden>
+              <div class="sub-h">Nom du profil</div>
+              <input class="field" id="col-name" maxlength="24" autocomplete="off" enterkeyhint="done">
+              <div class="srow"><span class="lab">Gamma</span><input type="range" id="col-gamma" min="50" max="200" step="5" aria-label="Gamma"><span class="val num" id="col-gamma-v"></span></div>
+              <div class="srow"><span class="lab">Contraste</span><input type="range" id="col-contrast" min="50" max="150" step="1" aria-label="Contraste"><span class="val num" id="col-contrast-v"></span></div>
+              <div class="srow"><span class="lab">Luminosité</span><input type="range" id="col-brightness" min="-50" max="50" step="1" aria-label="Luminosité"><span class="val num" id="col-brightness-v"></span></div>
+              <div class="srow"><span class="lab">Température</span><input type="range" id="col-temperature" min="3000" max="9000" step="100" aria-label="Température de couleur"><span class="val num" id="col-temperature-v"></span></div>
+              <div class="srow"><span class="lab">Saturation</span><input type="range" id="col-saturation" min="0" max="200" step="5" aria-label="Saturation"><span class="val num" id="col-saturation-v"></span></div>
+              <div class="pair"><button class="wide" id="col-cancel">Annuler</button><button class="wide primary" id="col-save">Enregistrer</button></div>
+              <button class="link danger-l" id="col-delete">Supprimer ce profil</button>
+            </div>
+            <div class="pair" id="col-btns"><button class="wide" id="col-modify">Modifier</button><button class="wide" id="col-new">Nouveau profil</button></div>
+            <p class="hint in" id="col-hint">Gamma, contraste, luminosité et température passent par la carte graphique : aucun effet sur les FPS. La saturation utilise le filtre de Windows, qui peut ajouter un très léger délai d'affichage.</p>
+          </div>
+        </div>
+
+        <div class="section" id="sec-games">
+          <h3>Profils de jeu automatiques</h3>
+          <div class="panel">
+            <div id="game-list"></div>
+            <button class="wide" id="game-add">Ajouter un jeu</button>
+            <p class="hint in">Quand le jeu se lance, ses réglages s'appliquent tout seuls. À sa fermeture, tout revient comme avant.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Controles -->
     <section class="view" id="v-ctl" aria-label="Contrôles">
       <div class="cols">
@@ -494,6 +626,8 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
             </div>
             <div id="kb-color-wrap">
               <div class="sub-h">Couleur</div>
+              <div class="seg small zmode" id="kb-zmode"><button data-v="one">Une couleur</button><button data-v="four">4 zones</button></div>
+              <div class="kb-zones" id="kb-zones" hidden><button data-z="0">1</button><button data-z="1">2</button><button data-z="2">3</button><button data-z="3">4</button></div>
               <div class="swatches" id="kb-color"></div>
             </div>
             <div id="kb-speed-wrap">
@@ -523,6 +657,12 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
             <button class="btn" data-act="sleep" data-yes="Mettre en veille" data-confirm="Mettre le PC en veille ?" data-sub="Le tableau de bord sera coupé jusqu'au réveil du PC."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 119.5 5a6 6 0 009.5 9.5z"/></svg>Veille</button>
             <button class="btn danger" data-act="restart" data-yes="Redémarrer" data-confirm="Redémarrer le PC ?" data-sub="Pense à enregistrer ton travail. Redémarrage dans 5 secondes."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.6-5.9"/><path d="M20 4v5h-5"/></svg>Redémarrer</button>
             <button class="btn danger" data-act="shutdown" data-yes="Éteindre" data-confirm="Éteindre le PC ?" data-sub="Pense à enregistrer ton travail. Arrêt dans 5 secondes."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3.5v8"/><path d="M7 6.5a7.5 7.5 0 1010 0"/></svg>Éteindre</button>
+          </div>
+          <div class="panel timer">
+            <div class="sub-h first">Minuteur</div>
+            <div class="seg small" id="timer-what"><button data-v="shutdown">Éteindre</button><button data-v="sleep">Mettre en veille</button></div>
+            <div class="chips" id="timer-min"><button data-v="30">30 min</button><button data-v="60">1 h</button><button data-v="90">1 h 30</button><button data-v="120">2 h</button><button data-v="0">Annuler</button></div>
+            <p class="hint in" id="timer-left">Aucun minuteur en cours.</p>
           </div>
         </div>
       </div>
@@ -581,6 +721,7 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 
   <nav class="nav" role="tablist">
     <button class="tab" role="tab" aria-selected="true" data-view="v-mon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4.5 17a8.5 8.5 0 1115 0"/><path d="M12 13l4-4.5"/><circle cx="12" cy="13" r="1.2" fill="currentColor"/></svg>Monitoring</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="v-game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 7h9a4.5 4.5 0 014.4 3.6l.9 4.6a2.6 2.6 0 01-4.6 2.1L15.6 15H8.4l-1.6 2.3a2.6 2.6 0 01-4.6-2.1l.9-4.6A4.5 4.5 0 017.5 7z"/><path d="M8 10v3M6.5 11.5h3"/><circle cx="15.5" cy="10.6" r=".7" fill="currentColor"/><circle cx="17.4" cy="12.6" r=".7" fill="currentColor"/></svg>Jeu</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><rect x="3" y="13" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="10" y="7" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="17" y="11" width="4" height="3" rx="1" fill="var(--ink)"/></svg>Contrôles</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-perf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2c-.6-2.9.1-5.6 2.6-6.4 2.2-.7 3.4 1.6 2 3.2-1.1 1.3-2.8 2.3-4.6 3.2"/><path d="M13.6 12.9c2.8 1 4.7 3 4.2 5.6-.5 2.2-3.1 2.3-3.8.3-.6-1.6-.6-3.6-.4-5.9"/><path d="M10.4 12.9c-2.2 2-4.9 2.7-6.8.9-1.7-1.6-.3-3.8 1.8-3.4 1.7.3 3.3 1.3 5 2.5"/></svg>Perf</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Applis</button>
@@ -615,6 +756,27 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
     <div class="trow"><span id="alert-label">Au-delà de 90 °C</span><button class="switch" id="alert-switch" role="switch" aria-checked="true" aria-label="Alerte surchauffe"></button></div>
     <input type="range" id="alert-temp" min="70" max="100" step="1" aria-label="Seuil d'alerte">
     <div class="acts one"><button id="custom-close">Terminé</button></div>
+  </div>
+</div>
+<div class="sheet" id="gsheet">
+  <div class="box tall" role="dialog" aria-modal="true" aria-labelledby="g-title">
+    <p id="g-title">Profil de jeu</p>
+    <div class="sub">S'applique au lancement du jeu, puis tout revient comme avant à sa fermeture.</div>
+    <div class="sub-h first">Programme du jeu</div>
+    <input class="field" id="g-exe" placeholder="ex. cod.exe" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="sub-h" id="g-running-h">Ouverts sur le PC</div>
+    <div class="chips" id="g-running"></div>
+    <div class="sub-h">Nom affiché</div>
+    <input class="field" id="g-name" placeholder="ex. Warzone" autocomplete="off" maxlength="40">
+    <div class="sub-h">Mode</div>
+    <div class="seg small" id="g-mode"><button data-v="">Inchangé</button><button data-v="silent">Silence</button><button data-v="balanced">Équilibré</button><button data-v="turbo">Turbo</button></div>
+    <div class="sub-h">Carte graphique</div>
+    <div class="seg small" id="g-gpu"><button data-v="">Inchangée</button><button data-v="on">Bridée</button><button data-v="off">Normale</button></div>
+    <div class="sub-h">Couleurs de l'écran</div>
+    <div class="chips" id="g-color"></div>
+    <div class="trow"><span>Bloquer la touche Windows</span><button class="switch" id="g-winkey" role="switch" aria-checked="false" aria-label="Bloquer la touche Windows"></button></div>
+    <div class="acts"><button id="g-cancel">Annuler</button><button class="ok" id="g-save">Enregistrer</button></div>
+    <button class="link danger-l" id="g-delete">Supprimer ce profil</button>
   </div>
 </div>
 <div class="sheet" id="sheet">
@@ -822,6 +984,7 @@ function render(s) {
   if (modeState.pending && (m.current === modeState.pending || Date.now() > modeState.until)) modeState.pending = null;
   paintModes();
   renderPerfLive(s);
+  renderGameLive(s);
   // Bandeaux
   const notes = [];
   const heat = overheat(s);
@@ -862,7 +1025,8 @@ async function tick() {
     const s = await api("/api/stats");
     if (s && s.cpu) { render(s); fails = 0; $("dot").className = "dot on"; }
     const view = document.body.dataset.view;
-    if ((view === "v-ctl" || view === "v-perf") && Date.now() - ctlAt > 8000 && !Object.values(dragging).some(Boolean)) loadControls();
+    if ((view === "v-ctl" || view === "v-perf" || view === "v-game") && Date.now() - ctlAt > 8000 && !Object.values(dragging).some(Boolean) && !colEdit) loadControls();
+    if (view === "v-game") loadGame();
   } catch (e) {
     fails++;
     if (e.auth) { setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]); $("dot").className = "dot off"; }
@@ -1057,8 +1221,20 @@ document.querySelectorAll("[data-zone]").forEach(sw => sw.addEventListener("clic
 }));
 $("kb-color").innerHTML = KB_COLORS.map(c => `<button data-c="${c}" style="background:${c}" aria-label="Couleur ${c}"></button>`).join("") +
   `<label aria-label="Autre couleur"><input type="color" id="kb-custom" value="#FF2A2A"></label>`;
-$("kb-color").addEventListener("click", e => { const b = e.target.closest("button[data-c]"); if (b) kbSend({ color: b.dataset.c }); });
-$("kb-custom").addEventListener("change", e => kbSend({ color: e.target.value.toUpperCase() }));
+let kbZone = 0;
+function kbPick(c) {
+  const k = CTL && CTL.keyboard;
+  if (k && Array.isArray(k.zones) && k.zones.length === 4) { const z = k.zones.slice(); z[kbZone] = c; kbSend({ zones: z }); }
+  else kbSend({ color: c });
+}
+$("kb-color").addEventListener("click", e => { const b = e.target.closest("button[data-c]"); if (b) kbPick(b.dataset.c); });
+$("kb-custom").addEventListener("change", e => kbPick(e.target.value.toUpperCase()));
+$("kb-zmode").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); const k = CTL && CTL.keyboard; if (!b || !k) return;
+  if (b.dataset.v === "four" && !(k.zones && k.zones.length === 4)) { kbZone = 0; kbSend({ zones: [k.color, k.color, k.color, k.color] }); }
+  else if (b.dataset.v === "one" && k.zones) kbSend({ zones: null, color: k.zones[kbZone] || k.color });
+});
+$("kb-zones").addEventListener("click", e => { const b = e.target.closest("button[data-z]"); if (!b) return; kbZone = +b.dataset.z; renderKeyboard(); });
 
 $("batt").addEventListener("click", async e => {
   const b = e.target.closest("button[data-v]"); if (!b) return;
@@ -1075,14 +1251,20 @@ function renderKeyboard() {
   const usesColor = k.mode === 0 || k.mode === 1 || k.mode === 10;
   $("kb-color-wrap").hidden = !usesColor;
   $("kb-speed-wrap").hidden = k.mode === 0;
+  const zones = Array.isArray(k.zones) && k.zones.length === 4 ? k.zones : null;
+  $("kb-zmode").hidden = !usesColor;
+  press($("kb-zmode"), zones ? "four" : "one");
+  $("kb-zones").hidden = !zones;
+  if (zones) $("kb-zones").querySelectorAll("button").forEach((b, i) => { b.style.background = zones[i]; b.setAttribute("aria-pressed", i === kbZone); });
+  const cur = zones ? zones[kbZone] : k.color;
   let match = false;
   $("kb-color").querySelectorAll("button[data-c]").forEach(b => {
-    const on = b.dataset.c.toUpperCase() === String(k.color).toUpperCase(); if (on) match = true;
+    const on = b.dataset.c.toUpperCase() === String(cur).toUpperCase(); if (on) match = true;
     b.setAttribute("aria-pressed", on);
   });
   const lab = $("kb-color").querySelector("label");
   lab.setAttribute("aria-pressed", !match);
-  if (!match && /^#[0-9a-f]{6}$/i.test(k.color)) { lab.style.background = k.color; $("kb-custom").value = k.color; }
+  if (!match && /^#[0-9a-f]{6}$/i.test(cur)) { lab.style.background = cur; $("kb-custom").value = cur; }
   else lab.style.background = "";
   document.querySelectorAll("[data-zone]").forEach(sw => setSwitch(sw, k[sw.dataset.zone] !== false));
 }
@@ -1123,6 +1305,9 @@ function renderControls() {
   // Perf
   renderGpu();
   renderFans();
+  // Jeu, minuteur
+  renderGameCtl();
+  renderTimer();
 }
 
 /* Carte graphique */
@@ -1323,6 +1508,310 @@ function overheat(s) {
   return hot ? `Surchauffe : ${list.join(" et ")}` : null;
 }
 
+
+/* ---------- Onglet Jeu ---------- */
+let GAME = null, gameBusy = false, lastStats = null;
+async function loadGame() {
+  if (gameBusy) return;
+  gameBusy = true;
+  try { GAME = await api("/api/game"); renderGame(); } catch (e) {} finally { gameBusy = false; }
+}
+const normExe = e => String(e || "").trim().replace(/^.*[\\/]/, "").replace(/\.exe$/i, "").toLowerCase();
+function gameProfiles() { return (CTL && CTL.games && CTL.games.profiles) || []; }
+function profileFor(app) { const n = normExe(app); return gameProfiles().find(g => normExe(g.exe) === n); }
+function renderGame() {
+  const g = GAME || {};
+  const has = g.app != null && g.fps != null;
+  const prof = has ? profileFor(g.app) : null;
+  $("fps-app").textContent = has ? (prof ? prof.name : g.app) : g.error ? "Compteur indisponible" : g.running ? "Aucun jeu détecté" : "Démarrage du compteur…";
+  $("fps-num").textContent = has ? g.fps : "–";
+  $("fps-low1").textContent = has ? g.low1 : "–";
+  $("fps-low01").textContent = has ? g.low01 : "–";
+  $("fps-avg").textContent = has ? g.avg : "–";
+  $("fps-ft").textContent = has && g.frametime != null ? nf(g.frametime, 1) + " ms" : "–";
+  $("fps-hint").textContent = g.error ? g.error : has ? "" : "Lance un jeu : les FPS s'affichent ici (jeux DirectX 9 à 12, comme Warzone).";
+  $("fps-hint").hidden = has && !g.error;
+  $("fps-add").hidden = !has || !!prof || /^(chrome|msedge|firefox|opera|brave|discord|steamwebhelper|spotify)$/i.test(g.app);
+  if (!$("fps-add").hidden) $("fps-add").textContent = `Créer un profil auto pour ${g.app}`;
+  $("ft-cap").textContent = has && g.frametime_max != null ? `pire ${nf(g.frametime_max, 1)} ms` : "pics = saccades";
+  const hz = (CTL && CTL.screen && CTL.screen.refresh) || null;
+  $("ft-left").textContent = hz ? `Temps par image · ${hz} Hz` : "Temps par image";
+  const hs = has ? g.history || [] : [];
+  $("hist-cap").textContent = hs.length > 1 ? `de ${Math.min(...hs)} à ${Math.max(...hs)}` : "";
+  drawFrames($("ft-graph"), has ? g.frames || [] : []);
+  drawFpsHist($("fps-hist"), has ? g.history || [] : []);
+}
+function canvasCtx(cv) {
+  const w = cv.clientWidth, h = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (!w || !h) return null;
+  if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  return { g, w, h };
+}
+const accent = () => getComputedStyle(document.documentElement).getPropertyValue("--cool").trim() || "#4FC3E0";
+function drawFrames(cv, fr) {
+  const c = canvasCtx(cv); if (!c) return;
+  const { g, w, h } = c;
+  const hz = (CTL && CTL.screen && CTL.screen.refresh) || 60, target = 1000 / hz;
+  const top = Math.max(target * 2.2, 20, ...fr.map(v => Math.min(v, 100)));
+  const y = v => h - 2 - Math.min(v, top) / top * (h - 6);
+  g.strokeStyle = "rgba(127,147,166,.35)"; g.setLineDash([3, 4]); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, y(target)); g.lineTo(w, y(target)); g.stroke(); g.setLineDash([]);
+  if (fr.length < 2) return;
+  const n = 180, bw = w / n;
+  fr.forEach((v, i) => {
+    const x = w - (fr.length - i) * bw;
+    g.fillStyle = v > target * 2 ? "#FF5A4E" : v > target * 1.35 ? "#FFB547" : accent();
+    g.globalAlpha = v > target * 1.35 ? 1 : .75;
+    g.fillRect(x, y(v), Math.max(1, bw - .6), h - 2 - y(v));
+  });
+  g.globalAlpha = 1;
+}
+function drawFpsHist(cv, hs) {
+  const c = canvasCtx(cv); if (!c || hs.length < 2) return;
+  const { g, w, h } = c;
+  const mx = Math.max(...hs), mn = Math.min(...hs), pad = Math.max(5, (mx - mn) * .15);
+  const lo = Math.max(0, mn - pad), hi = mx + pad, n = 119;
+  const x = i => w - (hs.length - 1 - i) / n * w, y = v => h - 2 - (v - lo) / (hi - lo) * (h - 4);
+  g.beginPath(); hs.forEach((v, i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)));
+  g.strokeStyle = accent(); g.lineWidth = 1.6; g.lineJoin = "round"; g.stroke();
+}
+function renderGameLive(s) {
+  const c = s.cpu || {}, gp = s.gpu || {}, n = s.net || {};
+  const t = v => v != null ? Math.round(v) + "°" : "–";
+  $("h-cpu").textContent = t(c.temp); $("h-cpu").style.color = c.temp != null ? thermal(c.temp) : "";
+  $("h-gpu").textContent = t(gp.temp); $("h-gpu").style.color = gp.temp != null ? thermal(gp.temp) : "";
+  $("h-gload").textContent = gp.load != null ? nf(gp.load) + " %" : "–";
+  $("h-gclk").textContent = gp.clock != null ? nf(gp.clock) : "–";
+  $("h-vram").textContent = gp.vram_used != null ? nf(gp.vram_used, 1) + " Go" : "–";
+  $("h-ping").textContent = n.latency != null ? n.latency + " ms" : "–";
+  $("h-ping").style.color = n.history && n.history.length ? latColor(n.latency) : "";
+  // modes
+  const box = $("g-modes");
+  if (box.children.length !== MODES.length) {
+    box.innerHTML = MODES.map(m => `<button data-v="${esc(m.id)}">${esc(m.label)}</button>`).join("");
+  }
+  press(box, modeState.pending || modeState.current);
+}
+$("g-modes").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) setMode(b.dataset.v); });
+$("q-gpu").addEventListener("click", async () => {
+  const on = !isOn($("q-gpu")); setSwitch($("q-gpu"), on);
+  if (CTL && CTL.gpu) CTL.gpu.on = on;
+  await act({ action: "gpu_limit", on }); reloadControls(300);
+});
+$("q-winkey").addEventListener("click", async () => {
+  const on = !isOn($("q-winkey")); setSwitch($("q-winkey"), on);
+  await act({ action: "winkey_set", on }); reloadControls(300);
+});
+document.querySelectorAll("[data-cap]").forEach(b => b.addEventListener("click", () =>
+  act({ action: "capture", what: b.dataset.cap, tool: UI.capTool || "gamebar" })));
+function renderCapTool() {
+  press($("cap-tool"), UI.capTool || "gamebar");
+  $("cap-hint").textContent = (UI.capTool || "gamebar") === "nvidia"
+    ? "Raccourcis NVIDIA (Alt+F1, Alt+F10, Alt+F9) : active l'overlay NVIDIA et la relecture instantanée pour garder les clips."
+    : "Raccourcis de la Xbox Game Bar (Win+Alt+Impr, Win+Alt+G, Win+Alt+R) : active l'enregistrement en arrière-plan pour garder les clips.";
+}
+$("cap-tool").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; UI.capTool = b.dataset.v; saveUI(); renderCapTool(); });
+renderCapTool();
+
+function renderGameCtl() {
+  const c = CTL || {};
+  const gpu = c.gpu || {};
+  setSwitch($("q-gpu"), !!(gpu.supported && gpu.on)); $("q-gpu").disabled = !gpu.supported;
+  $("q-gpu-sub").textContent = gpu.supported ? `à ${gpu.mhz || 1755} MHz (réglable dans Perf)` : "NVIDIA introuvable";
+  setSwitch($("q-winkey"), !!c.winkey);
+  renderColors();
+  renderGames();
+}
+
+/* Couleurs de l'écran */
+let colEdit = null, colTimer = null;
+const COL_KEYS = ["gamma", "contrast", "brightness", "temperature", "saturation"];
+function colProfiles() { return (CTL && CTL.color && CTL.color.profiles) || []; }
+function colActive() { return (CTL && CTL.color && CTL.color.active) || "Normal"; }
+function colLabel(k, v) {
+  if (k === "gamma") return nf(v / 100, 2);
+  if (k === "temperature") return v + " K";
+  if (k === "brightness") return (v > 0 ? "+" : "") + v;
+  return v + " %";
+}
+function renderColors() {
+  const list = colProfiles(), cur = colActive();
+  $("col-list").innerHTML = list.map(p => `<button data-n="${esc(p.name)}" aria-pressed="${p.name.toLowerCase() === cur.toLowerCase()}">${esc(p.name)}</button>`).join("");
+  $("col-edit").hidden = !colEdit;
+  $("col-btns").hidden = !!colEdit;
+  $("col-modify").disabled = cur.toLowerCase() === "normal";
+  const err = CTL && CTL.color && CTL.color.error;
+  $("col-hint").textContent = err || "Gamma, contraste, luminosité et température passent par la carte graphique : aucun effet sur les FPS. La saturation utilise le filtre de Windows, qui peut ajouter un très léger délai d'affichage.";
+  $("col-hint").style.color = err ? "var(--hot)" : "";
+  if (colEdit) {
+    for (const k of COL_KEYS) {
+      const el = $("col-" + k);
+      if (!dragging["col-" + k]) el.value = k === "gamma" ? Math.round(colEdit.gamma * 100) : colEdit[k];
+      fill(el); $("col-" + k + "-v").textContent = colLabel(k, +el.value);
+    }
+    if (document.activeElement !== $("col-name")) $("col-name").value = colEdit.name;
+    $("col-delete").hidden = !colEdit.old;
+  }
+}
+$("col-list").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-n]"); if (!b) return;
+  if (colEdit) return toast("Enregistre ou annule la modification en cours", true);
+  $("col-list").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  if (CTL && CTL.color) CTL.color.active = b.dataset.n;
+  await act({ action: "color_apply", name: b.dataset.n }); reloadControls(300);
+});
+function startEdit(fromNew) {
+  const cur = colActive(), p = colProfiles().find(x => x.name.toLowerCase() === cur.toLowerCase()) || { name: "Normal", gamma: 1, contrast: 100, brightness: 0, temperature: 6500, saturation: 100 };
+  let name = p.name;
+  if (fromNew) {
+    const names = colProfiles().map(x => x.name.toLowerCase());
+    let i = 1; name = "Perso"; while (names.includes(name.toLowerCase())) name = "Perso " + (++i);
+  }
+  colEdit = { old: fromNew ? null : p.name, name, gamma: p.gamma, contrast: p.contrast, brightness: p.brightness, temperature: p.temperature, saturation: p.saturation };
+  renderColors();
+}
+$("col-modify").addEventListener("click", () => startEdit(false));
+$("col-new").addEventListener("click", () => startEdit(true));
+for (const k of COL_KEYS) {
+  const el = $("col-" + k);
+  el.addEventListener("input", () => {
+    dragging["col-" + k] = true;
+    colEdit[k] = k === "gamma" ? +el.value / 100 : +el.value;
+    fill(el); $("col-" + k + "-v").textContent = colLabel(k, +el.value);
+    clearTimeout(colTimer);
+    colTimer = setTimeout(() => api("/api/action", Object.assign({ action: "color_preview" }, colEdit)).catch(() => {}), 120);
+  });
+  el.addEventListener("change", () => { dragging["col-" + k] = false; });
+}
+$("col-name").addEventListener("input", e => { if (colEdit) colEdit.name = e.target.value; });
+$("col-cancel").addEventListener("click", async () => {
+  colEdit = null; clearTimeout(colTimer); renderColors();
+  await act({ action: "color_apply", name: colActive() }, true); reloadControls(300);
+});
+$("col-save").addEventListener("click", async () => {
+  if (!colEdit) return;
+  const name = (colEdit.name || "").trim();
+  if (!name) return toast("Donne un nom au profil", true);
+  clearTimeout(colTimer);
+  const r = await api("/api/action", Object.assign({ action: "color_save", apply: true }, colEdit, { name })).catch(() => null);
+  toast(r ? r.msg || "Profil enregistré" : "Le PC ne répond pas", !r || !r.ok);
+  if (r && r.ok) { colEdit = null; if (CTL && CTL.color) CTL.color.active = name; }
+  reloadControls(200);
+});
+$("col-delete").addEventListener("click", () => {
+  if (!colEdit || !colEdit.old) return;
+  const name = colEdit.old;
+  confirmSheet(`Supprimer le profil ${name} ?`, "L'écran reviendra aux couleurs normales si ce profil est utilisé.", async () => {
+    colEdit = null; await act({ action: "color_delete", name }); reloadControls(200);
+  }, "Supprimer");
+});
+
+/* Profils de jeu automatiques */
+const MODE_SHORT = { silent: "Silence", balanced: "Équilibré", turbo: "Turbo" };
+function gameSummary(g) {
+  const parts = [];
+  if (g.mode) parts.push(MODE_SHORT[g.mode] || g.mode);
+  if (g.gpu === true) parts.push(`GPU bridé`);
+  if (g.gpu === false) parts.push("GPU normal");
+  if (g.color) parts.push(g.color);
+  if (g.winkey) parts.push("Win bloquée");
+  return (parts.length ? parts.join(" · ") : "aucun changement") + ` — ${g.exe}`;
+}
+function renderGames() {
+  const gs = (CTL && CTL.games) || {}, list = gs.profiles || [];
+  const activeExe = normExe(gs.active_exe);
+  $("game-list").innerHTML = list.length ? list.map((g, i) => `<div class="grow">
+      <button class="gtxt" data-edit="${i}"><b>${esc(g.name)}${normExe(g.exe) === activeExe ? ' <span class="live">· en cours</span>' : ""}</b><span>${esc(gameSummary(g))}</span></button>
+      <button class="switch" data-gon="${i}" role="switch" aria-checked="${g.enabled !== false}" aria-label="Activer ${esc(g.name)}"></button></div>`).join("")
+    : `<p class="muted small" style="padding:6px 2px 2px">Aucun jeu pour l'instant. Exemple : Warzone en Turbo, GPU bridé à 1755 MHz et touche Windows bloquée.</p>`;
+  const ga = $("game-active");
+  ga.hidden = !gs.active;
+  if (gs.active) ga.textContent = `Profil ${gs.active} actif` + (gs.since != null ? ` depuis ${since(gs.since)}` : "");
+}
+$("game-list").addEventListener("click", async e => {
+  const ed = e.target.closest("[data-edit]"), on = e.target.closest("[data-gon]");
+  const list = gameProfiles();
+  if (ed) openGame(list[+ed.dataset.edit]);
+  else if (on) {
+    const g = list[+on.dataset.gon]; if (!g) return;
+    const en = !isOn(on); setSwitch(on, en);
+    await act(Object.assign({ action: "game_save", old: g.exe }, g, { enabled: en }), true); reloadControls(200);
+  }
+});
+let gEdit = null;
+function segVal(box) { const b = box.querySelector('button[aria-pressed="true"]'); return b ? b.dataset.v : ""; }
+function openGame(g, exe) {
+  gEdit = g ? Object.assign({}, g) : { exe: exe || "", name: "", mode: "turbo", gpu: true, color: null, winkey: true, enabled: true };
+  $("g-title").textContent = g ? `Profil ${g.name}` : "Nouveau profil de jeu";
+  $("g-exe").value = gEdit.exe; $("g-name").value = gEdit.name;
+  press($("g-mode"), gEdit.mode || "");
+  press($("g-gpu"), gEdit.gpu === true ? "on" : gEdit.gpu === false ? "off" : "");
+  const cols = [{ name: "" }].concat(colProfiles());
+  $("g-color").innerHTML = cols.map(p => `<button data-v="${esc(p.name)}" aria-pressed="${(gEdit.color || "") === p.name}">${p.name ? esc(p.name) : "Inchangées"}</button>`).join("");
+  setSwitch($("g-winkey"), !!gEdit.winkey);
+  $("g-delete").hidden = !g;
+  $("g-running").innerHTML = `<span class="muted small">Recherche…</span>`;
+  $("gsheet").classList.add("show");
+  api("/api/procs").then(r => {
+    const items = (r.items || []);
+    $("g-running-h").hidden = !items.length;
+    $("g-running").innerHTML = items.slice(0, 24).map(it => `<button data-exe="${esc(it.exe)}" data-t="${esc(it.title)}" title="${esc(it.exe)}">${esc(it.title)}</button>`).join("") ||
+      `<span class="muted small">Lance le jeu puis rouvre cette fenêtre pour le choisir, ou tape le nom du programme.</span>`;
+    $("g-running").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", normExe(b.dataset.exe) === normExe($("g-exe").value)));
+  }).catch(() => { $("g-running").innerHTML = ""; });
+}
+$("g-running").addEventListener("click", e => {
+  const b = e.target.closest("button[data-exe]"); if (!b) return;
+  $("g-exe").value = b.dataset.exe;
+  if (!$("g-name").value.trim()) $("g-name").value = b.dataset.t.split(/\s[-–—|]\s/)[0].slice(0, 40);
+  $("g-running").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+});
+["g-mode", "g-gpu", "g-color"].forEach(id => $(id).addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); if (b) press($(id), b.dataset.v);
+}));
+$("g-winkey").addEventListener("click", () => setSwitch($("g-winkey"), !isOn($("g-winkey"))));
+const closeGame = () => { $("gsheet").classList.remove("show"); gEdit = null; };
+$("g-cancel").addEventListener("click", closeGame);
+$("gsheet").addEventListener("click", e => { if (e.target.id === "gsheet") closeGame(); });
+$("g-save").addEventListener("click", async () => {
+  const exe = $("g-exe").value.trim();
+  if (!normExe(exe)) return toast("Indique le programme du jeu (ex. cod.exe)", true);
+  const gpu = segVal($("g-gpu"));
+  const body = { action: "game_save", old: gEdit && gEdit.exe ? gEdit.exe : undefined, exe, name: $("g-name").value.trim(),
+    mode: segVal($("g-mode")) || null, gpu: gpu === "on" ? true : gpu === "off" ? false : null,
+    color: segVal($("g-color")) || null, winkey: isOn($("g-winkey")), enabled: gEdit ? gEdit.enabled !== false : true };
+  const r = await api("/api/action", body).catch(() => null);
+  toast(r ? r.msg || "Enregistré" : "Le PC ne répond pas", !r || !r.ok);
+  if (r && r.ok) { closeGame(); reloadControls(200); }
+});
+$("g-delete").addEventListener("click", () => {
+  if (!gEdit) return;
+  const g = gEdit;
+  closeGame();
+  confirmSheet(`Supprimer le profil ${g.name} ?`, "Le jeu ne changera plus aucun réglage à son lancement.", async () => {
+    await act({ action: "game_remove", exe: g.exe }); reloadControls(200);
+  }, "Supprimer");
+});
+$("game-add").addEventListener("click", () => openGame(null));
+$("fps-add").addEventListener("click", () => { if (GAME && GAME.app) openGame(null, GAME.app + ".exe"); });
+
+/* Minuteur d'arrêt / de veille (onglet Contrôles) */
+let timerWhat = "shutdown";
+function renderTimer() {
+  const t = CTL && CTL.timer;
+  if (t) timerWhat = t.what;
+  press($("timer-what"), timerWhat);
+  $("timer-min").querySelector('[data-v="0"]').hidden = !t;
+  $("timer-left").textContent = t ? `${t.what === "sleep" ? "Mise en veille" : "Arrêt"} dans ${since(t.left)}` : "Aucun minuteur en cours.";
+  $("timer-left").style.color = t ? "var(--text)" : "";
+}
+$("timer-what").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; timerWhat = b.dataset.v; press($("timer-what"), timerWhat); });
+$("timer-min").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-v]"); if (!b) return;
+  await act({ action: "timer_set", minutes: +b.dataset.v, what: timerWhat }); reloadControls(300);
+});
+
 /* ---------- Onglets ---------- */
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
@@ -1330,9 +1819,10 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   document.body.dataset.view = t.dataset.view;
   document.querySelector("main").scrollTop = 0;
   if (t.dataset.view === "v-mon") { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); }
-  if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf") loadControls();
+  if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf" || t.dataset.view === "v-game") loadControls();
+  if (t.dataset.view === "v-game") { loadGame(); renderGame(); }
 }));
-window.addEventListener("resize", () => { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); });
+window.addEventListener("resize", () => { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); });
 
 /* ---------- Appli Android : toucher le nom du PC ouvre les réglages de connexion ---------- */
 const IN_APP = typeof window.AndroidApp !== "undefined";
