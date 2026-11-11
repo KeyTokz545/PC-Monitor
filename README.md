@@ -4,8 +4,7 @@ Un seul logiciel sur le PC, une appli sur le téléphone : températures, charge
 Silencieux / Équilibré / Turbo, ventilateurs, son, applis et alimentation, depuis un iPhone ou
 un téléphone Android posé à côté du PC.
 
-- **PCMonitor.exe** (Windows 10/11) : tourne en arrière-plan, icône près de l'horloge. Il remplace la
-  fenêtre noire Python, la fenêtre de LibreHardwareMonitor et G-Helper.
+- **PCMonitor.exe** (Windows 10/11) : tourne en arrière-plan, icône près de l'horloge. Il remplace la fenêtre de LibreHardwareMonitor et G-Helper.
 - **PCMonitor.apk** (Android) : le tableau de bord en plein écran, écran toujours allumé, recherche
   automatique du PC sur le Wi-Fi, réveil du PC à distance.
 - **iPhone** : le même tableau de bord dans Safari, ajouté à l'écran d'accueil.
@@ -15,8 +14,7 @@ Les deux fichiers sont dans **Releases → latest**, recompilés automatiquement
 ## Installation sur le PC
 
 1. **PawnIO** doit être installé (pilote utilisé pour lire les capteurs du processeur).
-2. Ferme l'ancienne version : la fenêtre noire `pc_monitor.py`. Ferme aussi **G-Helper** et
-   **LibreHardwareMonitor**, et retire-les du démarrage de Windows : PC Monitor fait leur travail.
+2. Ferme **G-Helper** et **LibreHardwareMonitor**, et retire-les du démarrage de Windows : PC Monitor fait leur travail.
 3. Pour garder ta clé et tes applis de l'ancienne version, mets `PCMonitor.exe` **dans l'ancien dossier
    PC-Monitor** (à côté de `config.json`) avant de le lancer la première fois.
 4. Double-clic sur `PCMonitor.exe`, puis **Oui** à la demande d'autorisation de Windows.
@@ -32,7 +30,7 @@ Clic droit sur l'icône près de l'horloge :
 - **Lancer avec PC Monitor** : ThrottleStop et MSI Afterburner démarrent en même temps.
 - **Démarrer avec Windows**, **Ouvrir le dossier des réglages** (réglages et journal), **Quitter**.
 
-## Installation sur Android (Galaxy S20 FE)
+## Installation sur Android 
 
 1. Sur le téléphone, ouvre la page **Releases** du dépôt et télécharge `PCMonitor.apk`.
 2. Ouvre le fichier. Android demande d'autoriser l'installation depuis cette source : accepte.
