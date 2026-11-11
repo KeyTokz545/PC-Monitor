@@ -368,6 +368,8 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .uv-test .pair .wide{margin-top:10px}
 #cm-lim-box[hidden]{display:none}
 #cm-mode{margin-bottom:4px}
+.cm-name{font-size:13px;color:var(--muted);margin:6px 2px 2px}
+.cm-name b{color:var(--text);font-weight:700}
 #v-cpu .srow .lab{width:106px;line-height:1.2}
 
 /* ---------- Thèmes (variables CSS seulement : aucun coût) ---------- */
@@ -665,9 +667,10 @@ html[data-density="compact"] .chips button{height:32px}
         </div>
 
         <div class="section">
-          <h3>Puissance et Turbo par mode</h3>
+          <h3>Profils CPU (un par mode)</h3>
           <div class="panel">
             <div class="seg" id="cm-mode"></div>
+            <div class="cm-name" id="cm-name"></div>
             <div class="trow"><div><div>Limites de puissance perso</div><div class="muted small">Sinon, celles du BIOS</div></div><button class="switch" id="cm-limits" role="switch" aria-checked="false" aria-label="Limites de puissance perso"></button></div>
             <div id="cm-lim-box">
               <div class="srow"><span class="lab">PL1 durable</span><input type="range" id="cm-pl1" min="10" max="90" step="1" aria-label="PL1"><span class="val num" id="cm-pl1-v"></span></div>
@@ -675,10 +678,11 @@ html[data-density="compact"] .chips button{height:32px}
               <div class="sub-h">Durée du boost avant PL1</div>
               <div class="chips" id="cm-tau"><button data-v="8">8 s</button><button data-v="28">28 s</button><button data-v="56">56 s</button><button data-v="96">96 s</button><button data-v="128">128 s</button></div>
             </div>
+            <div class="srow"><span class="lab">Fréquence max</span><input type="range" id="cm-freq" min="10" max="41" step="1" aria-label="Fréquence max"><span class="val num" id="cm-freq-v"></span></div>
             <div class="sub-h">Turbo Boost</div>
             <div class="seg small" id="cm-boost"><button data-v="0">Coupé</button><button data-v="1">Activé</button><button data-v="2">Agressif</button></div>
-            <div class="sub-h">Préférence d'énergie (Speed Shift)</div>
-            <div class="seg small" id="cm-epp"><button data-v="-1">Windows</button><button data-v="0">Perf max</button><button data-v="50">Équilibrée</button><button data-v="80">Économie</button></div>
+            <div class="sub-h">Speed Shift EPP <span class="muted small">(0 = perf max, 255 = économie)</span></div>
+            <div class="seg small" id="cm-epp"><button data-v="-1">Windows</button><button data-v="0">0</button><button data-v="16">16</button><button data-v="64">64</button><button data-v="128">128</button><button data-v="192">192</button></div>
             <button class="wide primary" id="cm-save">Enregistrer pour ce mode</button>
             <p class="hint in" id="cm-hint"></p>
           </div>
@@ -2039,8 +2043,13 @@ function renderCpu() {
   press(box, cmMode);
   if (!cmDirty) fillCpuMode();
 }
+const CPU_PROFILE = { silent: "Léger", balanced: "Médium", turbo: "Gros" };
+const ghz = v => v >= 41 ? "Sans limite" : nf(v / 10, 1) + " GHz";
 function fillCpuMode() {
-  const m = ((CPU && CPU.settings && CPU.settings.modes) || {})[cmMode] || { limits: false, pl1: 45, pl2: 90, tau: 28, epp: -1, boost: 2 };
+  const m = ((CPU && CPU.settings && CPU.settings.modes) || {})[cmMode] || { limits: false, pl1: 45, pl2: 90, tau: 28, epp: -1, max_mhz: 0, boost: 2 };
+  const ml = (MODES.find(x => x.id === cmMode) || {}).label || cmMode;
+  $("cm-name").innerHTML = `Profil <b>${esc(CPU_PROFILE[cmMode] || ml)}</b>, appliqué en mode ${esc(ml)}`;
+  const fr = $("cm-freq"); fr.value = m.max_mhz ? Math.round(m.max_mhz / 100) : 41; fill(fr); $("cm-freq-v").textContent = ghz(+fr.value);
   setSwitch($("cm-limits"), !!m.limits);
   $("cm-lim-box").hidden = !m.limits;
   const l = CPU && CPU.limits;
@@ -2052,7 +2061,7 @@ function fillCpuMode() {
   press($("cm-epp"), String(m.epp != null ? m.epp : -1));
   const cur = CPU && CPU.mode === cmMode;
   $("cm-hint").textContent = (cur ? "Mode actuel : appliqué dès l'enregistrement." : "S'appliquera quand tu passeras dans ce mode.") +
-    " PL1 = puissance tenue dans la durée, PL2 = pic autorisé pendant la durée du boost. Le i7-8750H est prévu pour 45 W.";
+    " PL1 = puissance tenue dans la durée, PL2 = pic pendant la durée du boost (le i7-8750H est prévu pour 45 W). Fréquence max et EPP passent par Windows, comme le Speed Shift de ThrottleStop.";
 }
 function nearestTau(v) { const opts = [8, 28, 56, 96, 128]; return opts.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a, 28); }
 $("cm-mode").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; cmMode = b.dataset.v; cmDirty = false; press($("cm-mode"), cmMode); fillCpuMode(); });
@@ -2066,10 +2075,12 @@ $("cm-limits").addEventListener("click", () => { const on = !isOn($("cm-limits")
     if (k === "pl2" && +p1.value > +p2.value) { p1.value = p2.value; fill(p1); $("cm-pl1-v").textContent = p1.value + " W"; }
   });
 });
+$("cm-freq").addEventListener("input", e => { cmDirty = true; fill(e.target); $("cm-freq-v").textContent = ghz(+e.target.value); });
 ["cm-tau", "cm-boost", "cm-epp"].forEach(id => $(id).addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) { press($(id), b.dataset.v); cmDirty = true; } }));
 $("cm-save").addEventListener("click", async () => {
   const body = { action: "cpu_mode_save", mode: cmMode, limits: isOn($("cm-limits")), pl1: +$("cm-pl1").value, pl2: +$("cm-pl2").value,
-    tau: +segVal($("cm-tau")) || 28, boost: +segVal($("cm-boost")), epp: +segVal($("cm-epp")) };
+    tau: +segVal($("cm-tau")) || 28, boost: +segVal($("cm-boost")), epp: +segVal($("cm-epp")),
+    max_mhz: +$("cm-freq").value >= 41 ? 0 : +$("cm-freq").value * 100 };
   const r = await act(body);
   if (r && r.ok) cmDirty = false;
   loadCpu();

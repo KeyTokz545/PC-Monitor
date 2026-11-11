@@ -434,7 +434,8 @@ public sealed class Actions
                     if (Has(body, "pl1")) t.Pl1 = I(body, "pl1");
                     if (Has(body, "pl2")) t.Pl2 = I(body, "pl2");
                     if (Has(body, "tau")) t.Tau = I(body, "tau");
-                    if (Has(body, "epp")) t.Epp = I(body, "epp");
+                    if (Has(body, "epp")) t.EppRaw = I(body, "epp");
+                    if (Has(body, "max_mhz")) t.MaxMhz = Math.Max(0, I(body, "max_mhz"));
                     t.Clamp();
                     if (Has(body, "boost")) cfg.CpuBoost[mode] = Math.Clamp(I(body, "boost"), 0, 2);
                 }
@@ -447,7 +448,7 @@ public sealed class Actions
                     var (ok, msg) = CpuTuner.WriteLimits(t.Pl1, t.Pl2, t.Tau);
                     if (!ok) return R(false, msg);
                 }
-                if (Has(body, "epp") && t.Epp >= 0) CpuTuner.SetEpp(t.Epp);
+                if (Has(body, "epp") || Has(body, "max_mhz")) CpuTuner.ApplyPowerPlan(t.EppRaw, t.MaxMhz);
                 return R(true, "Réglages processeur appliqués");
             }
             case "cpu_tsboot":

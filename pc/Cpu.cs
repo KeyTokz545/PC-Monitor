@@ -21,15 +21,22 @@ public sealed class CpuModeTune
     public int Pl2 { get; set; } = 90;
     /// <summary>Durée du turbo (s) avant de redescendre à PL1.</summary>
     public int Tau { get; set; } = 28;
-    /// <summary>Préférence d'énergie Speed Shift 0 (perf) à 100 (économie), -1 = laisser Windows.</summary>
+    /// <summary>Ancienne préférence d'énergie en % (versions 2.3-2.4), convertie en EppRaw.</summary>
     public int Epp { get; set; } = -1;
+    /// <summary>Préférence d'énergie Speed Shift sur l'échelle de ThrottleStop : 0 (perf) à 255 (économie), -1 = laisser Windows.</summary>
+    public int EppRaw { get; set; } = -1;
+    /// <summary>Fréquence maximale en MHz (0 = pas de limite).</summary>
+    public int MaxMhz { get; set; }
 
     public CpuModeTune Clamp()
     {
         Pl1 = Math.Clamp(Pl1, 5, 150);
         Pl2 = Math.Clamp(Pl2, Pl1, 200);
         Tau = Math.Clamp(Tau, 1, 256);
-        Epp = Epp < 0 ? -1 : Math.Clamp(Epp, 0, 100);
+        if (EppRaw < 0 && Epp >= 0) EppRaw = (int)Math.Round(Math.Clamp(Epp, 0, 100) * 2.55);
+        Epp = -1;
+        EppRaw = EppRaw < 0 ? -1 : Math.Clamp(EppRaw, 0, 255);
+        MaxMhz = MaxMhz <= 0 ? 0 : Math.Clamp(MaxMhz, 800, 6000);
         return this;
     }
 }
@@ -49,6 +56,24 @@ public sealed class CpuSettings
     /// </summary>
     public bool TsBoot { get; set; }
     public string TsPath { get; set; }
+    /// <summary>Les 3 profils de Lilian (Léger, Médium, Gros) ont été chargés une fois.</summary>
+    public bool Profiles3 { get; set; }
+
+    /// <summary>
+    /// Profils repris de ThrottleStop : Léger (Silencieux), Médium 3,2 GHz / 50 W (Équilibré),
+    /// Gros 4,1 GHz / 75 W + seuil 100 °C (Turbo). Tout reste modifiable dans l'onglet CPU.
+    /// </summary>
+    public void LoadDefaultProfiles(Dictionary<string, int> boost)
+    {
+        Modes["silent"] = new CpuModeTune { Limits = true, Pl1 = 25, Pl2 = 25, Tau = 28, EppRaw = 128, MaxMhz = 2400 };
+        Modes["balanced"] = new CpuModeTune { Limits = true, Pl1 = 50, Pl2 = 50, Tau = 28, EppRaw = 16, MaxMhz = 3200 };
+        Modes["turbo"] = new CpuModeTune { Limits = true, Pl1 = 75, Pl2 = 75, Tau = 28, EppRaw = 16, MaxMhz = 0 };
+        boost["silent"] = 1;
+        boost["balanced"] = 2;
+        boost["turbo"] = 2;
+        TsBoot = true;
+        Profiles3 = true;
+    }
 }
 
 /// <summary>Accès aux registres MSR par PawnIO.</summary>
@@ -359,13 +384,23 @@ public sealed class CpuTuner
     }
 
     // ---------------------------------------------------------------- préférence d'énergie (Speed Shift, par Windows)
-    public static void SetEpp(int percent)
+    /// <summary>
+    /// Préférence d'énergie (Speed Shift) et fréquence max par le mode d'alimentation de Windows, qui les transmet au processeur.
+    /// EPP sur l'échelle ThrottleStop 0-255 (Windows l'exprime en %), fréquence en MHz (0 = pas de limite).
+    /// </summary>
+    public static void ApplyPowerPlan(int eppRaw, int maxMhz)
     {
-        const string sub = "54533251-82be-4824-96c1-47b60b740d00";  // SUB_PROCESSOR
-        const string epp = "36687f9e-e3a5-4dbf-b1dc-15eb381c6863";  // PERFEPP
-        Win.Run("powercfg", $"/attributes {sub} {epp} -ATTRIB_HIDE", 5000);
-        Win.Run("powercfg", $"/setacvalueindex SCHEME_CURRENT {sub} {epp} {percent}", 5000);
-        Win.Run("powercfg", $"/setdcvalueindex SCHEME_CURRENT {sub} {epp} {percent}", 5000);
+        const string sub = "54533251-82be-4824-96c1-47b60b740d00";   // SUB_PROCESSOR
+        const string epp = "36687f9e-e3a5-4dbf-b1dc-15eb381c6863";   // PERFEPP
+        const string fmax = "75b0ae3f-bce0-45a7-8c89-c9611c25e100";  // PROCFREQMAX
+        if (eppRaw >= 0)
+        {
+            var pct = (int)Math.Round(eppRaw / 2.55);
+            Win.Run("powercfg", $"/setacvalueindex SCHEME_CURRENT {sub} {epp} {pct}", 5000);
+            Win.Run("powercfg", $"/setdcvalueindex SCHEME_CURRENT {sub} {epp} {pct}", 5000);
+        }
+        Win.Run("powercfg", $"/setacvalueindex SCHEME_CURRENT {sub} {fmax} {Math.Max(0, maxMhz)}", 5000);
+        Win.Run("powercfg", $"/setdcvalueindex SCHEME_CURRENT {sub} {fmax} {Math.Max(0, maxMhz)}", 5000);
         Win.Run("powercfg", "/setactive SCHEME_CURRENT", 5000);
     }
 
@@ -387,7 +422,7 @@ public sealed class CpuTuner
         {
             var t = ModeTune(mode);
             if (t.Limits) WriteLimits(t.Pl1, t.Pl2, t.Tau);
-            if (t.Epp >= 0) SetEpp(t.Epp);
+            ApplyPowerPlan(t.EppRaw, t.MaxMhz);
         }
         catch (Exception e)
         {
@@ -519,7 +554,7 @@ public sealed class CpuTuner
                 cfg.Cpu.SaMv = Math.Clamp(sa ?? 0, -250, 0);
                 notes.Add($"undervolt {cfg.Cpu.CoreMv} mV");
             }
-            if (lim != null && !(bool)lim["locked"])
+            if (lim != null && !(bool)lim["locked"] && !cfg.Cpu.Profiles3)
             {
                 int pl1 = (int)Math.Round((double)lim["pl1"]), pl2 = (int)Math.Round((double)lim["pl2"]), tau = (int)Math.Round((double)lim["tau"]);
                 foreach (var m in ModeDefs.Order)
@@ -624,7 +659,7 @@ public sealed class CpuTuner
                     cfg.CpuBoost.TryGetValue(m, out var boost);
                     return (object)new Dictionary<string, object>
                     {
-                        ["limits"] = t.Limits, ["pl1"] = t.Pl1, ["pl2"] = t.Pl2, ["tau"] = t.Tau, ["epp"] = t.Epp, ["boost"] = boost,
+                        ["limits"] = t.Limits, ["pl1"] = t.Pl1, ["pl2"] = t.Pl2, ["tau"] = t.Tau, ["epp"] = t.EppRaw, ["max_mhz"] = t.MaxMhz, ["boost"] = boost,
                     };
                 }),
             };
