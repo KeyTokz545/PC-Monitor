@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        s.setUserAgentString(s.getUserAgentString() + " PCMonitorApp/2.6");
+        s.setUserAgentString(s.getUserAgentString() + " PCMonitorApp/2.7");
         web.addJavascriptInterface(new Bridge(), "AndroidApp");
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri u = request.getUrl();
-                if (u != null && pc.host.equals(u.getHost())) return false;
+                if (u != null && (pc.host.equals(u.getHost()) || u.getHost() != null && u.getHost().equals(host))) return false;
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, u));
                 } catch (Exception ignored) {
@@ -94,8 +94,19 @@ public class MainActivity extends Activity {
         load();
     }
 
+    /** Adresse réellement utilisée (Wi-Fi ou Tailscale). */
+    private String host;
+
     private void load() {
-        web.loadUrl(Net.base(pc) + "/?k=" + Net.code(this) + "&app=android");
+        // choix de l'adresse hors du fil de l'interface : Wi-Fi d'abord, Tailscale si on est loin de chez soi
+        new Thread(() -> {
+            String h = Net.pickHost(this, pc);
+            runOnUiThread(() -> {
+                if (web == null) return;
+                host = h;
+                web.loadUrl("http://" + h + ":" + pc.port + "/?k=" + Net.code(this) + "&app=android");
+            });
+        }).start();
     }
 
     private LinearLayout buildOverlay() {
@@ -254,6 +265,21 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean wake() {
             return Net.wake(pc.macs);
+        }
+
+        /** Le tableau de bord transmet l'adresse Tailscale du PC. */
+        @JavascriptInterface
+        public void setRemote(String ip) {
+            Net.saveRemote(MainActivity.this, ip);
+        }
+
+        /** Le PC ne répond plus : on retente Wi-Fi puis Tailscale, et on recharge si l'adresse a changé. */
+        @JavascriptInterface
+        public void reconnect() {
+            new Thread(() -> {
+                String h = Net.pickHost(MainActivity.this, pc);
+                if (!h.equals(host)) runOnUiThread(MainActivity.this::load);
+            }).start();
         }
     }
 }

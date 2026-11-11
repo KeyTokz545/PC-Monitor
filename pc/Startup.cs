@@ -64,6 +64,14 @@ public static class Startup
     {
         Rule($"PC Monitor (TCP {tcpPort})", "TCP", tcpPort);
         Rule($"PC Monitor (UDP {udpPort})", "UDP", udpPort);
+        // accès à distance par Tailscale : seulement depuis le réseau privé Tailscale, quel que soit le profil réseau
+        var name = $"PC Monitor (Tailscale {tcpPort})";
+        if (Win.Run("netsh", $"advfirewall firewall show rule name=\"{name}\"", 8000).Code != 0)
+        {
+            var (code, output) = Win.Run("netsh",
+                $"advfirewall firewall add rule name=\"{name}\" dir=in action=allow protocol=TCP localport={tcpPort} remoteip=100.64.0.0/10 profile=any", 8000);
+            Log.Info($"Pare-feu « {name} » : " + (code == 0 ? "ajouté" : Win.Decode(output)));
+        }
     }
 
     static void Rule(string name, string protocol, int port)

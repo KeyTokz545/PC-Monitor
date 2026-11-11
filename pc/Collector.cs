@@ -172,6 +172,8 @@ public sealed class Collector
         s["lhm"] = new Dictionary<string, object> { ["ok"] = sensors.Ok, ["error"] = sensors.Error };
         s["cpu_profile"] = cfg.Cpu.Enabled ? cfg.Cpu.Active : null;
         s["last_report"] = GameReports.LatestId;
+        s["remote"] = NetInfo.TailscaleIp();
+        s["port"] = cfg.Port;
         s["demo"] = false;
         s["app"] = "pcmonitor";
         s["version"] = Program.Version;

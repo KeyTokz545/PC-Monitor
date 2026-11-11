@@ -61,6 +61,61 @@ public final class Net {
         return prefs(ctx).getString("code", "");
     }
 
+    /** Adresse Tailscale du PC (envoyée par le tableau de bord), pour l'accès hors de chez soi. */
+    public static String remote(Context ctx) {
+        return prefs(ctx).getString("remote", "");
+    }
+
+    public static void saveRemote(Context ctx, String host) {
+        if (host == null || !host.matches("[0-9.]{7,15}")) return;
+        if (host.equals(remote(ctx))) return;
+        prefs(ctx).edit().putString("remote", host).apply();
+    }
+
+    /** Le PC répond-il à cette adresse ? (petit délai : on teste d'abord le Wi-Fi puis Tailscale) */
+    public static boolean reachable(String host, int port, int timeoutMs) {
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL("http://" + host + ":" + port + "/api/hello").openConnection();
+            c.setConnectTimeout(timeoutMs);
+            c.setReadTimeout(timeoutMs);
+            return c.getResponseCode() == 200;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
+    /** Adresse à utiliser : celle du Wi-Fi si le PC y répond, sinon l'adresse Tailscale si elle répond. */
+    public static String pickHost(Context ctx, Pc pc) {
+        if (reachable(pc.host, pc.port, 1500)) return pc.host;
+        String r = remote(ctx);
+        if (!r.isEmpty() && reachable(r, pc.port, 3000)) return r;
+        return pc.host;
+    }
+
+    /** POST JSON simple (utilisé par le widget). Renvoie le code HTTP ou -1. */
+    public static int post(String url, String json) {
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(2500);
+            c.setReadTimeout(5000);
+            c.setRequestMethod("POST");
+            c.setDoOutput(true);
+            c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            try (java.io.OutputStream o = c.getOutputStream()) {
+                o.write(json.getBytes(StandardCharsets.UTF_8));
+            }
+            return c.getResponseCode();
+        } catch (Exception e) {
+            return -1;
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
     public static void save(Context ctx, Pc pc, String code) {
         prefs(ctx).edit()
                 .putString("host", pc.host)
