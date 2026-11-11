@@ -51,7 +51,7 @@ main{grid-area:main;overflow-y:auto;-webkit-overflow-scrolling:touch;
 
 .nav{grid-area:nav;display:flex;justify-content:space-around;border-top:1px solid var(--line);background:var(--ink);
   padding:6px calc(var(--safe-r) + 8px) calc(var(--safe-b) + 4px) calc(var(--safe-l) + 8px)}
-.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;min-width:0;color:var(--faint);font-size:11px;font-weight:600}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 4px;min-width:0;color:var(--faint);font-size:11px;font-weight:600}
 .tab svg{width:24px;height:24px}
 .tab[aria-selected="true"]{color:var(--text)}
 
@@ -350,6 +350,26 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .panel.timer{margin-top:var(--gap)}
 #timer-min{margin-top:10px}
 
+/* ---------- Processeur ---------- */
+.cpu-live{margin:4px 0 0}
+.cpu-live div{background:var(--raise)}
+.limiters{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0 4px}
+.limiters b{font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);opacity:.45}
+.limiters b.on{opacity:1;color:#1b1206;background:#FFB547;border-color:#FFB547}
+.limiters b[data-k="thermal"].on,.limiters b[data-k="prochot"].on{background:var(--hot);border-color:var(--hot);color:#fff}
+.limiters em{font-style:normal;font-size:12.5px;color:var(--cool);font-weight:700}
+.limiters em[hidden]{display:none}
+.trow.first{border-top:0;padding-top:0}
+.ts-note{display:grid;gap:10px;margin-bottom:var(--gap)}
+.ts-note .wide{margin-top:0}
+.ts-note[hidden],.uv-test[hidden],#cpu-err[hidden]{display:none}
+#cpu-err{margin-bottom:var(--gap)}
+.uv-test{margin-bottom:10px;background:rgba(79,195,224,.1);border-color:rgba(79,195,224,.4);color:var(--text)}
+.uv-test .pair .wide{margin-top:10px}
+#cm-lim-box[hidden]{display:none}
+#cm-mode{margin-bottom:4px}
+#v-cpu .srow .lab{width:106px;line-height:1.2}
+
 /* ---------- Paysage (telephone pose a cote du PC) ---------- */
 @media (orientation:landscape) and (max-height:520px){
   .app{grid-template-columns:auto 1fr;grid-template-rows:auto 1fr;grid-template-areas:"nav head" "nav main"}
@@ -566,6 +586,70 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
       </div>
     </section>
 
+    <!-- Processeur : remplace ThrottleStop -->
+    <section class="view" id="v-cpu" aria-label="Processeur">
+      <div class="note ts-note" id="cpu-ts" hidden>
+        <div><b>ThrottleStop est ouvert</b> : il écrase les réglages de cet onglet. Reprends ses réglages actuels, PC Monitor s'en occupera à sa place.</div>
+        <button class="wide primary" id="cpu-takeover">Reprendre ses réglages et le fermer</button>
+      </div>
+      <div class="note" id="cpu-err" hidden></div>
+      <div class="cols">
+        <div class="section">
+          <h3>Processeur</h3>
+          <div class="panel">
+            <div class="trow first"><div><div>PC Monitor gère le processeur</div><div class="muted small">Remplace ThrottleStop, appliqué à chaque démarrage</div></div><button class="switch" id="cpu-on" role="switch" aria-checked="false" aria-label="PC Monitor gère le processeur"></button></div>
+            <div class="hud cpu-live">
+              <div><span class="num" id="c-freq">–</span><small>Fréquence</small></div>
+              <div><span class="num" id="c-vid">–</span><small>Tension</small></div>
+              <div><span class="num" id="c-pow">–</span><small>Puissance</small></div>
+            </div>
+            <div class="limiters" id="c-limit"><span class="muted small">Limité par</span><b data-k="power">Puissance</b><b data-k="thermal">Température</b><b data-k="prochot">PROCHOT</b><em id="c-nolimit">rien</em></div>
+            <div class="stats">
+              <div class="row"><span class="muted">Limites actives</span><span class="num" id="c-pl">–</span></div>
+              <div class="row"><span class="muted">Undervolt actif</span><span class="num" id="c-uvlive">–</span></div>
+              <div class="row"><span class="muted">Température max</span><span class="num" id="c-tj">–</span></div>
+            </div>
+            <p class="hint in" id="c-name"></p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Undervolt</h3>
+          <div class="panel">
+            <div class="note uv-test" id="uv-test" hidden>
+              <div id="uv-test-txt"></div>
+              <div class="pair"><button class="wide" id="uv-cancel">Annuler</button><button class="wide primary" id="uv-keep">Garder</button></div>
+            </div>
+            <div class="srow"><span class="lab">Cœurs + cache</span><input type="range" id="uv-core" min="-200" max="0" step="5" aria-label="Undervolt cœurs et cache"><span class="val num" id="uv-core-v"></span></div>
+            <div class="srow"><span class="lab">GPU Intel</span><input type="range" id="uv-gpu" min="-150" max="0" step="5" aria-label="Undervolt GPU Intel"><span class="val num" id="uv-gpu-v"></span></div>
+            <div class="srow"><span class="lab">System Agent</span><input type="range" id="uv-sa" min="-150" max="0" step="5" aria-label="Undervolt System Agent"><span class="val num" id="uv-sa-v"></span></div>
+            <button class="wide primary" id="uv-apply">Tester ces valeurs</button>
+            <p class="hint in">Moins de tension = moins de chaleur à performances égales. Avance par paliers de 10 à 25 mV. Un réglage en test n'est jamais remis après un redémarrage : si le PC plante, il repart avec le dernier réglage gardé.</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Puissance et Turbo par mode</h3>
+          <div class="panel">
+            <div class="seg" id="cm-mode"></div>
+            <div class="trow"><div><div>Limites de puissance perso</div><div class="muted small">Sinon, celles du BIOS</div></div><button class="switch" id="cm-limits" role="switch" aria-checked="false" aria-label="Limites de puissance perso"></button></div>
+            <div id="cm-lim-box">
+              <div class="srow"><span class="lab">PL1 durable</span><input type="range" id="cm-pl1" min="10" max="90" step="1" aria-label="PL1"><span class="val num" id="cm-pl1-v"></span></div>
+              <div class="srow"><span class="lab">PL2 boost</span><input type="range" id="cm-pl2" min="10" max="130" step="1" aria-label="PL2"><span class="val num" id="cm-pl2-v"></span></div>
+              <div class="sub-h">Durée du boost avant PL1</div>
+              <div class="chips" id="cm-tau"><button data-v="8">8 s</button><button data-v="28">28 s</button><button data-v="56">56 s</button><button data-v="96">96 s</button><button data-v="128">128 s</button></div>
+            </div>
+            <div class="sub-h">Turbo Boost</div>
+            <div class="seg small" id="cm-boost"><button data-v="0">Coupé</button><button data-v="1">Activé</button><button data-v="2">Agressif</button></div>
+            <div class="sub-h">Préférence d'énergie (Speed Shift)</div>
+            <div class="seg small" id="cm-epp"><button data-v="-1">Windows</button><button data-v="0">Perf max</button><button data-v="50">Équilibrée</button><button data-v="80">Économie</button></div>
+            <button class="wide primary" id="cm-save">Enregistrer pour ce mode</button>
+            <p class="hint in" id="cm-hint"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Controles -->
     <section class="view" id="v-ctl" aria-label="Contrôles">
       <div class="cols">
@@ -727,6 +811,7 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
     <button class="tab" role="tab" aria-selected="false" data-view="v-game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 7h9a4.5 4.5 0 014.4 3.6l.9 4.6a2.6 2.6 0 01-4.6 2.1L15.6 15H8.4l-1.6 2.3a2.6 2.6 0 01-4.6-2.1l.9-4.6A4.5 4.5 0 017.5 7z"/><path d="M8 10v3M6.5 11.5h3"/><circle cx="15.5" cy="10.6" r=".7" fill="currentColor"/><circle cx="17.4" cy="12.6" r=".7" fill="currentColor"/></svg>Jeu</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><rect x="3" y="13" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="10" y="7" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="17" y="11" width="4" height="3" rx="1" fill="var(--ink)"/></svg>Contrôles</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-perf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2c-.6-2.9.1-5.6 2.6-6.4 2.2-.7 3.4 1.6 2 3.2-1.1 1.3-2.8 2.3-4.6 3.2"/><path d="M13.6 12.9c2.8 1 4.7 3 4.2 5.6-.5 2.2-3.1 2.3-3.8.3-.6-1.6-.6-3.6-.4-5.9"/><path d="M10.4 12.9c-2.2 2-4.9 2.7-6.8.9-1.7-1.6-.3-3.8 1.8-3.4 1.7.3 3.3 1.3 5 2.5"/></svg>Perf</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="v-cpu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx=".8"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/></svg>CPU</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Applis</button>
   </nav>
 </div>
@@ -1030,6 +1115,7 @@ async function tick() {
     const view = document.body.dataset.view;
     if ((view === "v-ctl" || view === "v-perf" || view === "v-game") && Date.now() - ctlAt > 8000 && !Object.values(dragging).some(Boolean) && !colEdit) loadControls();
     if (view === "v-game") loadGame();
+    if (view === "v-cpu" && (cpuTick = (cpuTick + 1) % 2) === 0) loadCpu();
   } catch (e) {
     fails++;
     if (e.auth) { setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]); $("dot").className = "dot off"; }
@@ -1138,8 +1224,8 @@ $("pk-search").addEventListener("input", renderCatalog);
 
 /* ---------- Actions ---------- */
 async function act(body, quiet) {
-  try { const r = await api("/api/action", body); if (!quiet || !r.ok) toast(r.msg || (r.ok ? "Fait" : "Échec"), !r.ok); }
-  catch (e) { toast(e.auth ? "Clé invalide" : "Le PC ne répond pas", true); }
+  try { const r = await api("/api/action", body); if (!quiet || !r.ok) toast(r.msg || (r.ok ? "Fait" : "Échec"), !r.ok); return r; }
+  catch (e) { toast(e.auth ? "Clé invalide" : "Le PC ne répond pas", true); return null; }
 }
 document.querySelectorAll("[data-act]").forEach(b => {
   const a = b.dataset.act;
@@ -1583,6 +1669,7 @@ function drawFpsHist(cv, hs) {
   g.strokeStyle = accent(); g.lineWidth = 1.6; g.lineJoin = "round"; g.stroke();
 }
 function renderGameLive(s) {
+  lastStats = s;
   const c = s.cpu || {}, gp = s.gpu || {}, n = s.net || {};
   const t = v => v != null ? Math.round(v) + "°" : "–";
   $("h-cpu").textContent = t(c.temp); $("h-cpu").style.color = c.temp != null ? thermal(c.temp) : "";
@@ -1818,6 +1905,109 @@ $("timer-min").addEventListener("click", async e => {
   await act({ action: "timer_set", minutes: +b.dataset.v, what: timerWhat }); reloadControls(300);
 });
 
+
+/* ---------- Onglet Processeur (remplace ThrottleStop) ---------- */
+let cpuTick = 0;
+let CPU = null, cpuBusy = false, cmMode = null, cmDirty = false, uvDirty = false;
+async function loadCpu() {
+  if (cpuBusy) return;
+  cpuBusy = true;
+  try { CPU = await api("/api/cpu"); renderCpu(); } catch (e) {} finally { cpuBusy = false; }
+}
+const mvTxt = v => v == null ? "–" : (v > 0 ? "+" : "") + v + " mV";
+function renderCpu() {
+  const c = CPU; if (!c) return;
+  const st = c.settings || {}, s = lastStats || {}, cs = s.cpu || {};
+  $("cpu-ts").hidden = !c.throttlestop;
+  $("cpu-err").hidden = !c.error; $("cpu-err").textContent = c.error || "";
+  setSwitch($("cpu-on"), !!st.enabled);
+  const avail = !!c.available;
+  $("c-freq").textContent = c.ratio ? nf(c.ratio / 10, 1) + " GHz" : "–";
+  $("c-vid").textContent = c.vid != null ? nf(c.vid, 3) + " V" : "–";
+  $("c-pow").textContent = cs.power != null ? nf(cs.power) + " W" : "–";
+  const th = c.throttle || {};
+  let any = false;
+  $("c-limit").querySelectorAll("b[data-k]").forEach(b => { const on = !!th[b.dataset.k]; b.classList.toggle("on", on); any = any || on; });
+  $("c-nolimit").hidden = any || !avail;
+  const l = c.limits;
+  $("c-pl").textContent = l ? `${nf(l.pl1)} W / ${nf(l.pl2)} W · ${nf(l.tau)} s${l.locked ? " · verrouillé" : ""}` : "–";
+  const uv = c.uv || {};
+  $("c-uvlive").textContent = uv.core == null ? "–" : mvTxt(uv.core) + (uv.gpu ? ` · GPU ${uv.gpu}` : "") + (uv.sa ? ` · SA ${uv.sa}` : "");
+  $("c-tj").textContent = c.tjmax ? c.tjmax + " °C" : "–";
+  $("c-name").textContent = (c.name || "") + (c.base_ratio ? ` · base ${nf(c.base_ratio / 10, 1)} GHz` : "");
+  // undervolt
+  const t = c.test;
+  $("uv-test").hidden = !t;
+  if (t) $("uv-test-txt").innerHTML = `<b>En test : ${esc(mvTxt(t.core))}</b>${t.gpu ? ` · GPU ${t.gpu} mV` : ""}${t.sa ? ` · SA ${t.sa} mV` : ""}<br>Joue ou lance un test 10 à 15 min. Tout va bien ? Appuie sur Garder.`;
+  if (!uvDirty) {
+    const src = t || { core: st.core || 0, gpu: st.gpu || 0, sa: st.sa || 0 };
+    ["core", "gpu", "sa"].forEach(k => { const el = $("uv-" + k); el.value = src[k] || 0; fill(el); $("uv-" + k + "-v").textContent = mvTxt(+el.value); });
+  }
+  ["uv-core", "uv-gpu", "uv-sa", "uv-apply", "uv-keep", "uv-cancel", "cm-save", "cpu-takeover"].forEach(id => $(id).disabled = !avail);
+  // modes
+  const box = $("cm-mode");
+  if (box.children.length !== MODES.length) box.innerHTML = MODES.map(m => `<button data-v="${esc(m.id)}">${esc(m.label)}</button>`).join("");
+  if (!cmMode) cmMode = c.mode || (MODES[1] && MODES[1].id) || "balanced";
+  press(box, cmMode);
+  if (!cmDirty) fillCpuMode();
+}
+function fillCpuMode() {
+  const m = ((CPU && CPU.settings && CPU.settings.modes) || {})[cmMode] || { limits: false, pl1: 45, pl2: 90, tau: 28, epp: -1, boost: 2 };
+  setSwitch($("cm-limits"), !!m.limits);
+  $("cm-lim-box").hidden = !m.limits;
+  const l = CPU && CPU.limits;
+  [["pl1", m.limits ? m.pl1 : l ? Math.round(l.pl1) : m.pl1], ["pl2", m.limits ? m.pl2 : l ? Math.round(l.pl2) : m.pl2]].forEach(([k, v]) => {
+    const el = $("cm-" + k); el.value = v; fill(el); $("cm-" + k + "-v").textContent = el.value + " W";
+  });
+  press($("cm-tau"), String(nearestTau(m.limits ? m.tau : l ? l.tau : m.tau)));
+  press($("cm-boost"), String(m.boost != null ? m.boost : 2));
+  press($("cm-epp"), String(m.epp != null ? m.epp : -1));
+  const cur = CPU && CPU.mode === cmMode;
+  $("cm-hint").textContent = (cur ? "Mode actuel : appliqué dès l'enregistrement." : "S'appliquera quand tu passeras dans ce mode.") +
+    " PL1 = puissance tenue dans la durée, PL2 = pic autorisé pendant la durée du boost. Le i7-8750H est prévu pour 45 W.";
+}
+function nearestTau(v) { const opts = [8, 28, 56, 96, 128]; return opts.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a, 28); }
+$("cm-mode").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; cmMode = b.dataset.v; cmDirty = false; press($("cm-mode"), cmMode); fillCpuMode(); });
+$("cm-limits").addEventListener("click", () => { const on = !isOn($("cm-limits")); setSwitch($("cm-limits"), on); $("cm-lim-box").hidden = !on; cmDirty = true; });
+["pl1", "pl2"].forEach(k => {
+  const el = $("cm-" + k);
+  el.addEventListener("input", () => {
+    cmDirty = true; fill(el); $("cm-" + k + "-v").textContent = el.value + " W";
+    const p1 = $("cm-pl1"), p2 = $("cm-pl2");
+    if (k === "pl1" && +p2.value < +p1.value) { p2.value = p1.value; fill(p2); $("cm-pl2-v").textContent = p2.value + " W"; }
+    if (k === "pl2" && +p1.value > +p2.value) { p1.value = p2.value; fill(p1); $("cm-pl1-v").textContent = p1.value + " W"; }
+  });
+});
+["cm-tau", "cm-boost", "cm-epp"].forEach(id => $(id).addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) { press($(id), b.dataset.v); cmDirty = true; } }));
+$("cm-save").addEventListener("click", async () => {
+  const body = { action: "cpu_mode_save", mode: cmMode, limits: isOn($("cm-limits")), pl1: +$("cm-pl1").value, pl2: +$("cm-pl2").value,
+    tau: +segVal($("cm-tau")) || 28, boost: +segVal($("cm-boost")), epp: +segVal($("cm-epp")) };
+  const r = await act(body);
+  if (r && r.ok) cmDirty = false;
+  loadCpu();
+});
+["core", "gpu", "sa"].forEach(k => {
+  const el = $("uv-" + k);
+  el.addEventListener("input", () => { uvDirty = true; fill(el); $("uv-" + k + "-v").textContent = mvTxt(+el.value); });
+});
+$("uv-apply").addEventListener("click", async () => {
+  const core = +$("uv-core").value, gpu = +$("uv-gpu").value, sa = +$("uv-sa").value;
+  const st = (CPU && CPU.settings) || {};
+  const go = async () => { const r = await act({ action: "cpu_uv_test", core, gpu, sa }); if (r && r.ok) uvDirty = false; loadCpu(); };
+  if (core < (st.core || 0) - 50) confirmSheet(`Tester ${core} mV d'un coup ?`, "Un grand saut peut faire planter le PC. Sans gravité : il redémarrera avec l'ancien réglage. Mieux vaut avancer par paliers de 10 à 25 mV.", go, "Tester");
+  else go();
+});
+$("uv-keep").addEventListener("click", async () => { await act({ action: "cpu_uv_keep" }); uvDirty = false; loadCpu(); });
+$("uv-cancel").addEventListener("click", async () => { await act({ action: "cpu_uv_cancel" }); uvDirty = false; loadCpu(); });
+$("cpu-on").addEventListener("click", async () => {
+  const on = !isOn($("cpu-on")); setSwitch($("cpu-on"), on);
+  if (on && CPU && CPU.throttlestop) toast("ThrottleStop est encore ouvert : utilise « Reprendre ses réglages »", true);
+  await act({ action: "cpu_enable", on }); loadCpu();
+});
+$("cpu-takeover").addEventListener("click", () => confirmSheet("Remplacer ThrottleStop ?",
+  "PC Monitor lit l'undervolt et les limites que ThrottleStop a appliqués, les garde, ferme ThrottleStop et coupe son lancement automatique.",
+  async () => { cmDirty = false; uvDirty = false; await act({ action: "cpu_takeover" }); loadCpu(); }, "Remplacer"));
+
 /* ---------- Onglets ---------- */
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
@@ -1827,6 +2017,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   if (t.dataset.view === "v-mon") { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); }
   if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf" || t.dataset.view === "v-game") loadControls();
   if (t.dataset.view === "v-game") { loadGame(); renderGame(); }
+  if (t.dataset.view === "v-cpu") { cmMode = null; cmDirty = false; uvDirty = false; loadControls(); loadCpu(); }
 }));
 window.addEventListener("resize", () => { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); });
 

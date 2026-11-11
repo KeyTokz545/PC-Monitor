@@ -85,6 +85,7 @@ public sealed class TrayApp : ApplicationContext
             modes.Reapply();
             controls.Reapply();
             cpu.Reapply();
+            cpu.Start();
             games.Start();
             await Task.Delay(1500);
             LaunchTools();
@@ -312,6 +313,7 @@ public sealed class TrayApp : ApplicationContext
             Fps.Stop();
             WinKey.Set(false);
             ScreenColor.Reset();
+            cpu.Stop();
             Msr.Close();
             tipTimer.Stop();
             tray.Visible = false;

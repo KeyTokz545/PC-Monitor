@@ -157,7 +157,47 @@ public sealed class CpuTuner
     long uvCacheAt = -99999;
     static readonly Stopwatch Clock = Stopwatch.StartNew();
 
+    System.Threading.Timer timer;
+    int ticks;
+
     public CpuTuner(AppConfig cfg) => this.cfg = cfg;
+
+    /// <summary>Toutes les 10 s : remet les limites (le BIOS ASUS les réécrit parfois) et l'undervolt (perdu après certaines veilles).</summary>
+    public void Start() => timer = new System.Threading.Timer(_ => Maintain(), null, 15000, 10000);
+
+    public void Stop() => timer?.Dispose();
+
+    void Maintain()
+    {
+        try
+        {
+            if (!cfg.Cpu.Enabled || !Msr.Available || ThrottleStopRunning()) return;
+            var t = ModeTune(cfg.LastMode);
+            if (t.Limits && Msr.Read(PKG_POWER_LIMIT, out var v) && (v >> 63) == 0)
+            {
+                var (w, _) = Units();
+                if (Math.Abs((v & 0x7FFF) * w - t.Pl1) > 1 || Math.Abs(((v >> 32) & 0x7FFF) * w - t.Pl2) > 1)
+                {
+                    Log.Info("Limites de puissance modifiées par le système : remises");
+                    WriteLimits(t.Pl1, t.Pl2, t.Tau);
+                }
+            }
+            if (++ticks % 3 != 0) return;
+            (int Core, int Gpu, int Sa) uv;
+            lock (gate) uv = test ?? (cfg.Cpu.CoreMv, cfg.Cpu.GpuMv, cfg.Cpu.SaMv);
+            if (uv.Core == 0) return;
+            var now = ReadOffset(PlaneCore);
+            if (now.HasValue && Math.Abs(now.Value - uv.Core) > 2)
+            {
+                Log.Info($"Undervolt perdu ({now} mV au lieu de {uv.Core}) : remis");
+                ApplyUndervolt(uv.Core, uv.Gpu, uv.Sa);
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Error("Entretien des réglages processeur", e);
+        }
+    }
 
     public static string CpuName()
     {

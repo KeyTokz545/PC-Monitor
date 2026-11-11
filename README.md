@@ -61,6 +61,18 @@ Safari : Partager → **Sur l'écran d'accueil**.
 - **Captures** : capture d'écran, clip et enregistrement (Xbox Game Bar ou NVIDIA).
 - **Minuteur** d'arrêt ou de mise en veille (onglet Contrôles).
 
+## Onglet CPU (2.3) : remplace ThrottleStop
+
+- **Undervolt** cœurs + cache, GPU Intel et System Agent, avec un mode test : une valeur en test n'est
+  jamais réappliquée après un redémarrage, seule la dernière valeur « gardée » l'est.
+- **Limites de puissance PL1 / PL2** et durée du boost, **Turbo Boost** et **préférence d'énergie
+  (Speed Shift)**, par mode (Silencieux, Équilibré, Turbo). Remises toutes les 10 s si le système les change.
+- **Reprendre les réglages de ThrottleStop** : lit l'undervolt et les limites qu'il a appliqués,
+  les garde, ferme ThrottleStop et coupe son lancement automatique.
+- Accès au processeur par le pilote signé **PawnIO** (déjà installé pour les capteurs) et son module
+  officiel IntelMSR 0.2.11 (LGPL-2.1, voir `pc/Resources`). Pas de BD PROCHOT, d'états C ni de
+  multiplicateurs : ce module n'autorise pas ces registres.
+
 ## Bon à savoir
 
 - Le téléphone doit être sur le même Wi-Fi que le PC, réglé en réseau **privé** dans Windows.
