@@ -117,6 +117,12 @@ public sealed class GameWatcher
     readonly ModeService modes;
     readonly CpuTuner cpu;
     readonly object gate = new();
+
+    /// <summary>Mesures pour le bilan de partie (fourni par TrayApp).</summary>
+    public Collector Collector { get; set; }
+    float cpuMax, gpuMax;
+    double cpuSum, gpuSum;
+    int cpuN, gpuN;
     Timer timer;
     int ticks;
     GameProfile active;
@@ -167,7 +173,12 @@ public sealed class GameWatcher
             {
                 if (active != null)
                 {
-                    if (running.TryGetValue(GameProfile.Norm(active.Exe), out var pid)) Fps.PreferredPid = pid;
+                    if (running.TryGetValue(GameProfile.Norm(active.Exe), out var pid))
+                    {
+                        Fps.PreferredPid = pid;
+                        if (Collector?.CpuTemp is float ct) { cpuMax = Math.Max(cpuMax, ct); cpuSum += ct; cpuN++; }
+                        if (Collector?.GpuTemp is float gt && gt > 1) { gpuMax = Math.Max(gpuMax, gt); gpuSum += gt; gpuN++; }
+                    }
                     else Restore();
                     return;
                 }
@@ -195,6 +206,10 @@ public sealed class GameWatcher
         beforeWinKey = cfg.WinKeyLock;
         beforeCpu = cfg.Cpu.Active;
         Fps.PreferredPid = pid;
+        cpuMax = gpuMax = 0;
+        cpuSum = gpuSum = 0;
+        cpuN = gpuN = 0;
+        try { Fps.BeginSession(); } catch (Exception e) { Log.Error("Mesure des FPS de la partie", e); }
         Log.Info($"Jeu détecté : {g.Name} ({g.Exe})");
         if (!string.IsNullOrEmpty(g.Mode) && ModeDefs.Known(g.Mode) && g.Mode != cfg.LastMode) modes.Apply(g.Mode);
         if (g.Gpu.HasValue && g.Gpu.Value != cfg.GpuLimit.On) Tweaks.SetGpu(cfg, g.Gpu.Value);
@@ -207,7 +222,30 @@ public sealed class GameWatcher
     {
         var g = active;
         active = null;
+        Dictionary<string, object> fps = null;
+        try { fps = Fps.EndSession(); } catch (Exception e) { Log.Error("Fin de mesure des FPS", e); }
         Fps.PreferredPid = 0;
+        var secs = (long)(DateTime.Now - since).TotalSeconds;
+        if (secs >= 60)
+        {
+            var r = new Dictionary<string, object>
+            {
+                ["id"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["game"] = g.Name,
+                ["exe"] = g.Exe,
+                ["start"] = since.ToString("dd/MM HH:mm"),
+                ["duration"] = secs,
+                ["cpu_max"] = cpuN > 0 ? (object)(int)Math.Round(cpuMax) : null,
+                ["cpu_avg"] = cpuN > 0 ? (object)(int)Math.Round(cpuSum / cpuN) : null,
+                ["gpu_max"] = gpuN > 0 ? (object)(int)Math.Round(gpuMax) : null,
+                ["gpu_avg"] = gpuN > 0 ? (object)(int)Math.Round(gpuSum / gpuN) : null,
+                ["fan_mode"] = cfg.LastMode,
+                ["cpu_profile"] = cfg.Cpu.Enabled ? cfg.Cpu.Active : null,
+            };
+            if (fps != null) foreach (var kv in fps) r[kv.Key] = kv.Value;
+            GameReports.Add(r);
+            Log.Info($"Bilan de partie : {g.Name}, {secs / 60} min, {(fps != null ? fps["fps_avg"] + " FPS" : "FPS non mesurés")}");
+        }
         Log.Info($"Jeu fermé : {g.Name}, retour aux réglages d'avant");
         try
         {

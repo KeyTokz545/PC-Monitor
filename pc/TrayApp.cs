@@ -46,7 +46,8 @@ public sealed class TrayApp : ApplicationContext
         collector.Start();
 
         cpu = new CpuTuner(cfg);
-        games = new GameWatcher(cfg, modes, cpu);
+        cpu.Stress = new StressTest(cfg, collector);
+        games = new GameWatcher(cfg, modes, cpu) { Collector = collector };
         controls = new Controls(cfg, asus, modes, games);
         var actions = new Actions(cfg, modes, asus, games, cpu) { ResetPeaks = collector.ResetPeaks };
         web = new WebServer(cfg, collector, actions, controls);
@@ -330,6 +331,7 @@ public sealed class TrayApp : ApplicationContext
             WinKey.Set(false);
             ScreenColor.Reset();
             cpu.Stop();
+            cpu.Stress?.Stop();
             Msr.Close();
             tipTimer.Stop();
             tray.Visible = false;

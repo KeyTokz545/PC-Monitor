@@ -163,6 +163,10 @@ public sealed class WebServer
                     SendJson(ctx, 200, actions.Cpu.State());
                     return;
 
+                case "/api/reports":
+                    SendJson(ctx, 200, new Dictionary<string, object> { ["items"] = GameReports.All() });
+                    return;
+
                 case "/api/game":
                     SendJson(ctx, 200, Fps.State());
                     return;

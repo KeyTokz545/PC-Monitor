@@ -247,6 +247,12 @@ public sealed class CpuTuner
 
     public CpuTuner(AppConfig cfg) => this.cfg = cfg;
 
+    /// <summary>Test de stabilité (fourni par TrayApp).</summary>
+    public StressTest Stress { get; set; }
+
+    /// <summary>Undervolt cœurs actuellement voulu pour le profil actif (en test ou gardé).</summary>
+    public int ActiveCore => UvFor(cfg.Cpu.Active).Core;
+
     /// <summary>Toutes les 10 s : remet les limites (le BIOS ASUS les réécrit parfois) et l'undervolt (perdu après certaines veilles).</summary>
     public void Start() => timer = new System.Threading.Timer(_ => Maintain(), null, 15000, 10000);
 
@@ -765,6 +771,7 @@ public sealed class CpuTuner
             };
             d["mode"] = cfg.LastMode;
         }
+        d["stress"] = Stress?.State();
         lock (gate) d["test"] = test.HasValue ? new Dictionary<string, object> { ["mode"] = test.Value.Mode, ["core"] = test.Value.Core, ["gpu"] = test.Value.Gpu, ["sa"] = test.Value.Sa } : null;
 
         if (!IsIntel || !Msr.Available)

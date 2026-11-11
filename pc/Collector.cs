@@ -25,6 +25,7 @@ public sealed class Collector
 
     public float? CpuTemp { get; private set; }
     public float? GpuTemp { get; private set; }
+    public float? CpuPower { get; private set; }
 
     // max / min depuis la dernière remise à zéro (gardés par le PC, communs à tous les téléphones)
     readonly object peakGate = new();
@@ -170,6 +171,7 @@ public sealed class Collector
         };
         s["lhm"] = new Dictionary<string, object> { ["ok"] = sensors.Ok, ["error"] = sensors.Error };
         s["cpu_profile"] = cfg.Cpu.Enabled ? cfg.Cpu.Active : null;
+        s["last_report"] = GameReports.LatestId;
         s["demo"] = false;
         s["app"] = "pcmonitor";
         s["version"] = Program.Version;
@@ -179,6 +181,7 @@ public sealed class Collector
         var gpuD = (Dictionary<string, object>)s["gpu"];
         CpuTemp = cpuD.GetValueOrDefault("temp") as float?;
         GpuTemp = gpuD.GetValueOrDefault("temp") as float?;
+        CpuPower = cpuD.GetValueOrDefault("power") as float?;
         lock (peakGate)
         {
             Peak(ref cpuMin, ref cpuMax, CpuTemp);

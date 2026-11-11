@@ -424,6 +424,18 @@ public sealed class Actions
                 var (ok, msg) = Cpu.TestUndervolt(mode, I(body, "core"), I(body, "gpu"), I(body, "sa"));
                 return R(ok, msg + extra);
             }
+            case "stress_start":
+            {
+                if (Cpu.Stress == null) return R(false, "Test indisponible");
+                var (ok, msg) = Cpu.Stress.Start(I(body, "minutes"), cfg.Cpu.Active, Cpu.ActiveCore);
+                return R(ok, msg);
+            }
+            case "stress_stop":
+            {
+                if (Cpu.Stress == null) return R(false, "Test indisponible");
+                var (ok, msg) = Cpu.Stress.Stop();
+                return R(ok, msg);
+            }
             case "cpu_profile":
             {
                 var (ok, msg) = Cpu.SetProfile(S(body, "id"));

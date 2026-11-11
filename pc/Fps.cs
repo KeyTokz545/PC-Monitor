@@ -46,6 +46,62 @@ public static class Fps
     /// <summary>Processus du jeu détecté par les profils de jeu (prioritaire).</summary>
     public static int PreferredPid { get; set; }
 
+    // partie en cours (jeu à profil) : histogramme des temps d'image par pas de 0,1 ms, pour le bilan
+    static int[] sessionHist;
+    static long sessionFrames;
+    static double sessionMs;
+    static volatile bool keepAlive;
+
+    /// <summary>Début d'une partie : l'écoute reste active jusqu'à la fin, même sans téléphone.</summary>
+    public static void BeginSession()
+    {
+        lock (Gate)
+        {
+            sessionHist = new int[2001];
+            sessionFrames = 0;
+            sessionMs = 0;
+            keepAlive = true;
+        }
+        Interlocked.Exchange(ref lastTouch, Clock.ElapsedMilliseconds);
+        if (session == null) Start();
+    }
+
+    /// <summary>Fin de partie : FPS moyen, 1 % et 0,1 % bas sur toute la partie (null si rien mesuré).</summary>
+    public static Dictionary<string, object> EndSession()
+    {
+        int[] h;
+        long frames;
+        double ms;
+        lock (Gate)
+        {
+            h = sessionHist;
+            frames = sessionFrames;
+            ms = sessionMs;
+            sessionHist = null;
+            keepAlive = false;
+        }
+        if (h == null || frames < 100 || ms <= 0) return null;
+        double Low(double share)
+        {
+            long need = Math.Max(1, (long)(frames * share)), got = 0;
+            double sum = 0;
+            for (int i = h.Length - 1; i >= 0 && got < need; i--)
+            {
+                long take = Math.Min(h[i], need - got);
+                sum += take * (i / 10.0 + 0.05);
+                got += take;
+            }
+            return got > 0 ? 1000.0 / (sum / got) : 0;
+        }
+        return new Dictionary<string, object>
+        {
+            ["fps_avg"] = (int)Math.Round(frames / (ms / 1000.0)),
+            ["low1"] = (int)Math.Round(Low(0.01)),
+            ["low01"] = (int)Math.Round(Low(0.001)),
+            ["frames"] = frames,
+        };
+    }
+
     public static bool Running => session != null;
 
     [DllImport("user32.dll")]
@@ -143,7 +199,16 @@ public static class Fps
             if (t.LastTs >= 0)
             {
                 var ft = ts - t.LastTs;
-                if (ft > 0 && ft < 1000) t.Frames.Enqueue((ts, (float)ft));
+                if (ft > 0 && ft < 1000)
+                {
+                    t.Frames.Enqueue((ts, (float)ft));
+                    if (sessionHist != null && pid == PreferredPid)
+                    {
+                        sessionHist[Math.Min(2000, (int)(ft * 10))]++;
+                        sessionFrames++;
+                        sessionMs += ft;
+                    }
+                }
             }
             t.LastTs = ts;
             t.LastWall = wall;
@@ -189,7 +254,7 @@ public static class Fps
     static void Second()
     {
         long now = Clock.ElapsedMilliseconds;
-        if (now - Interlocked.Read(ref lastTouch) > 60_000)
+        if (now - Interlocked.Read(ref lastTouch) > 60_000 && !keepAlive)
         {
             Stop();
             Log.Info("Compteur FPS arrêté (plus personne ne regarde)");

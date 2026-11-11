@@ -345,6 +345,15 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .sheet .acts .ok{background:var(--cool);color:var(--ink)}
 .sheet .acts{margin-top:16px}
 #g-running button{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-hud{margin-top:12px}
+.r-hud div{background:var(--raise)}
+.rrow{display:flex;align-items:center;gap:12px;min-height:56px;border-top:1px solid var(--line);width:100%;text-align:left}
+.rrow:first-child{border-top:0}
+.rrow .rt{flex:1;min-width:0}
+.rrow .rt b{display:block;font-size:15px;font-weight:600}
+.rrow .rt span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .rf{font-family:var(--num);font-weight:700;font-size:20px;text-align:right;line-height:1.1}
+.rrow .rf small{display:block;font-size:11px;color:var(--muted);font-weight:600}
 #game-active{margin-bottom:var(--gap);background:rgba(79,195,224,.1);border-color:rgba(79,195,224,.4);color:var(--text)}
 #game-active[hidden]{display:none}
 .kb-zones{display:flex;gap:8px;margin:2px 0 10px}
@@ -377,6 +386,17 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .uv-test .pair .wide{margin-top:10px}
 #cm-lim-box[hidden]{display:none}
 #cm-mode{margin-bottom:4px}
+.st-prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:6px 0 10px}
+.st-prog i{display:block;height:100%;width:0;background:var(--cool);transition:width .8s}
+.st-res{border:1px solid var(--line);border-left:4px solid var(--faint);border-radius:var(--r-inner);padding:10px 12px;margin-top:12px;background:var(--raise)}
+.st-res[hidden]{display:none}
+.st-res b{display:block;font-size:16px;margin-bottom:3px}
+.st-res p{font-size:13.5px;color:var(--muted)}
+.st-res .meta-l{font-size:12.5px;color:var(--faint);margin-top:6px}
+.st-res.ok{border-left-color:#5BE08A}.st-res.ok b{color:#5BE08A}
+.st-res.bad,.st-res.crash{border-left-color:var(--hot)}.st-res.bad b,.st-res.crash b{color:var(--hot)}
+.st-res.partial{border-left-color:var(--amber)}.st-res.partial b{color:var(--amber)}
+#st-idle[hidden],#st-run[hidden]{display:none}
 .cpu-only[hidden]{display:none}
 .cm-name{font-size:13px;color:var(--muted);margin:6px 2px 2px}
 .cm-name b{color:var(--text);font-weight:700}
@@ -627,6 +647,13 @@ html[data-density="compact"] .chips button{height:32px}
           </div>
         </div>
 
+        <div class="section" id="sec-reports">
+          <h3>Dernières parties</h3>
+          <div class="panel">
+            <div id="rep-list"><p class="muted small" style="padding:6px 2px">Le bilan s'affiche ici à la fin de chaque partie d'un jeu qui a un profil automatique (FPS, températures, durée).</p></div>
+          </div>
+        </div>
+
         <div class="section" id="sec-games">
           <h3>Profils de jeu automatiques</h3>
           <div class="panel">
@@ -684,6 +711,31 @@ html[data-density="compact"] .chips button{height:32px}
             <button class="wide primary" id="uv-apply">Tester ces valeurs</button>
             <button class="link" id="uv-copy">Mettre ces valeurs gardées dans les 3 profils</button>
             <p class="hint in">Moins de tension = moins de chaleur à performances égales. Avance par paliers de 10 à 25 mV. Un réglage en test n'est jamais remis après un redémarrage : si le PC plante, il repart avec le dernier réglage gardé.</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Test de stabilité</h3>
+          <div class="panel">
+            <div id="st-idle">
+              <div class="sub-h first">Durée</div>
+              <div class="chips" id="st-min"><button data-v="5">5 min</button><button data-v="10">10 min</button><button data-v="20">20 min</button><button data-v="30">30 min</button></div>
+              <button class="wide primary" id="st-start">Lancer le test</button>
+            </div>
+            <div id="st-run" hidden>
+              <div class="st-prog"><i id="st-bar"></i></div>
+              <div class="stats">
+                <div class="row"><span class="muted">Temps</span><span class="num" id="st-time">–</span></div>
+                <div class="row"><span class="muted">Erreurs de calcul</span><span class="num" id="st-err">–</span></div>
+                <div class="row"><span class="muted">Erreurs matérielles</span><span class="num" id="st-whea">–</span></div>
+                <div class="row"><span class="muted">Température max</span><span class="num" id="st-temp">–</span></div>
+                <div class="row"><span class="muted">Fréquence moyenne</span><span class="num" id="st-clock">–</span></div>
+                <div class="row"><span class="muted">Ralenti (temp. / puiss.)</span><span class="num" id="st-thr">–</span></div>
+              </div>
+              <button class="wide" id="st-stop">Arrêter le test</button>
+            </div>
+            <div class="st-res" id="st-res" hidden></div>
+            <p class="hint in">Charge maximale sur tous les cœurs avec le profil actif et son undervolt (en test ou gardé). Ferme tes jeux avant. Si le PC plante, PC Monitor le verra au redémarrage.</p>
           </div>
         </div>
 
@@ -916,6 +968,14 @@ html[data-density="compact"] .chips button{height:32px}
     <div class="acts one"><button id="custom-close">Terminé</button></div>
   </div>
 </div>
+<div class="sheet" id="rsheet">
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="r-title">
+    <p id="r-title">Bilan de partie</p>
+    <div class="sub" id="r-sub"></div>
+    <div class="hud r-hud" id="r-hud"></div>
+    <div class="acts one"><button id="r-close">Fermer</button></div>
+  </div>
+</div>
 <div class="sheet" id="gsheet">
   <div class="box tall" role="dialog" aria-modal="true" aria-labelledby="g-title">
     <p id="g-title">Profil de jeu</p>
@@ -1108,6 +1168,7 @@ function render(s) {
   $("cpu-name").textContent = shortName(c.name); $("gpu-name").textContent = shortName(g.name);
   setDial(dials.cpu, c.temp, c.temp_max); setDial(dials.gpu, g.temp, g.temp_max);
   paintCpuProfile(s.cpu_profile || null, s.cpu_profile != null);
+  if (s.last_report != null) checkNewReport(s.last_report);
   const peaks = (x, d) => x.temp_max != null ? `↑${Math.round(x.temp_max)}° ↓${Math.round(x.temp_min)}°` : d.max != null ? `max ${Math.round(d.max)}°` : "";
   dials.cpu.lbl.textContent = peaks(c, dials.cpu);
   dials.gpu.lbl.textContent = peaks(g, dials.gpu);
@@ -2004,6 +2065,47 @@ $("g-delete").addEventListener("click", () => {
 $("game-add").addEventListener("click", () => openGame(null));
 $("fps-add").addEventListener("click", () => { if (GAME && GAME.app) openGame(null, GAME.app + ".exe"); });
 
+/* Bilans de fin de partie */
+let REPORTS = [];
+const dur = s => s >= 3600 ? `${Math.floor(s / 3600)} h ${String(Math.floor(s % 3600 / 60)).padStart(2, "0")}` : `${Math.max(1, Math.round(s / 60))} min`;
+async function loadReports() {
+  try { const r = await api("/api/reports"); REPORTS = r.items || []; renderReports(); } catch (e) {}
+  return REPORTS;
+}
+function renderReports() {
+  if (!REPORTS.length) return;
+  $("rep-list").innerHTML = REPORTS.map((r, i) => `<button class="rrow" data-rep="${i}">
+    <div class="rt"><b>${esc(r.game)}</b><span>${esc(r.start || "")} · ${dur(r.duration || 0)}${r.cpu_max != null ? ` · CPU ${r.cpu_max}°` : ""}${r.gpu_max != null ? ` · GPU ${r.gpu_max}°` : ""}</span></div>
+    <div class="rf">${r.fps_avg != null ? r.fps_avg : "–"}<small>FPS moy.</small></div></button>`).join("");
+}
+$("rep-list").addEventListener("click", e => { const b = e.target.closest("[data-rep]"); if (b) showReport(REPORTS[+b.dataset.rep]); });
+function showReport(r) {
+  if (!r) return;
+  $("r-title").textContent = `Bilan : ${r.game}`;
+  $("r-sub").textContent = `${r.start || ""} · ${dur(r.duration || 0)}` +
+    (r.fan_mode ? ` · ${MODE_SHORT[r.fan_mode] || r.fan_mode}` : "") + (r.cpu_profile ? ` · CPU ${CPU_PROFILE[r.cpu_profile] || r.cpu_profile}` : "");
+  const tile = (v, l, color) => `<div><span class="num"${color ? ` style="color:${color}"` : ""}>${v}</span><small>${l}</small></div>`;
+  $("r-hud").innerHTML = [
+    tile(r.fps_avg ?? "–", "FPS moyen"), tile(r.low1 ?? "–", "1 % bas"), tile(r.low01 ?? "–", "0,1 % bas"),
+    tile(r.cpu_max != null ? r.cpu_max + "°" : "–", "CPU max", r.cpu_max != null ? thermal(r.cpu_max) : ""),
+    tile(r.gpu_max != null ? r.gpu_max + "°" : "–", "GPU max", r.gpu_max != null ? thermal(r.gpu_max) : ""),
+    tile(r.cpu_avg != null ? `${r.cpu_avg}° / ${r.gpu_avg ?? "–"}°` : "–", "Moy. CPU / GPU"),
+  ].join("") + (r.fps_avg == null ? `<p class="muted small" style="grid-column:1/-1">FPS non mesurés pour cette partie.</p>` : "");
+  $("rsheet").classList.add("show");
+}
+$("r-close").addEventListener("click", () => $("rsheet").classList.remove("show"));
+$("rsheet").addEventListener("click", e => { if (e.target.id === "rsheet") $("rsheet").classList.remove("show"); });
+let reportChecking = false;
+async function checkNewReport(id) {
+  if (id == null || reportChecking || String(UI.seenReport) === String(id)) return;
+  reportChecking = true;
+  try {
+    const list = await loadReports();
+    UI.seenReport = id; saveUI();
+    if (list[0] && String(list[0].id) === String(id)) showReport(list[0]);
+  } finally { reportChecking = false; }
+}
+
 /* Minuteur d'arrêt / de veille (onglet Contrôles) */
 let timerWhat = "shutdown";
 function renderTimer() {
@@ -2087,11 +2189,47 @@ function renderCpu() {
   if (!cmMode) cmMode = st.active || c.mode || "balanced";
   press($("cm-mode"), cmMode); press($("uv-mode"), cmMode);
   renderUv();
+  renderStress();
   ["uv-core", "uv-gpu", "uv-sa", "uv-apply", "uv-keep", "uv-cancel", "cm-save", "cpu-takeover", "cpu-tsboot"].forEach(id => $(id).disabled = !avail);
   if (!cmDirty) fillCpuMode();
 }
 const CPU_PROFILE = { silent: "Léger", balanced: "Médium", turbo: "Gros" };
 const ghz = v => v >= 41 ? "Sans limite" : nf(v / 10, 1) + " GHz";
+let stMin = 10;
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+function renderStress() {
+  const st = (CPU && CPU.stress) || {}, run = !!st.running;
+  $("st-idle").hidden = run; $("st-run").hidden = !run;
+  press($("st-min"), String(stMin));
+  $("st-start").disabled = !(CPU && CPU.available);
+  if (run) {
+    $("st-bar").style.width = Math.min(100, st.seconds / Math.max(1, st.duration) * 100) + "%";
+    $("st-time").textContent = `${mmss(st.seconds)} / ${mmss(st.duration)}`;
+    $("st-err").textContent = st.errors; $("st-err").style.color = st.errors ? "var(--hot)" : "";
+    $("st-whea").textContent = st.whea; $("st-whea").style.color = st.whea ? "var(--hot)" : "";
+    $("st-temp").textContent = st.temp_max != null ? st.temp_max + " °C" : "–";
+    $("st-clock").textContent = st.clock != null ? nf(st.clock, 2) + " GHz" : "–";
+    $("st-thr").textContent = `${st.thermal_s} s / ${st.power_s} s`;
+  }
+  const r = !run && st.result;
+  $("st-res").hidden = !r;
+  if (r) {
+    $("st-res").className = "st-res " + r.verdict;
+    const bits = [];
+    if (r.profile) bits.push(`profil ${CPU_PROFILE[r.profile] || r.profile}`);
+    if (r.core != null) bits.push(`${r.core} mV`);
+    if (r.temp_max != null) bits.push(`${r.temp_max} °C max`);
+    if (r.clock_avg != null) bits.push(`${nf(r.clock_avg, 2)} GHz moy.`);
+    if (r.power_avg != null) bits.push(`${r.power_avg} W moy.`);
+    if (r.at) bits.push(r.at);
+    $("st-res").innerHTML = `<b>${esc(r.title)}</b><p>${esc(r.detail)}</p><div class="meta-l">${esc(bits.join(" · "))}</div>`;
+  }
+}
+$("st-min").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) { stMin = +b.dataset.v; press($("st-min"), b.dataset.v); } });
+$("st-start").addEventListener("click", () => confirmSheet(`Lancer ${stMin} min de test ?`,
+  "Le processeur va tourner à fond : ventilateurs au maximum et PC peu réactif pendant le test. Ferme tes jeux et enregistre ton travail.",
+  async () => { await act({ action: "stress_start", minutes: stMin }); loadCpu(); }, "Lancer"));
+$("st-stop").addEventListener("click", async () => { await act({ action: "stress_stop" }); loadCpu(); });
 function profOf(mode) { return ((CPU && CPU.settings && CPU.settings.modes) || {})[mode] || {}; }
 function modeLabel(mode) { return (MODES.find(x => x.id === mode) || {}).label || mode; }
 function renderUv() {
@@ -2190,7 +2328,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   document.querySelector("main").scrollTop = 0;
   if (t.dataset.view === "v-mon") { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); }
   if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf" || t.dataset.view === "v-game") loadControls();
-  if (t.dataset.view === "v-game") { loadGame(); renderGame(); }
+  if (t.dataset.view === "v-game") { loadGame(); renderGame(); loadReports(); }
   if (t.dataset.view === "v-cpu") { cmMode = null; cmDirty = false; uvDirty = false; loadControls(); loadCpu(); }
 }));
 window.addEventListener("resize", () => { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); });
