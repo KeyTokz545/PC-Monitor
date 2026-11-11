@@ -133,6 +133,7 @@ public sealed class WebServer
             switch (path)
             {
                 case "/api/stats":
+                    collector.Touch();
                     SendJson(ctx, 200, collector.StatsJson);
                     return;
 

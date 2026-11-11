@@ -48,7 +48,8 @@ public sealed class TrayApp : ApplicationContext
         games = new GameWatcher(cfg, modes);
         cpu = new CpuTuner(cfg);
         controls = new Controls(cfg, asus, modes, games);
-        web = new WebServer(cfg, collector, new Actions(cfg, modes, asus, games, cpu), controls);
+        var actions = new Actions(cfg, modes, asus, games, cpu) { ResetPeaks = collector.ResetPeaks };
+        web = new WebServer(cfg, collector, actions, controls);
         string webError = null;
         try
         {
@@ -86,6 +87,7 @@ public sealed class TrayApp : ApplicationContext
             controls.Reapply();
             cpu.Reapply();
             cpu.Start();
+            _ = Task.Run(() => cpu.EnsureThreshold(true));
             games.Start();
             await Task.Delay(1500);
             LaunchTools();

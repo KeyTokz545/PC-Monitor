@@ -43,6 +43,12 @@ public sealed class CpuSettings
     public int GpuMv { get; set; }
     public int SaMv { get; set; }
     public Dictionary<string, CpuModeTune> Modes { get; set; } = new();
+    /// <summary>
+    /// Seuil thermique à TjMax (100 °C) : le module PawnIO ne permet pas de l'écrire, donc on lance ThrottleStop
+    /// caché quelques secondes au démarrage pour qu'il le règle, puis on le ferme.
+    /// </summary>
+    public bool TsBoot { get; set; }
+    public string TsPath { get; set; }
 }
 
 /// <summary>Accès aux registres MSR par PawnIO.</summary>
@@ -183,6 +189,7 @@ public sealed class CpuTuner
                 }
             }
             if (++ticks % 3 != 0) return;
+            if (cfg.Cpu.TsBoot && TccOffset() > 0) System.Threading.Tasks.Task.Run(() => EnsureThreshold());
             (int Core, int Gpu, int Sa) uv;
             lock (gate) uv = test ?? (cfg.Cpu.CoreMv, cfg.Cpu.GpuMv, cfg.Cpu.SaMv);
             if (uv.Core == 0) return;
@@ -405,7 +412,81 @@ public sealed class CpuTuner
         }
     }
 
-    public static bool ThrottleStopRunning() => Process.GetProcessesByName("ThrottleStop").Length > 0;
+    public static bool ThrottleStopRunning()
+    {
+        var list = Process.GetProcessesByName("ThrottleStop");
+        foreach (var p in list) p.Dispose();
+        return list.Length > 0;
+    }
+
+    /// <summary>Décalage du seuil thermique (TCC offset) en °C : 0 = le processeur ne ralentit qu'à TjMax.</summary>
+    public static int? TccOffset() => Msr.Read(TEMP_TARGET, out var v) ? (int)((v >> 24) & 0x3F) : null;
+
+    string ThrottleStopPath()
+    {
+        var p = cfg.Cpu.TsPath;
+        if (!string.IsNullOrEmpty(p) && File.Exists(p)) return p;
+        p = Catalog.FindTools().FirstOrDefault(t => Path.GetFileName(t.Path).StartsWith("ThrottleStop", StringComparison.OrdinalIgnoreCase)).Path;
+        if (!string.IsNullOrEmpty(p) && File.Exists(p))
+        {
+            cfg.Cpu.TsPath = p;
+            cfg.Save();
+            return p;
+        }
+        return null;
+    }
+
+    long lastTs = -999_999;
+    public string TsStatus { get; private set; }
+
+    /// <summary>
+    /// Si le seuil n'est plus à TjMax (redémarrage, veille), lance ThrottleStop caché, attend qu'il ait réglé le seuil,
+    /// le ferme et remet les réglages de PC Monitor par-dessus. Au plus une fois toutes les 10 minutes.
+    /// </summary>
+    public void EnsureThreshold(bool force = false)
+    {
+        try
+        {
+            if (!cfg.Cpu.Enabled || !cfg.Cpu.TsBoot || !Msr.Available) return;
+            if (TccOffset() == 0 || ThrottleStopRunning()) return;
+            if (!force && Clock.ElapsedMilliseconds - lastTs < 600_000) return;
+            lastTs = Clock.ElapsedMilliseconds;
+            var path = ThrottleStopPath();
+            if (path == null)
+            {
+                TsStatus = "ThrottleStop introuvable : garde-le installé (dossier d'origine) pour régler le seuil à 100 °C.";
+                Log.Info("Seuil thermique : ThrottleStop introuvable");
+                return;
+            }
+            using var p = Process.Start(new ProcessStartInfo(path)
+            {
+                UseShellExecute = true,
+                WorkingDirectory = Path.GetDirectoryName(path),
+                WindowStyle = ProcessWindowStyle.Minimized,
+            });
+            int? off = null;
+            for (int i = 0; i < 30; i++)
+            {
+                System.Threading.Thread.Sleep(500);
+                off = TccOffset();
+                if (off == 0) break;
+            }
+            System.Threading.Thread.Sleep(1500); // le temps qu'il finisse d'appliquer le reste
+            foreach (var q in Process.GetProcessesByName("ThrottleStop"))
+            {
+                try { q.Kill(); } catch { }
+                finally { q.Dispose(); }
+            }
+            TsStatus = off == 0 ? null : "ThrottleStop n'a pas réglé le seuil : vérifie le PROCHOT Offset (0) dans ThrottleStop.";
+            Log.Info($"Seuil thermique via ThrottleStop : décalage {off} °C");
+            Win.Run("powercfg", "/setactive SCHEME_CURRENT", 5000); // Windows remet sa préférence d'énergie
+            Reapply();
+        }
+        catch (Exception e)
+        {
+            Log.Error("Seuil thermique via ThrottleStop", e);
+        }
+    }
 
     /// <summary>Reprend les réglages que ThrottleStop a appliqués (lus dans le processeur), puis le ferme et coupe son lancement automatique.</summary>
     public (bool Ok, string Message) TakeOver()
@@ -417,8 +498,20 @@ public sealed class CpuTuner
         var gpu = ReadOffset(PlaneGpu);
         var sa = ReadOffset(PlaneSa);
         var lim = ReadLimits();
+        var tcc = TccOffset();
+        foreach (var p in Process.GetProcessesByName("ThrottleStop"))
+        {
+            try { cfg.Cpu.TsPath = p.MainModule?.FileName ?? cfg.Cpu.TsPath; } catch { }
+            finally { p.Dispose(); }
+        }
         lock (AppConfig.Gate)
         {
+            if (tcc == 0)
+            {
+                // ThrottleStop avait mis le seuil à TjMax : on le garde grâce au lancement éclair au démarrage
+                cfg.Cpu.TsBoot = true;
+                notes.Add("seuil 100 °C gardé");
+            }
             if (core.HasValue)
             {
                 cfg.Cpu.CoreMv = Math.Clamp(Math.Max(core.Value, cache ?? core.Value), -250, 0);
@@ -521,6 +614,9 @@ public sealed class CpuTuner
                 ["core"] = cfg.Cpu.CoreMv,
                 ["gpu"] = cfg.Cpu.GpuMv,
                 ["sa"] = cfg.Cpu.SaMv,
+                ["ts_boot"] = cfg.Cpu.TsBoot,
+                ["ts_found"] = !string.IsNullOrEmpty(cfg.Cpu.TsPath) && File.Exists(cfg.Cpu.TsPath),
+                ["ts_status"] = TsStatus,
                 ["modes"] = ModeDefs.Order.ToDictionary(m => m, m =>
                 {
                     cfg.Cpu.Modes.TryGetValue(m, out var t);
@@ -556,7 +652,11 @@ public sealed class CpuTuner
                 ["prochot"] = ((th >> 2) & 1) == 1,
                 ["power"] = ((th >> 10) & 1) == 1,
             };
-        if (Msr.Read(TEMP_TARGET, out var tt)) d["tjmax"] = (int)((tt >> 16) & 0xFF);
+        if (Msr.Read(TEMP_TARGET, out var tt))
+        {
+            d["tjmax"] = (int)((tt >> 16) & 0xFF);
+            d["tcc_offset"] = (int)((tt >> 24) & 0x3F);
+        }
         if (Msr.Read(PLATFORM_INFO, out var pi)) d["base_ratio"] = (int)((pi >> 8) & 0xFF);
         d["limits"] = ReadLimits();
         // l'undervolt réel se lit par la boîte aux lettres : pas plus d'une fois toutes les 5 s

@@ -16,6 +16,9 @@ public sealed class Actions
 
     public CpuTuner Cpu { get; }
 
+    /// <summary>Remise à zéro des températures max / min (fournie par TrayApp).</summary>
+    public Action ResetPeaks { get; set; }
+
     public Actions(AppConfig cfg, ModeService modes, Asus asus, GameWatcher games, CpuTuner cpu)
     {
         this.cfg = cfg;
@@ -447,6 +450,17 @@ public sealed class Actions
                 if (Has(body, "epp") && t.Epp >= 0) CpuTuner.SetEpp(t.Epp);
                 return R(true, "Réglages processeur appliqués");
             }
+            case "cpu_tsboot":
+            {
+                var on = B(body, "on") ?? !cfg.Cpu.TsBoot;
+                cfg.Cpu.TsBoot = on;
+                cfg.Save();
+                if (on) System.Threading.Tasks.Task.Run(() => Cpu.EnsureThreshold(true));
+                return R(true, on ? "Seuil à 100 °C : ThrottleStop sera lancé caché quelques secondes au démarrage" : "Seuil thermique laissé au BIOS (95 °C)");
+            }
+            case "temps_reset":
+                ResetPeaks?.Invoke();
+                return R(true, "Températures max et min remises à zéro");
             case "cpu_takeover":
             {
                 var (ok, msg) = Cpu.TakeOver();

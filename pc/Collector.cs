@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
@@ -25,6 +26,36 @@ public sealed class Collector
     public float? CpuTemp { get; private set; }
     public float? GpuTemp { get; private set; }
 
+    // max / min depuis la dernière remise à zéro (gardés par le PC, communs à tous les téléphones)
+    readonly object peakGate = new();
+    float? cpuMin, cpuMax, gpuMin, gpuMax;
+    DateTime peaksSince = DateTime.Now;
+
+    // veille : sans téléphone connecté, mesures toutes les 5 s, sans Wi-Fi ni ping
+    long lastClient = -60_000;
+    bool trimmed;
+
+    [DllImport("kernel32.dll")]
+    static extern IntPtr GetCurrentProcess();
+
+    [DllImport("kernel32.dll")]
+    static extern bool SetProcessWorkingSetSize(IntPtr process, IntPtr min, IntPtr max);
+
+    /// <summary>Un téléphone regarde : mesures complètes chaque seconde.</summary>
+    public void Touch() => Interlocked.Exchange(ref lastClient, Environment.TickCount64);
+
+    public bool Active => Environment.TickCount64 - Interlocked.Read(ref lastClient) < 15_000;
+
+    public void ResetPeaks()
+    {
+        lock (peakGate)
+        {
+            cpuMin = cpuMax = gpuMin = gpuMax = null;
+            peaksSince = DateTime.Now;
+        }
+        Log.Info("Températures max et min remises à zéro");
+    }
+
     public Collector(AppConfig cfg, Sensors sensors, Asus asus)
     {
         this.cfg = cfg;
@@ -46,36 +77,63 @@ public sealed class Collector
     void Loop()
     {
         DateTime lastSlow = DateTime.MinValue, lastLatency = DateTime.MinValue;
+        long idleSince = Environment.TickCount64;
         while (running)
         {
             var t0 = DateTime.UtcNow;
+            var active = Active;
             try
             {
-                if ((t0 - lastSlow).TotalSeconds >= 5)
+                if (active)
                 {
-                    lastSlow = t0;
-                    wifi = NetInfo.Wifi();
+                    trimmed = false;
+                    idleSince = Environment.TickCount64;
+                    if ((t0 - lastSlow).TotalSeconds >= 5)
+                    {
+                        lastSlow = t0;
+                        wifi = NetInfo.Wifi();
+                    }
+                    if ((t0 - lastLatency).TotalSeconds >= 2)
+                    {
+                        lastLatency = t0;
+                        latencies.Enqueue(NetInfo.Latency(cfg.LatencyHost, cfg.LatencyPort));
+                        while (latencies.Count > 30) latencies.Dequeue();
+                    }
                 }
-                if ((t0 - lastLatency).TotalSeconds >= 2)
+                Snapshot(active);
+                // une minute sans téléphone : on rend la mémoire inutilisée à Windows
+                if (!active && !trimmed && Environment.TickCount64 - idleSince > 60_000)
                 {
-                    lastLatency = t0;
-                    latencies.Enqueue(NetInfo.Latency(cfg.LatencyHost, cfg.LatencyPort));
-                    while (latencies.Count > 30) latencies.Dequeue();
+                    trimmed = true;
+                    GC.Collect(2, GCCollectionMode.Forced, true, true);
+                    SetProcessWorkingSetSize(GetCurrentProcess(), (IntPtr)(-1), (IntPtr)(-1));
                 }
-                Snapshot();
             }
             catch (Exception e)
             {
                 Log.Error("Mesures", e);
             }
-            var wait = 1000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds;
-            Thread.Sleep(Math.Max(200, wait));
+            var period = active ? 1000 : 5000;
+            var wait = period - (int)(DateTime.UtcNow - t0).TotalMilliseconds;
+            // réveil rapide dès qu'un téléphone revient
+            for (var left = Math.Max(200, wait); left > 0 && running; left -= 250)
+            {
+                Thread.Sleep(Math.Min(250, left));
+                if (!active && Active) break;
+            }
         }
     }
 
-    void Snapshot()
+    static void Peak(ref float? min, ref float? max, float? v)
     {
-        var s = sensors.Read(wifi?.GetValueOrDefault("name") as string);
+        if (!v.HasValue || v.Value <= 1) return;
+        min = min.HasValue ? Math.Min(min.Value, v.Value) : v.Value;
+        max = max.HasValue ? Math.Max(max.Value, v.Value) : v.Value;
+    }
+
+    void Snapshot(bool full)
+    {
+        var s = sensors.Read(wifi?.GetValueOrDefault("name") as string, full);
 
         // latence, gigue, pertes
         var lats = latencies.ToList();
@@ -116,8 +174,20 @@ public sealed class Collector
         s["version"] = Program.Version;
         s["time"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        CpuTemp = ((Dictionary<string, object>)s["cpu"])["temp"] as float?;
-        GpuTemp = ((Dictionary<string, object>)s["gpu"])["temp"] as float?;
+        var cpuD = (Dictionary<string, object>)s["cpu"];
+        var gpuD = (Dictionary<string, object>)s["gpu"];
+        CpuTemp = cpuD.GetValueOrDefault("temp") as float?;
+        GpuTemp = gpuD.GetValueOrDefault("temp") as float?;
+        lock (peakGate)
+        {
+            Peak(ref cpuMin, ref cpuMax, CpuTemp);
+            Peak(ref gpuMin, ref gpuMax, GpuTemp);
+            cpuD["temp_min"] = cpuMin;
+            cpuD["temp_max"] = cpuMax;
+            gpuD["temp_min"] = gpuMin;
+            gpuD["temp_max"] = gpuMax;
+            s["peaks_since"] = (long)(DateTime.Now - peaksSince).TotalSeconds;
+        }
         statsJson = JsonSerializer.Serialize(s, Json);
     }
 }

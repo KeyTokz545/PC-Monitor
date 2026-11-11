@@ -62,8 +62,15 @@ public sealed class Sensors : IDisposable
     static readonly Regex CoreClock = new(@"core #\d+", RegexOptions.IgnoreCase);
 
     /// <summary>Lit tous les capteurs et renvoie le résumé envoyé au téléphone.</summary>
-    public Dictionary<string, object> Read(string wifiAdapterName)
+    int fullReads;
+
+    /// <summary>
+    /// <paramref name="full"/> = un téléphone regarde : tout est relu (disques une fois sur 5).
+    /// Sinon seuls le processeur et la carte graphique sont relus (pour le max / min et l'icône).
+    /// </summary>
+    public Dictionary<string, object> Read(string wifiAdapterName, bool full = true)
     {
+        if (full) fullReads++;
         var result = new Dictionary<string, object>();
         IHardware cpu = null, gpu = null, ram = null;
         var nics = new List<IHardware>();
@@ -75,8 +82,14 @@ public sealed class Sensors : IDisposable
             {
                 try
                 {
-                    hw.Update();
-                    foreach (var sub in hw.SubHardware) sub.Update();
+                    var t = hw.HardwareType;
+                    bool main = t == HardwareType.Cpu || t == HardwareType.GpuNvidia || t == HardwareType.GpuAmd || t == HardwareType.GpuIntel;
+                    bool update = main || (full && (t != HardwareType.Storage || fullReads % 5 == 1));
+                    if (update)
+                    {
+                        hw.Update();
+                        foreach (var sub in hw.SubHardware) sub.Update();
+                    }
                 }
                 catch (Exception e)
                 {

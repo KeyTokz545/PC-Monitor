@@ -11,7 +11,11 @@
     <RootNamespace>PCMonitor</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.3.0</Version>
+    <Version>2.4.0</Version>
+    <!-- léger : un seul tas mémoire compact, pas de fil de nettoyage en arrière-plan -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
     <Product>PC Monitor</Product>
     <Company>KeyTokz545</Company>
     <Description>Monitoring et contrôle du PC depuis un téléphone</Description>
@@ -21,6 +25,11 @@
     <PublishTrimmed>false</PublishTrimmed>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- le ramasse-miettes compacte davantage pour garder peu de mémoire -->
+    <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="7" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
