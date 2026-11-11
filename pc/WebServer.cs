@@ -158,6 +158,10 @@ public sealed class WebServer
                     SendJson(ctx, 200, controls.State());
                     return;
 
+                case "/api/cpu":
+                    SendJson(ctx, 200, actions.Cpu.State());
+                    return;
+
                 case "/api/game":
                     SendJson(ctx, 200, Fps.State());
                     return;

@@ -20,6 +20,7 @@ public sealed class TrayApp : ApplicationContext
     readonly ModeService modes;
     readonly Controls controls;
     readonly GameWatcher games;
+    readonly CpuTuner cpu;
     readonly WebServer web;
     readonly Discovery discovery;
     readonly NotifyIcon tray;
@@ -45,8 +46,9 @@ public sealed class TrayApp : ApplicationContext
         collector.Start();
 
         games = new GameWatcher(cfg, modes);
+        cpu = new CpuTuner(cfg);
         controls = new Controls(cfg, asus, modes, games);
-        web = new WebServer(cfg, collector, new Actions(cfg, modes, asus, games), controls);
+        web = new WebServer(cfg, collector, new Actions(cfg, modes, asus, games, cpu), controls);
         string webError = null;
         try
         {
@@ -70,6 +72,7 @@ public sealed class TrayApp : ApplicationContext
         tipTimer.Start();
 
         modes.Changed += _ => UpdateTip();
+        modes.Changed += m => Task.Run(() => cpu.ApplyMode(m));
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
         SystemEvents.DisplaySettingsChanged += OnDisplayChanged;
 
@@ -81,6 +84,7 @@ public sealed class TrayApp : ApplicationContext
             await Task.Delay(2500);
             modes.Reapply();
             controls.Reapply();
+            cpu.Reapply();
             games.Start();
             await Task.Delay(1500);
             LaunchTools();
@@ -279,7 +283,11 @@ public sealed class TrayApp : ApplicationContext
             {
                 await Task.Delay(delay);
                 modes.Reapply();
-                if (e.Mode == PowerModes.Resume) controls.Reapply();
+                if (e.Mode == PowerModes.Resume)
+                {
+                    controls.Reapply();
+                    cpu.Reapply();
+                }
             });
         }
     }
@@ -304,6 +312,7 @@ public sealed class TrayApp : ApplicationContext
             Fps.Stop();
             WinKey.Set(false);
             ScreenColor.Reset();
+            Msr.Close();
             tipTimer.Stop();
             tray.Visible = false;
             tray.Dispose();

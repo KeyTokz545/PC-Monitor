@@ -14,12 +14,15 @@ public sealed class Actions
     readonly Asus asus;
     readonly GameWatcher games;
 
-    public Actions(AppConfig cfg, ModeService modes, Asus asus, GameWatcher games)
+    public CpuTuner Cpu { get; }
+
+    public Actions(AppConfig cfg, ModeService modes, Asus asus, GameWatcher games, CpuTuner cpu)
     {
         this.cfg = cfg;
         this.modes = modes;
         this.asus = asus;
         this.games = games;
+        Cpu = cpu;
     }
 
     static double D(JsonElement b, string name, double fallback) =>
@@ -391,6 +394,63 @@ public sealed class Actions
                 lock (AppConfig.Gate) n = cfg.Games.RemoveAll(x => GameProfile.Norm(x.Exe) == exe);
                 cfg.Save();
                 return R(n > 0, n > 0 ? "Profil de jeu supprimé" : "Profil introuvable");
+            }
+
+            // ---------------------------------------------------------------- processeur (remplace ThrottleStop)
+            case "cpu_enable":
+            {
+                var on = B(body, "on") ?? !cfg.Cpu.Enabled;
+                cfg.Cpu.Enabled = on;
+                cfg.Save();
+                if (on) System.Threading.Tasks.Task.Run(Cpu.Reapply);
+                return R(true, on ? "PC Monitor gère le processeur" : "PC Monitor ne touche plus au processeur (au prochain démarrage)");
+            }
+            case "cpu_uv_test":
+            {
+                var (ok, msg) = Cpu.TestUndervolt(I(body, "core"), I(body, "gpu"), I(body, "sa"));
+                return R(ok, msg);
+            }
+            case "cpu_uv_keep":
+            {
+                var (ok, msg) = Cpu.KeepTest();
+                return R(ok, msg);
+            }
+            case "cpu_uv_cancel":
+            {
+                var (ok, msg) = Cpu.CancelTest();
+                return R(ok, msg);
+            }
+            case "cpu_mode_save":
+            {
+                var mode = S(body, "mode");
+                if (!ModeDefs.Known(mode)) return R(false, "Mode inconnu");
+                var t = Cpu.ModeTune(mode);
+                lock (AppConfig.Gate)
+                {
+                    if (B(body, "limits") is bool lim) t.Limits = lim;
+                    if (Has(body, "pl1")) t.Pl1 = I(body, "pl1");
+                    if (Has(body, "pl2")) t.Pl2 = I(body, "pl2");
+                    if (Has(body, "tau")) t.Tau = I(body, "tau");
+                    if (Has(body, "epp")) t.Epp = I(body, "epp");
+                    t.Clamp();
+                    if (Has(body, "boost")) cfg.CpuBoost[mode] = Math.Clamp(I(body, "boost"), 0, 2);
+                }
+                cfg.Save();
+                if (mode != cfg.LastMode) return R(true, $"Réglages enregistrés pour le mode {ModeDefs.Label(mode)}");
+                if (Has(body, "boost")) Win.SetCpuBoost(cfg.CpuBoost[mode]);
+                if (!cfg.Cpu.Enabled) return R(true, "Enregistré. Active « PC Monitor gère le processeur » pour l'appliquer");
+                if (t.Limits && (B(body, "limits") == true || Has(body, "pl1") || Has(body, "pl2") || Has(body, "tau")))
+                {
+                    var (ok, msg) = CpuTuner.WriteLimits(t.Pl1, t.Pl2, t.Tau);
+                    if (!ok) return R(false, msg);
+                }
+                if (Has(body, "epp") && t.Epp >= 0) CpuTuner.SetEpp(t.Epp);
+                return R(true, "Réglages processeur appliqués");
+            }
+            case "cpu_takeover":
+            {
+                var (ok, msg) = Cpu.TakeOver();
+                return R(ok, msg);
             }
 
             // ---------------------------------------------------------------- minuteur

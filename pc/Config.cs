@@ -75,6 +75,8 @@ public sealed class AppConfig
     /// <summary>Profils de jeu appliqués automatiquement au lancement du jeu.</summary>
     public List<GameProfile> Games { get; set; } = new();
     public bool WinKeyLock { get; set; }
+    /// <summary>Réglages du processeur (remplace ThrottleStop).</summary>
+    public CpuSettings Cpu { get; set; } = new();
     public bool FirstRunDone { get; set; }
     public List<AppEntry> Apps { get; set; } = DefaultApps();
 
@@ -150,6 +152,12 @@ public sealed class AppConfig
         cfg.ColorProfiles.Insert(0, new ColorProfile());
         if (!cfg.ColorProfiles.Any(c => string.Equals(c.Name, cfg.ActiveColor, StringComparison.OrdinalIgnoreCase)))
             cfg.ActiveColor = ScreenColor.NormalName;
+        cfg.Cpu ??= new();
+        cfg.Cpu.Modes ??= new();
+        foreach (var t in cfg.Cpu.Modes.Values) t?.Clamp();
+        cfg.Cpu.CoreMv = Math.Clamp(cfg.Cpu.CoreMv, -250, 0);
+        cfg.Cpu.GpuMv = Math.Clamp(cfg.Cpu.GpuMv, -250, 0);
+        cfg.Cpu.SaMv = Math.Clamp(cfg.Cpu.SaMv, -250, 0);
         cfg.Games = (cfg.Games ?? new()).Where(g => g != null && !string.IsNullOrWhiteSpace(g.Exe)).ToList();
         cfg.LaunchWith ??= new();
         cfg.Apps ??= new();
