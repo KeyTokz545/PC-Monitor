@@ -61,37 +61,14 @@ public final class Net {
         return prefs(ctx).getString("code", "");
     }
 
-    /** Adresse Tailscale du PC (envoyée par le tableau de bord), pour l'accès hors de chez soi. */
+    /** Ancienne adresse Tailscale (2.7), effacée au démarrage. */
     public static String remote(Context ctx) {
         return prefs(ctx).getString("remote", "");
     }
 
-    public static void saveRemote(Context ctx, String host) {
-        if (host == null || !host.matches("[0-9.]{7,15}")) return;
-        if (host.equals(remote(ctx))) return;
-        prefs(ctx).edit().putString("remote", host).apply();
-    }
-
-    /** Le PC répond-il à cette adresse ? (petit délai : on teste d'abord le Wi-Fi puis Tailscale) */
-    public static boolean reachable(String host, int port, int timeoutMs) {
-        HttpURLConnection c = null;
-        try {
-            c = (HttpURLConnection) new URL("http://" + host + ":" + port + "/api/hello").openConnection();
-            c.setConnectTimeout(timeoutMs);
-            c.setReadTimeout(timeoutMs);
-            return c.getResponseCode() == 200;
-        } catch (Exception e) {
-            return false;
-        } finally {
-            if (c != null) c.disconnect();
-        }
-    }
-
-    /** Adresse à utiliser : celle du Wi-Fi si le PC y répond, sinon l'adresse Tailscale si elle répond. */
+    /** Adresse à utiliser : celle du PC sur le Wi-Fi (l'accès à distance a été retiré). */
     public static String pickHost(Context ctx, Pc pc) {
-        if (reachable(pc.host, pc.port, 1500)) return pc.host;
-        String r = remote(ctx);
-        if (!r.isEmpty() && reachable(r, pc.port, 3000)) return r;
+        if (!remote(ctx).isEmpty()) prefs(ctx).edit().remove("remote").apply();
         return pc.host;
     }
 

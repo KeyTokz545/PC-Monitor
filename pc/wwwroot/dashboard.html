@@ -367,8 +367,6 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .mini{height:34px;padding:0 14px;border-radius:10px;background:var(--raise);font-weight:600;font-size:14px;flex:none}
 .steps{margin:4px 0 2px 20px;color:var(--muted);font-size:14px;display:grid;gap:6px}
 .steps b{color:var(--text)}
-.steps[hidden],#remote-on[hidden]{display:none}
-#remote-url{word-break:break-all;font-size:13px}
 #timer-min{margin-top:10px}
 
 /* ---------- Processeur ---------- */
@@ -869,18 +867,6 @@ html[data-density="compact"] .chips button{height:32px}
             <div class="chips" id="timer-min"><button data-v="30">30 min</button><button data-v="60">1 h</button><button data-v="90">1 h 30</button><button data-v="120">2 h</button><button data-v="0">Annuler</button></div>
             <p class="hint in" id="timer-left">Aucun minuteur en cours.</p>
           </div>
-          <div class="panel timer" id="remote-box">
-            <div class="sub-h first">Accès hors de chez toi (Tailscale)</div>
-            <div id="remote-on" hidden>
-              <div class="trow first"><div><div>Adresse à distance</div><div class="muted small num" id="remote-url"></div></div><button class="mini" id="remote-copy">Copier</button></div>
-              <p class="hint in" id="remote-hint"></p>
-            </div>
-            <ol class="steps" id="remote-off">
-              <li>Installe <b>Tailscale</b> sur le PC (tailscale.com/download) et connecte-toi.</li>
-              <li>Installe l'appli Tailscale sur le téléphone, avec le même compte.</li>
-              <li>Reviens ici : l'adresse à distance s'affiche, et l'appli Android l'utilise toute seule hors de chez toi.</li>
-            </ol>
-          </div>
         </div>
       </div>
     </section>
@@ -1185,7 +1171,6 @@ function render(s) {
   $("cpu-name").textContent = shortName(c.name); $("gpu-name").textContent = shortName(g.name);
   setDial(dials.cpu, c.temp, c.temp_max); setDial(dials.gpu, g.temp, g.temp_max);
   paintCpuProfile(s.cpu_profile || null, s.cpu_profile != null);
-  renderRemote(s);
   if (s.last_report != null) checkNewReport(s.last_report);
   const peaks = (x, d) => x.temp_max != null ? `↑${Math.round(x.temp_max)}° ↓${Math.round(x.temp_min)}°` : d.max != null ? `max ${Math.round(d.max)}°` : "";
   dials.cpu.lbl.textContent = peaks(c, dials.cpu);
@@ -1280,7 +1265,6 @@ async function tick() {
   } catch (e) {
     fails++;
     if (e.auth) { setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]); $("dot").className = "dot off"; }
-    else if (fails >= 3 && window.AndroidApp && AndroidApp.reconnect && Date.now() - (window.lastReconnect || 0) > 20000) { window.lastReconnect = Date.now(); try { AndroidApp.reconnect(); } catch (e2) {} }
     if (!e.auth && fails >= 2) { $("dot").className = "dot off";
       setNotes([["PC injoignable : vérifie que PC Monitor tourne sur le PC et que le téléphone est sur le même Wi-Fi.", "bad"]]); }
   } finally { busy = false; }
@@ -2124,25 +2108,6 @@ async function checkNewReport(id) {
     if (list[0] && String(list[0].id) === String(id)) showReport(list[0]);
   } finally { reportChecking = false; }
 }
-
-/* Accès à distance (Tailscale) */
-let remoteSent = null;
-function renderRemote(s) {
-  const ip = s.remote || null, url = ip ? `http://${ip}:${s.port || location.port || 8765}/?k=${encodeURIComponent(KEY)}` : "";
-  $("remote-on").hidden = !ip; $("remote-off").hidden = !!ip;
-  if (ip) {
-    $("remote-url").textContent = url;
-    $("remote-hint").textContent = typeof window.AndroidApp !== "undefined"
-      ? "Rien à faire : hors de chez toi, l'appli passe toute seule par cette adresse (Tailscale doit être activé sur le téléphone)."
-      : "Sur iPhone : ouvre cette adresse dans Safari avec Tailscale activé, puis Partager > Sur l'écran d'accueil. Elle marche partout, même à la maison.";
-  }
-  if (ip && ip !== remoteSent && window.AndroidApp && AndroidApp.setRemote) { try { AndroidApp.setRemote(ip); remoteSent = ip; } catch (e) {} }
-}
-$("remote-copy").addEventListener("click", async () => {
-  const t = $("remote-url").textContent;
-  try { await navigator.clipboard.writeText(t); toast("Adresse copiée"); }
-  catch (e) { const r = document.createRange(); r.selectNodeContents($("remote-url")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Sélectionnée : copie-la"); }
-});
 
 /* Minuteur d'arrêt / de veille (onglet Contrôles) */
 let timerWhat = "shutdown";

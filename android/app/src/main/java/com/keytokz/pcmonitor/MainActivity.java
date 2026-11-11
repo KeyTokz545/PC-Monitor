@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        s.setUserAgentString(s.getUserAgentString() + " PCMonitorApp/2.7");
+        s.setUserAgentString(s.getUserAgentString() + " PCMonitorApp/2.7.1");
         web.addJavascriptInterface(new Bridge(), "AndroidApp");
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -94,11 +94,11 @@ public class MainActivity extends Activity {
         load();
     }
 
-    /** Adresse réellement utilisée (Wi-Fi ou Tailscale). */
+    /** Adresse du PC sur le Wi-Fi. */
     private String host;
 
     private void load() {
-        // choix de l'adresse hors du fil de l'interface : Wi-Fi d'abord, Tailscale si on est loin de chez soi
+        // hors du fil de l'interface (efface aussi l'ancienne adresse Tailscale)
         new Thread(() -> {
             String h = Net.pickHost(this, pc);
             runOnUiThread(() -> {
@@ -265,21 +265,6 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean wake() {
             return Net.wake(pc.macs);
-        }
-
-        /** Le tableau de bord transmet l'adresse Tailscale du PC. */
-        @JavascriptInterface
-        public void setRemote(String ip) {
-            Net.saveRemote(MainActivity.this, ip);
-        }
-
-        /** Le PC ne répond plus : on retente Wi-Fi puis Tailscale, et on recharge si l'adresse a changé. */
-        @JavascriptInterface
-        public void reconnect() {
-            new Thread(() -> {
-                String h = Net.pickHost(MainActivity.this, pc);
-                if (!h.equals(host)) runOnUiThread(MainActivity.this::load);
-            }).start();
         }
     }
 }

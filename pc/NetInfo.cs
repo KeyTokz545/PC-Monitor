@@ -145,30 +145,4 @@ public static class NetInfo
             return new List<string>();
         }
     }
-
-    static string tailscale;
-    static long tailscaleAt = -999_999;
-
-    /// <summary>Adresse Tailscale du PC (réseau 100.64.0.0/10), pour l'accès hors de chez soi. null si absent.</summary>
-    public static string TailscaleIp()
-    {
-        if (Environment.TickCount64 - tailscaleAt < 60_000) return tailscale;
-        tailscaleAt = Environment.TickCount64;
-        tailscale = null;
-        try
-        {
-            foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
-                foreach (var a in ni.GetIPProperties().UnicastAddresses)
-                {
-                    if (a.Address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) continue;
-                    var b = a.Address.GetAddressBytes();
-                    if (b[0] == 100 && b[1] >= 64 && b[1] <= 127) return tailscale = a.Address.ToString();
-                }
-            }
-        }
-        catch { }
-        return tailscale;
-    }
 }
