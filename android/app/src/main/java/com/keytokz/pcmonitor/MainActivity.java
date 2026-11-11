@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        s.setUserAgentString(s.getUserAgentString() + " PCMonitorApp/2.5");
+        s.setUserAgentString(s.getUserAgentString() + " PCMonitorApp/2.6");
         web.addJavascriptInterface(new Bridge(), "AndroidApp");
         web.setWebViewClient(new WebViewClient() {
             @Override

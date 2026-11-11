@@ -410,8 +410,36 @@ public sealed class Actions
             }
             case "cpu_uv_test":
             {
-                var (ok, msg) = Cpu.TestUndervolt(I(body, "core"), I(body, "gpu"), I(body, "sa"));
-                return R(ok, msg);
+                var mode = S(body, "mode");
+                if (!ModeDefs.Known(mode)) mode = cfg.LastMode;
+                string extra = "";
+                if (mode != cfg.LastMode)
+                {
+                    // le test se fait dans le mode du profil : on y passe d'abord
+                    Cpu.TestUndervolt(mode, I(body, "core"), I(body, "gpu"), I(body, "sa"));
+                    var (mok, _) = modes.Apply(mode);
+                    if (!mok) return R(false, "Impossible de passer dans ce mode pour le test");
+                    extra = $" (passé en mode {ModeDefs.Label(mode)})";
+                }
+                var (ok, msg) = Cpu.TestUndervolt(mode, I(body, "core"), I(body, "gpu"), I(body, "sa"));
+                return R(ok, msg + extra);
+            }
+            case "cpu_uv_set":
+            {
+                // recopie de valeurs déjà gardées sur un autre profil
+                var mode = S(body, "mode");
+                if (!ModeDefs.Known(mode)) return R(false, "Mode inconnu");
+                var t = Cpu.ModeTune(mode);
+                lock (AppConfig.Gate)
+                {
+                    t.CoreMv = I(body, "core");
+                    t.GpuMv = I(body, "gpu");
+                    t.SaMv = I(body, "sa");
+                    t.Clamp();
+                }
+                cfg.Save();
+                if (mode == cfg.LastMode && cfg.Cpu.Enabled) Cpu.ApplyUndervolt(t.CoreMv, t.GpuMv, t.SaMv);
+                return R(true, "Undervolt enregistré");
             }
             case "cpu_uv_keep":
             {

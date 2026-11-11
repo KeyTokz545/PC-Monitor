@@ -364,7 +364,9 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .ts-note .wide{margin-top:0}
 .ts-note[hidden],.uv-test[hidden],#cpu-err[hidden]{display:none}
 #cpu-err{margin-bottom:var(--gap)}
-.uv-test{margin-bottom:10px;background:rgba(79,195,224,.1);border-color:rgba(79,195,224,.4);color:var(--text)}
+#uv-mode{margin-bottom:4px}
+#uv-copy{display:block;margin:8px auto 0;font-size:14px}
+.uv-test{margin:8px 0 10px;background:rgba(79,195,224,.1);border-color:rgba(79,195,224,.4);color:var(--text)}
 .uv-test .pair .wide{margin-top:10px}
 #cm-lim-box[hidden]{display:none}
 #cm-mode{margin-bottom:4px}
@@ -652,8 +654,10 @@ html[data-density="compact"] .chips button{height:32px}
         </div>
 
         <div class="section">
-          <h3>Undervolt</h3>
+          <h3>Undervolt par profil</h3>
           <div class="panel">
+            <div class="seg" id="uv-mode"></div>
+            <div class="cm-name" id="uv-name"></div>
             <div class="note uv-test" id="uv-test" hidden>
               <div id="uv-test-txt"></div>
               <div class="pair"><button class="wide" id="uv-cancel">Annuler</button><button class="wide primary" id="uv-keep">Garder</button></div>
@@ -662,6 +666,7 @@ html[data-density="compact"] .chips button{height:32px}
             <div class="srow"><span class="lab">GPU Intel</span><input type="range" id="uv-gpu" min="-150" max="0" step="5" aria-label="Undervolt GPU Intel"><span class="val num" id="uv-gpu-v"></span></div>
             <div class="srow"><span class="lab">System Agent</span><input type="range" id="uv-sa" min="-150" max="0" step="5" aria-label="Undervolt System Agent"><span class="val num" id="uv-sa-v"></span></div>
             <button class="wide primary" id="uv-apply">Tester ces valeurs</button>
+            <button class="link" id="uv-copy">Mettre ces valeurs gardées dans les 3 profils</button>
             <p class="hint in">Moins de tension = moins de chaleur à performances égales. Avance par paliers de 10 à 25 mV. Un réglage en test n'est jamais remis après un redémarrage : si le PC plante, il repart avec le dernier réglage gardé.</p>
           </div>
         </div>
@@ -2027,24 +2032,33 @@ function renderCpu() {
   $("c-ts-sub").textContent = st.ts_status || (st.ts_boot ? "ThrottleStop lancé caché quelques secondes au démarrage et après une veille, puis fermé" : "Sinon le BIOS remet 95 °C à chaque démarrage");
   $("c-ts-sub").style.color = st.ts_status ? "var(--hot)" : "";
   $("c-name").textContent = (c.name || "") + (c.base_ratio ? ` · base ${nf(c.base_ratio / 10, 1)} GHz` : "");
-  // undervolt
-  const t = c.test;
-  $("uv-test").hidden = !t;
-  if (t) $("uv-test-txt").innerHTML = `<b>En test : ${esc(mvTxt(t.core))}</b>${t.gpu ? ` · GPU ${t.gpu} mV` : ""}${t.sa ? ` · SA ${t.sa} mV` : ""}<br>Joue ou lance un test 10 à 15 min. Tout va bien ? Appuie sur Garder.`;
-  if (!uvDirty) {
-    const src = t || { core: st.core || 0, gpu: st.gpu || 0, sa: st.sa || 0 };
-    ["core", "gpu", "sa"].forEach(k => { const el = $("uv-" + k); el.value = src[k] || 0; fill(el); $("uv-" + k + "-v").textContent = mvTxt(+el.value); });
-  }
-  ["uv-core", "uv-gpu", "uv-sa", "uv-apply", "uv-keep", "uv-cancel", "cm-save", "cpu-takeover", "cpu-tsboot"].forEach(id => $(id).disabled = !avail);
-  // modes
-  const box = $("cm-mode");
-  if (box.children.length !== MODES.length) box.innerHTML = MODES.map(m => `<button data-v="${esc(m.id)}">${esc(m.label)}</button>`).join("");
+  // modes / profils (communs à l'undervolt et aux limites)
+  ["cm-mode", "uv-mode"].forEach(id => {
+    const box = $(id);
+    if (box.children.length !== MODES.length) box.innerHTML = MODES.map(m => `<button data-v="${esc(m.id)}">${esc(CPU_PROFILE[m.id] || m.label)}</button>`).join("");
+  });
   if (!cmMode) cmMode = c.mode || (MODES[1] && MODES[1].id) || "balanced";
-  press(box, cmMode);
+  press($("cm-mode"), cmMode); press($("uv-mode"), cmMode);
+  renderUv();
+  ["uv-core", "uv-gpu", "uv-sa", "uv-apply", "uv-keep", "uv-cancel", "cm-save", "cpu-takeover", "cpu-tsboot"].forEach(id => $(id).disabled = !avail);
   if (!cmDirty) fillCpuMode();
 }
 const CPU_PROFILE = { silent: "Léger", balanced: "Médium", turbo: "Gros" };
 const ghz = v => v >= 41 ? "Sans limite" : nf(v / 10, 1) + " GHz";
+function profOf(mode) { return ((CPU && CPU.settings && CPU.settings.modes) || {})[mode] || {}; }
+function modeLabel(mode) { return (MODES.find(x => x.id === mode) || {}).label || mode; }
+function renderUv() {
+  const c = CPU || {}, t = c.test, p = profOf(cmMode), cur = c.mode === cmMode;
+  $("uv-name").innerHTML = `Profil <b>${esc(CPU_PROFILE[cmMode] || cmMode)}</b> (mode ${esc(modeLabel(cmMode))})` +
+    (p.core ? ` · gardé : ${esc(mvTxt(p.core))}` : " · aucun undervolt");
+  $("uv-test").hidden = !t;
+  if (t) $("uv-test-txt").innerHTML = `<b>En test sur ${esc(CPU_PROFILE[t.mode] || t.mode)} : ${esc(mvTxt(t.core))}</b>${t.gpu ? ` · GPU ${t.gpu} mV` : ""}${t.sa ? ` · SA ${t.sa} mV` : ""}<br>Joue ou lance un test 10 à 15 min. Tout va bien ? Appuie sur Garder.`;
+  if (!uvDirty) {
+    const src = t && t.mode === cmMode ? t : { core: p.core || 0, gpu: p.gpu || 0, sa: p.sa || 0 };
+    ["core", "gpu", "sa"].forEach(k => { const el = $("uv-" + k); el.value = src[k] || 0; fill(el); $("uv-" + k + "-v").textContent = mvTxt(+el.value); });
+  }
+  $("uv-apply").textContent = cur ? `Tester sur le profil ${CPU_PROFILE[cmMode] || ""}` : `Passer en ${modeLabel(cmMode)} et tester`;
+}
 function fillCpuMode() {
   const m = ((CPU && CPU.settings && CPU.settings.modes) || {})[cmMode] || { limits: false, pl1: 45, pl2: 90, tau: 28, epp: -1, max_mhz: 0, boost: 2 };
   const ml = (MODES.find(x => x.id === cmMode) || {}).label || cmMode;
@@ -2064,7 +2078,11 @@ function fillCpuMode() {
     " PL1 = puissance tenue dans la durée, PL2 = pic pendant la durée du boost (le i7-8750H est prévu pour 45 W). Fréquence max et EPP passent par Windows, comme le Speed Shift de ThrottleStop.";
 }
 function nearestTau(v) { const opts = [8, 28, 56, 96, 128]; return opts.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a, 28); }
-$("cm-mode").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; cmMode = b.dataset.v; cmDirty = false; press($("cm-mode"), cmMode); fillCpuMode(); });
+["cm-mode", "uv-mode"].forEach(id => $(id).addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); if (!b) return;
+  cmMode = b.dataset.v; cmDirty = false; uvDirty = false;
+  press($("cm-mode"), cmMode); press($("uv-mode"), cmMode); fillCpuMode(); renderUv();
+}));
 $("cm-limits").addEventListener("click", () => { const on = !isOn($("cm-limits")); setSwitch($("cm-limits"), on); $("cm-lim-box").hidden = !on; cmDirty = true; });
 ["pl1", "pl2"].forEach(k => {
   const el = $("cm-" + k);
@@ -2091,10 +2109,16 @@ $("cm-save").addEventListener("click", async () => {
 });
 $("uv-apply").addEventListener("click", async () => {
   const core = +$("uv-core").value, gpu = +$("uv-gpu").value, sa = +$("uv-sa").value;
-  const st = (CPU && CPU.settings) || {};
-  const go = async () => { const r = await act({ action: "cpu_uv_test", core, gpu, sa }); if (r && r.ok) uvDirty = false; loadCpu(); };
-  if (core < (st.core || 0) - 50) confirmSheet(`Tester ${core} mV d'un coup ?`, "Un grand saut peut faire planter le PC. Sans gravité : il redémarrera avec l'ancien réglage. Mieux vaut avancer par paliers de 10 à 25 mV.", go, "Tester");
+  const kept = profOf(cmMode).core || 0;
+  const go = async () => { const r = await act({ action: "cpu_uv_test", mode: cmMode, core, gpu, sa }); if (r && r.ok) uvDirty = false; loadCpu(); };
+  if (core < kept - 50) confirmSheet(`Tester ${core} mV d'un coup ?`, "Un grand saut peut faire planter le PC. Sans gravité : il redémarrera avec l'ancien réglage. Mieux vaut avancer par paliers de 10 à 25 mV.", go, "Tester");
   else go();
+});
+$("uv-copy").addEventListener("click", () => {
+  const p = profOf(cmMode);
+  confirmSheet("Même undervolt pour les 3 profils ?", `Les valeurs gardées du profil ${CPU_PROFILE[cmMode] || cmMode} (${mvTxt(p.core || 0)}) remplacent celles des 2 autres. Un réglage stable sur le profil le plus rapide l'est aussi sur les autres, l'inverse n'est pas garanti.`,
+    async () => { for (const m of MODES.map(x => x.id)) if (m !== cmMode) await api("/api/action", { action: "cpu_uv_set", mode: m, core: p.core || 0, gpu: p.gpu || 0, sa: p.sa || 0 }).catch(() => null);
+      toast("Undervolt recopié dans les 3 profils"); loadCpu(); }, "Recopier");
 });
 $("uv-keep").addEventListener("click", async () => { await act({ action: "cpu_uv_keep" }); uvDirty = false; loadCpu(); });
 $("uv-cancel").addEventListener("click", async () => { await act({ action: "cpu_uv_cancel" }); uvDirty = false; loadCpu(); });

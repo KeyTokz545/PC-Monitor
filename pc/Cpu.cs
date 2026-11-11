@@ -27,6 +27,10 @@ public sealed class CpuModeTune
     public int EppRaw { get; set; } = -1;
     /// <summary>Fréquence maximale en MHz (0 = pas de limite).</summary>
     public int MaxMhz { get; set; }
+    /// <summary>Undervolt validé de ce profil, en mV : cœurs + cache, GPU Intel, System Agent.</summary>
+    public int CoreMv { get; set; }
+    public int GpuMv { get; set; }
+    public int SaMv { get; set; }
 
     public CpuModeTune Clamp()
     {
@@ -37,6 +41,9 @@ public sealed class CpuModeTune
         Epp = -1;
         EppRaw = EppRaw < 0 ? -1 : Math.Clamp(EppRaw, 0, 255);
         MaxMhz = MaxMhz <= 0 ? 0 : Math.Clamp(MaxMhz, 800, 6000);
+        CoreMv = Math.Clamp(CoreMv, -250, 0);
+        GpuMv = Math.Clamp(GpuMv, -250, 0);
+        SaMv = Math.Clamp(SaMv, -250, 0);
         return this;
     }
 }
@@ -58,6 +65,21 @@ public sealed class CpuSettings
     public string TsPath { get; set; }
     /// <summary>Les 3 profils de Lilian (Léger, Médium, Gros) ont été chargés une fois.</summary>
     public bool Profiles3 { get; set; }
+    /// <summary>L'undervolt commun (2.3-2.5) a été recopié dans chaque profil.</summary>
+    public bool UvPerMode { get; set; }
+
+    public void MigrateUndervolt()
+    {
+        if (UvPerMode) return;
+        foreach (var m in ModeDefs.Order)
+        {
+            if (!Modes.TryGetValue(m, out var t) || t == null) Modes[m] = t = new CpuModeTune();
+            t.CoreMv = CoreMv;
+            t.GpuMv = GpuMv;
+            t.SaMv = SaMv;
+        }
+        UvPerMode = true;
+    }
 
     /// <summary>
     /// Profils repris de ThrottleStop : Léger (Silencieux), Médium 3,2 GHz / 50 W (Équilibré),
@@ -183,7 +205,18 @@ public sealed class CpuTuner
 
     readonly AppConfig cfg;
     readonly object gate = new();
-    (int Core, int Gpu, int Sa)? test;
+    (string Mode, int Core, int Gpu, int Sa)? test;
+
+    /// <summary>Undervolt à appliquer pour un mode : celui en test s'il concerne ce mode, sinon celui du profil.</summary>
+    (int Core, int Gpu, int Sa) UvFor(string mode)
+    {
+        lock (gate)
+        {
+            if (test.HasValue && test.Value.Mode == mode) return (test.Value.Core, test.Value.Gpu, test.Value.Sa);
+        }
+        var t = ModeTune(mode);
+        return (t.CoreMv, t.GpuMv, t.SaMv);
+    }
     Dictionary<string, object> uvCache;
     long uvCacheAt = -99999;
     static readonly Stopwatch Clock = Stopwatch.StartNew();
@@ -215,8 +248,7 @@ public sealed class CpuTuner
             }
             if (++ticks % 3 != 0) return;
             if (cfg.Cpu.TsBoot && TccOffset() > 0) System.Threading.Tasks.Task.Run(() => EnsureThreshold());
-            (int Core, int Gpu, int Sa) uv;
-            lock (gate) uv = test ?? (cfg.Cpu.CoreMv, cfg.Cpu.GpuMv, cfg.Cpu.SaMv);
+            var uv = UvFor(cfg.LastMode);
             if (uv.Core == 0) return;
             var now = ReadOffset(PlaneCore);
             if (now.HasValue && Math.Abs(now.Value - uv.Core) > 2)
@@ -294,36 +326,45 @@ public sealed class CpuTuner
         }
     }
 
-    public (bool Ok, string Message) TestUndervolt(int core, int gpu, int sa)
+    /// <summary>Test d'undervolt pour un profil. Le mode du profil doit être actif (ModeService s'en charge avant).</summary>
+    public (bool Ok, string Message) TestUndervolt(string mode, int core, int gpu, int sa)
     {
+        core = Math.Clamp(core, -250, 0);
+        gpu = Math.Clamp(gpu, -250, 0);
+        sa = Math.Clamp(sa, -250, 0);
+        lock (gate) test = (mode, core, gpu, sa);
         var r = ApplyUndervolt(core, gpu, sa);
-        lock (gate) test = r.Ok ? (Math.Clamp(core, -250, 0), Math.Clamp(gpu, -250, 0), Math.Clamp(sa, -250, 0)) : null;
+        if (!r.Ok) lock (gate) test = null;
         return r.Ok ? (true, "En test : joue ou lance un test 10 à 15 min, puis appuie sur Garder") : r;
     }
 
     public (bool Ok, string Message) KeepTest()
     {
+        string mode;
         lock (gate)
         {
             if (test == null) return (false, "Aucun réglage en test");
             var t = test.Value;
+            mode = t.Mode;
+            var p = ModeTune(t.Mode);
             lock (AppConfig.Gate)
             {
-                cfg.Cpu.CoreMv = t.Core;
-                cfg.Cpu.GpuMv = t.Gpu;
-                cfg.Cpu.SaMv = t.Sa;
+                p.CoreMv = t.Core;
+                p.GpuMv = t.Gpu;
+                p.SaMv = t.Sa;
             }
             test = null;
         }
         cfg.Save();
-        return (true, "Undervolt gardé : il sera appliqué à chaque démarrage");
+        return (true, $"Undervolt gardé pour le mode {ModeDefs.Label(mode)}");
     }
 
     public (bool Ok, string Message) CancelTest()
     {
         lock (gate) test = null;
-        var r = ApplyUndervolt(cfg.Cpu.CoreMv, cfg.Cpu.GpuMv, cfg.Cpu.SaMv);
-        return (r.Ok, r.Ok ? "Test annulé, réglages validés remis" : r.Message);
+        var uv = UvFor(cfg.LastMode);
+        var r = ApplyUndervolt(uv.Core, uv.Gpu, uv.Sa);
+        return (r.Ok, r.Ok ? "Test annulé, undervolt du profil remis" : r.Message);
     }
 
     // ---------------------------------------------------------------- limites de puissance (MSR 0x610)
@@ -421,6 +462,11 @@ public sealed class CpuTuner
         try
         {
             var t = ModeTune(mode);
+            // un test en cours sur un autre profil est abandonné
+            lock (gate)
+                if (test.HasValue && test.Value.Mode != mode) test = null;
+            var uv = UvFor(mode);
+            if (Msr.Available) ApplyUndervolt(uv.Core, uv.Gpu, uv.Sa);
             if (t.Limits) WriteLimits(t.Pl1, t.Pl2, t.Tau);
             ApplyPowerPlan(t.EppRaw, t.MaxMhz);
         }
@@ -436,9 +482,6 @@ public sealed class CpuTuner
         if (!cfg.Cpu.Enabled) return;
         try
         {
-            (int Core, int Gpu, int Sa) uv;
-            lock (gate) uv = test ?? (cfg.Cpu.CoreMv, cfg.Cpu.GpuMv, cfg.Cpu.SaMv);
-            if (uv.Core != 0 || uv.Gpu != 0 || uv.Sa != 0) ApplyUndervolt(uv.Core, uv.Gpu, uv.Sa);
             ApplyMode(cfg.LastMode);
         }
         catch (Exception e)
@@ -549,10 +592,15 @@ public sealed class CpuTuner
             }
             if (core.HasValue)
             {
-                cfg.Cpu.CoreMv = Math.Clamp(Math.Max(core.Value, cache ?? core.Value), -250, 0);
-                cfg.Cpu.GpuMv = Math.Clamp(gpu ?? 0, -250, 0);
-                cfg.Cpu.SaMv = Math.Clamp(sa ?? 0, -250, 0);
-                notes.Add($"undervolt {cfg.Cpu.CoreMv} mV");
+                int c = Math.Clamp(Math.Max(core.Value, cache ?? core.Value), -250, 0), g = Math.Clamp(gpu ?? 0, -250, 0), a = Math.Clamp(sa ?? 0, -250, 0);
+                foreach (var m in ModeDefs.Order)
+                {
+                    if (!cfg.Cpu.Modes.TryGetValue(m, out var mt) || mt == null) cfg.Cpu.Modes[m] = mt = new CpuModeTune();
+                    mt.CoreMv = c;
+                    mt.GpuMv = g;
+                    mt.SaMv = a;
+                }
+                notes.Add($"undervolt {c} mV pour les 3 profils");
             }
             if (lim != null && !(bool)lim["locked"] && !cfg.Cpu.Profiles3)
             {
@@ -646,9 +694,7 @@ public sealed class CpuTuner
             d["settings"] = new Dictionary<string, object>
             {
                 ["enabled"] = cfg.Cpu.Enabled,
-                ["core"] = cfg.Cpu.CoreMv,
-                ["gpu"] = cfg.Cpu.GpuMv,
-                ["sa"] = cfg.Cpu.SaMv,
+
                 ["ts_boot"] = cfg.Cpu.TsBoot,
                 ["ts_found"] = !string.IsNullOrEmpty(cfg.Cpu.TsPath) && File.Exists(cfg.Cpu.TsPath),
                 ["ts_status"] = TsStatus,
@@ -660,12 +706,13 @@ public sealed class CpuTuner
                     return (object)new Dictionary<string, object>
                     {
                         ["limits"] = t.Limits, ["pl1"] = t.Pl1, ["pl2"] = t.Pl2, ["tau"] = t.Tau, ["epp"] = t.EppRaw, ["max_mhz"] = t.MaxMhz, ["boost"] = boost,
+                        ["core"] = t.CoreMv, ["gpu"] = t.GpuMv, ["sa"] = t.SaMv,
                     };
                 }),
             };
             d["mode"] = cfg.LastMode;
         }
-        lock (gate) d["test"] = test.HasValue ? new Dictionary<string, object> { ["core"] = test.Value.Core, ["gpu"] = test.Value.Gpu, ["sa"] = test.Value.Sa } : null;
+        lock (gate) d["test"] = test.HasValue ? new Dictionary<string, object> { ["mode"] = test.Value.Mode, ["core"] = test.Value.Core, ["gpu"] = test.Value.Gpu, ["sa"] = test.Value.Sa } : null;
 
         if (!IsIntel || !Msr.Available)
         {
