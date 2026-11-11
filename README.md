@@ -73,6 +73,16 @@ Safari : Partager → **Sur l'écran d'accueil**.
   officiel IntelMSR 0.2.11 (LGPL-2.1, voir `pc/Resources`). Pas de BD PROCHOT, d'états C ni de
   multiplicateurs : ce module n'autorise pas ces registres.
 
+## 2.4
+
+- **Léger** : sans téléphone connecté, PC Monitor ne relève que le CPU et le GPU toutes les 5 s
+  (ni Wi-Fi ni ping), puis rend la mémoire inutilisée à Windows au bout d'une minute.
+- **Max / min des températures** gardés par le PC (communs à tous les téléphones) ; toucher une jauge
+  pour les remettre à zéro.
+- **Seuil thermique à 100 °C** : ThrottleStop lancé caché quelques secondes au démarrage et après une
+  veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
+- **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
+
 ## Bon à savoir
 
 - Le téléphone doit être sur le même Wi-Fi que le PC, réglé en réseau **privé** dans Windows.
