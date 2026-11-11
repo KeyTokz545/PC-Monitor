@@ -45,8 +45,8 @@ public sealed class TrayApp : ApplicationContext
         collector = new Collector(cfg, sensors, asus);
         collector.Start();
 
-        games = new GameWatcher(cfg, modes);
         cpu = new CpuTuner(cfg);
+        games = new GameWatcher(cfg, modes, cpu);
         controls = new Controls(cfg, asus, modes, games);
         var actions = new Actions(cfg, modes, asus, games, cpu) { ResetPeaks = collector.ResetPeaks };
         web = new WebServer(cfg, collector, actions, controls);
@@ -73,7 +73,8 @@ public sealed class TrayApp : ApplicationContext
         tipTimer.Start();
 
         modes.Changed += _ => UpdateTip();
-        modes.Changed += m => Task.Run(() => cpu.ApplyMode(m));
+        modes.Changed += m => Task.Run(() => cpu.OnFanModeChanged(m));
+        cpu.ProfileChanged += _ => UpdateTip();
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
         SystemEvents.DisplaySettingsChanged += OnDisplayChanged;
 
@@ -140,7 +141,8 @@ public sealed class TrayApp : ApplicationContext
         OnUi(() =>
         {
             string T(float? v) => v.HasValue ? Math.Round(v.Value) + " °C" : "–";
-            var mode = string.IsNullOrEmpty(cfg.LastMode) ? "" : "\n" + cfg.ModeLabel(cfg.LastMode);
+            var mode = (string.IsNullOrEmpty(cfg.LastMode) ? "" : "\n" + cfg.ModeLabel(cfg.LastMode)) +
+                       (cfg.Cpu.Enabled ? " · CPU " + CpuTuner.ProfileLabel(cfg.Cpu.Active) : "");
             var text = $"PC Monitor\nCPU {T(collector.CpuTemp)}  GPU {T(collector.GpuTemp)}{mode}";
             tray.Text = text.Length > 127 ? text[..127] : text;
         });
@@ -175,6 +177,18 @@ public sealed class TrayApp : ApplicationContext
             var item = new ToolStripMenuItem(cfg.ModeLabel(mode)) { Checked = cfg.LastMode == mode };
             item.Click += (s, e) => Task.Run(() => Balloon(modes.Apply(mode).Message));
             m.Items.Add(item);
+        }
+        if (cfg.Cpu.Enabled)
+        {
+            var prof = new ToolStripMenuItem("Profil CPU : " + CpuTuner.ProfileLabel(cfg.Cpu.Active));
+            foreach (var id in ModeDefs.Order)
+            {
+                var pid = id;
+                var item = new ToolStripMenuItem(CpuTuner.ProfileLabel(pid)) { Checked = cfg.Cpu.Active == pid };
+                item.Click += (s, e) => Task.Run(() => Balloon(cpu.SetProfile(pid).Message));
+                prof.DropDownItems.Add(item);
+            }
+            m.Items.Add(prof);
         }
         var fansOn = cfg.FanCurves.TryGetValue("turbo", out var turboCurve) && turboCurve.IsFull;
         var fans = new ToolStripMenuItem("Ventilos à fond en Turbo") { Checked = fansOn };

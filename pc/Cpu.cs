@@ -31,6 +31,8 @@ public sealed class CpuModeTune
     public int CoreMv { get; set; }
     public int GpuMv { get; set; }
     public int SaMv { get; set; }
+    /// <summary>Turbo Boost de Windows : 0 coupé, 1 activé, 2 agressif, -1 = ne pas toucher.</summary>
+    public int Boost { get; set; } = -1;
 
     public CpuModeTune Clamp()
     {
@@ -44,6 +46,7 @@ public sealed class CpuModeTune
         CoreMv = Math.Clamp(CoreMv, -250, 0);
         GpuMv = Math.Clamp(GpuMv, -250, 0);
         SaMv = Math.Clamp(SaMv, -250, 0);
+        Boost = Boost < 0 ? -1 : Math.Clamp(Boost, 0, 2);
         return this;
     }
 }
@@ -67,6 +70,24 @@ public sealed class CpuSettings
     public bool Profiles3 { get; set; }
     /// <summary>L'undervolt commun (2.3-2.5) a été recopié dans chaque profil.</summary>
     public bool UvPerMode { get; set; }
+    /// <summary>Profil CPU actif (silent = Léger, balanced = Médium, turbo = Gros), indépendant de la ventilation.</summary>
+    public string Active { get; set; }
+    /// <summary>Le profil CPU suit le mode de ventilation (comme en 2.5-2.6).</summary>
+    public bool Linked { get; set; }
+    /// <summary>Le Turbo par mode de ventilation (CpuBoost) a été recopié dans les profils CPU.</summary>
+    public bool BoostPerProfile { get; set; }
+
+    public void MigrateBoost(Dictionary<string, int> boost, string lastMode)
+    {
+        if (string.IsNullOrEmpty(Active) || !ModeDefs.Known(Active)) Active = ModeDefs.Known(lastMode) ? lastMode : "balanced";
+        if (BoostPerProfile) return;
+        foreach (var m in ModeDefs.Order)
+        {
+            if (!Modes.TryGetValue(m, out var t) || t == null) Modes[m] = t = new CpuModeTune();
+            t.Boost = boost.TryGetValue(m, out var b) ? b : 2;
+        }
+        BoostPerProfile = true;
+    }
 
     public void MigrateUndervolt()
     {
@@ -87,9 +108,9 @@ public sealed class CpuSettings
     /// </summary>
     public void LoadDefaultProfiles(Dictionary<string, int> boost)
     {
-        Modes["silent"] = new CpuModeTune { Limits = true, Pl1 = 25, Pl2 = 25, Tau = 28, EppRaw = 128, MaxMhz = 2400 };
-        Modes["balanced"] = new CpuModeTune { Limits = true, Pl1 = 50, Pl2 = 50, Tau = 28, EppRaw = 16, MaxMhz = 3200 };
-        Modes["turbo"] = new CpuModeTune { Limits = true, Pl1 = 75, Pl2 = 75, Tau = 28, EppRaw = 16, MaxMhz = 0 };
+        Modes["silent"] = new CpuModeTune { Limits = true, Pl1 = 25, Pl2 = 25, Tau = 28, EppRaw = 128, MaxMhz = 2400, Boost = 1 };
+        Modes["balanced"] = new CpuModeTune { Limits = true, Pl1 = 50, Pl2 = 50, Tau = 28, EppRaw = 16, MaxMhz = 3200, Boost = 2 };
+        Modes["turbo"] = new CpuModeTune { Limits = true, Pl1 = 75, Pl2 = 75, Tau = 28, EppRaw = 16, MaxMhz = 0, Boost = 2 };
         boost["silent"] = 1;
         boost["balanced"] = 2;
         boost["turbo"] = 2;
@@ -236,7 +257,7 @@ public sealed class CpuTuner
         try
         {
             if (!cfg.Cpu.Enabled || !Msr.Available || ThrottleStopRunning()) return;
-            var t = ModeTune(cfg.LastMode);
+            var t = ModeTune(cfg.Cpu.Active);
             if (t.Limits && Msr.Read(PKG_POWER_LIMIT, out var v) && (v >> 63) == 0)
             {
                 var (w, _) = Units();
@@ -248,7 +269,7 @@ public sealed class CpuTuner
             }
             if (++ticks % 3 != 0) return;
             if (cfg.Cpu.TsBoot && TccOffset() > 0) System.Threading.Tasks.Task.Run(() => EnsureThreshold());
-            var uv = UvFor(cfg.LastMode);
+            var uv = UvFor(cfg.Cpu.Active);
             if (uv.Core == 0) return;
             var now = ReadOffset(PlaneCore);
             if (now.HasValue && Math.Abs(now.Value - uv.Core) > 2)
@@ -356,13 +377,13 @@ public sealed class CpuTuner
             test = null;
         }
         cfg.Save();
-        return (true, $"Undervolt gardé pour le mode {ModeDefs.Label(mode)}");
+        return (true, $"Undervolt gardé pour le profil {ProfileLabel(mode)}");
     }
 
     public (bool Ok, string Message) CancelTest()
     {
         lock (gate) test = null;
-        var uv = UvFor(cfg.LastMode);
+        var uv = UvFor(cfg.Cpu.Active);
         var r = ApplyUndervolt(uv.Core, uv.Gpu, uv.Sa);
         return (r.Ok, r.Ok ? "Test annulé, undervolt du profil remis" : r.Message);
     }
@@ -429,8 +450,14 @@ public sealed class CpuTuner
     /// Préférence d'énergie (Speed Shift) et fréquence max par le mode d'alimentation de Windows, qui les transmet au processeur.
     /// EPP sur l'échelle ThrottleStop 0-255 (Windows l'exprime en %), fréquence en MHz (0 = pas de limite).
     /// </summary>
-    public static void ApplyPowerPlan(int eppRaw, int maxMhz)
+    public static void ApplyPowerPlan(int eppRaw, int maxMhz, int boost = -1)
     {
+        const string boostId = "be337238-0d82-4146-a960-4f3749d470c7"; // PERFBOOSTMODE
+        if (boost >= 0)
+        {
+            Win.Run("powercfg", $"/setacvalueindex SCHEME_CURRENT 54533251-82be-4824-96c1-47b60b740d00 {boostId} {boost}", 5000);
+            Win.Run("powercfg", $"/setdcvalueindex SCHEME_CURRENT 54533251-82be-4824-96c1-47b60b740d00 {boostId} {boost}", 5000);
+        }
         const string sub = "54533251-82be-4824-96c1-47b60b740d00";   // SUB_PROCESSOR
         const string epp = "36687f9e-e3a5-4dbf-b1dc-15eb381c6863";   // PERFEPP
         const string fmax = "75b0ae3f-bce0-45a7-8c89-c9611c25e100";  // PROCFREQMAX
@@ -455,8 +482,33 @@ public sealed class CpuTuner
         }
     }
 
-    /// <summary>Réglages liés au mode : limites et préférence d'énergie (le Turbo est géré par ModeService).</summary>
-    public void ApplyMode(string mode)
+    public static string ProfileLabel(string id) => id switch { "silent" => "Léger", "balanced" => "Médium", "turbo" => "Gros", _ => id };
+
+    /// <summary>Le profil CPU a changé (pour l'icône près de l'horloge).</summary>
+    public event Action<string> ProfileChanged;
+
+    /// <summary>Choisit le profil CPU actif, indépendamment de la ventilation.</summary>
+    public (bool Ok, string Message) SetProfile(string id, bool save = true)
+    {
+        if (!ModeDefs.Known(id)) return (false, "Profil CPU inconnu");
+        cfg.Cpu.Active = id;
+        if (save) cfg.Save();
+        if (!cfg.Cpu.Enabled) return (true, $"Profil {ProfileLabel(id)} choisi (active « PC Monitor gère le processeur » pour l'appliquer)");
+        ApplyProfile(id);
+        try { ProfileChanged?.Invoke(id); } catch { }
+        return (true, $"Profil CPU {ProfileLabel(id)}");
+    }
+
+    /// <summary>Changement de ventilation : profil lié s'il est demandé, sinon on réaffirme le profil actif (le BIOS peut toucher aux limites).</summary>
+    public void OnFanModeChanged(string mode)
+    {
+        if (!cfg.Cpu.Enabled) return;
+        if (cfg.Cpu.Linked && ModeDefs.Known(mode) && mode != cfg.Cpu.Active) SetProfile(mode);
+        else ApplyProfile(cfg.Cpu.Active);
+    }
+
+    /// <summary>Applique un profil CPU : undervolt, limites, fréquence max, EPP, Turbo.</summary>
+    public void ApplyProfile(string mode)
     {
         if (!cfg.Cpu.Enabled || string.IsNullOrEmpty(mode)) return;
         try
@@ -468,7 +520,7 @@ public sealed class CpuTuner
             var uv = UvFor(mode);
             if (Msr.Available) ApplyUndervolt(uv.Core, uv.Gpu, uv.Sa);
             if (t.Limits) WriteLimits(t.Pl1, t.Pl2, t.Tau);
-            ApplyPowerPlan(t.EppRaw, t.MaxMhz);
+            ApplyPowerPlan(t.EppRaw, t.MaxMhz, t.Boost);
         }
         catch (Exception e)
         {
@@ -482,7 +534,7 @@ public sealed class CpuTuner
         if (!cfg.Cpu.Enabled) return;
         try
         {
-            ApplyMode(cfg.LastMode);
+            ApplyProfile(cfg.Cpu.Active);
         }
         catch (Exception e)
         {
@@ -698,14 +750,15 @@ public sealed class CpuTuner
                 ["ts_boot"] = cfg.Cpu.TsBoot,
                 ["ts_found"] = !string.IsNullOrEmpty(cfg.Cpu.TsPath) && File.Exists(cfg.Cpu.TsPath),
                 ["ts_status"] = TsStatus,
+                ["active"] = cfg.Cpu.Active,
+                ["linked"] = cfg.Cpu.Linked,
                 ["modes"] = ModeDefs.Order.ToDictionary(m => m, m =>
                 {
                     cfg.Cpu.Modes.TryGetValue(m, out var t);
                     t ??= new CpuModeTune();
-                    cfg.CpuBoost.TryGetValue(m, out var boost);
                     return (object)new Dictionary<string, object>
                     {
-                        ["limits"] = t.Limits, ["pl1"] = t.Pl1, ["pl2"] = t.Pl2, ["tau"] = t.Tau, ["epp"] = t.EppRaw, ["max_mhz"] = t.MaxMhz, ["boost"] = boost,
+                        ["limits"] = t.Limits, ["pl1"] = t.Pl1, ["pl2"] = t.Pl2, ["tau"] = t.Tau, ["epp"] = t.EppRaw, ["max_mhz"] = t.MaxMhz, ["boost"] = t.Boost,
                         ["core"] = t.CoreMv, ["gpu"] = t.GpuMv, ["sa"] = t.SaMv,
                     };
                 }),

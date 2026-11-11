@@ -73,7 +73,7 @@ public sealed class ModeService
 
             if (ok)
             {
-                if (cfg.CpuBoost.TryGetValue(mode, out var boost) && boost >= 0 && boost <= 4)
+                if (!cfg.Cpu.Enabled && cfg.CpuBoost.TryGetValue(mode, out var boost) && boost >= 0 && boost <= 4)
                 {
                     try { Win.SetCpuBoost(boost); } catch (Exception e) { Log.Error("Turbo Boost", e); }
                 }

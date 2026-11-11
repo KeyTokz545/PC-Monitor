@@ -156,6 +156,7 @@ public sealed class AppConfig
         cfg.Cpu.Modes ??= new();
         if (!cfg.Cpu.Profiles3) cfg.Cpu.LoadDefaultProfiles(cfg.CpuBoost);
         cfg.Cpu.MigrateUndervolt();
+        cfg.Cpu.MigrateBoost(cfg.CpuBoost, cfg.LastMode);
         foreach (var t in cfg.Cpu.Modes.Values) t?.Clamp();
         cfg.Cpu.CoreMv = Math.Clamp(cfg.Cpu.CoreMv, -250, 0);
         cfg.Cpu.GpuMv = Math.Clamp(cfg.Cpu.GpuMv, -250, 0);

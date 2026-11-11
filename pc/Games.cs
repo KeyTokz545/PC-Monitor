@@ -23,6 +23,8 @@ public sealed class GameProfile
     public string Color { get; set; }
     /// <summary>Bloquer la touche Windows pendant le jeu.</summary>
     public bool WinKey { get; set; }
+    /// <summary>Profil CPU pendant le jeu (null = ne pas toucher), indépendant de la ventilation.</summary>
+    public string CpuProfile { get; set; }
 
     public static string Norm(string exe)
     {
@@ -113,18 +115,20 @@ public sealed class GameWatcher
 {
     readonly AppConfig cfg;
     readonly ModeService modes;
+    readonly CpuTuner cpu;
     readonly object gate = new();
     Timer timer;
     int ticks;
     GameProfile active;
     DateTime since;
-    string beforeMode, beforeColor;
+    string beforeMode, beforeColor, beforeCpu;
     bool beforeGpu, beforeWinKey;
 
-    public GameWatcher(AppConfig cfg, ModeService modes)
+    public GameWatcher(AppConfig cfg, ModeService modes, CpuTuner cpu)
     {
         this.cfg = cfg;
         this.modes = modes;
+        this.cpu = cpu;
     }
 
     public string ActiveExe => active?.Exe;
@@ -189,12 +193,14 @@ public sealed class GameWatcher
         beforeGpu = cfg.GpuLimit.On;
         beforeColor = cfg.ActiveColor;
         beforeWinKey = cfg.WinKeyLock;
+        beforeCpu = cfg.Cpu.Active;
         Fps.PreferredPid = pid;
         Log.Info($"Jeu détecté : {g.Name} ({g.Exe})");
         if (!string.IsNullOrEmpty(g.Mode) && ModeDefs.Known(g.Mode) && g.Mode != cfg.LastMode) modes.Apply(g.Mode);
         if (g.Gpu.HasValue && g.Gpu.Value != cfg.GpuLimit.On) Tweaks.SetGpu(cfg, g.Gpu.Value);
         if (!string.IsNullOrEmpty(g.Color) && !string.Equals(g.Color, cfg.ActiveColor, StringComparison.OrdinalIgnoreCase)) Tweaks.SetColor(cfg, g.Color);
         if (g.WinKey && !cfg.WinKeyLock) Tweaks.SetWinKey(cfg, true);
+        if (ModeDefs.Known(g.CpuProfile) && g.CpuProfile != cfg.Cpu.Active) cpu.SetProfile(g.CpuProfile);
     }
 
     void Restore()
@@ -210,6 +216,7 @@ public sealed class GameWatcher
                 Tweaks.SetColor(cfg, string.IsNullOrEmpty(beforeColor) ? ScreenColor.NormalName : beforeColor);
             if (g.Gpu.HasValue && cfg.GpuLimit.On != beforeGpu) Tweaks.SetGpu(cfg, beforeGpu);
             if (!string.IsNullOrEmpty(g.Mode) && ModeDefs.Known(beforeMode) && cfg.LastMode != beforeMode) modes.Apply(beforeMode);
+            if (ModeDefs.Known(g.CpuProfile) && ModeDefs.Known(beforeCpu) && cfg.Cpu.Active != beforeCpu) cpu.SetProfile(beforeCpu);
         }
         catch (Exception e)
         {

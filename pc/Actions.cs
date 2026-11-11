@@ -374,6 +374,7 @@ public sealed class Actions
                     Gpu = B(body, "gpu"),
                     Color = string.IsNullOrWhiteSpace(color) ? null : color,
                     WinKey = B(body, "winkey") ?? false,
+                    CpuProfile = ModeDefs.Known(S(body, "cpu")) ? S(body, "cpu") : null,
                 };
                 var old = S(body, "old");
                 lock (AppConfig.Gate)
@@ -411,18 +412,29 @@ public sealed class Actions
             case "cpu_uv_test":
             {
                 var mode = S(body, "mode");
-                if (!ModeDefs.Known(mode)) mode = cfg.LastMode;
+                if (!ModeDefs.Known(mode)) mode = cfg.Cpu.Active;
                 string extra = "";
-                if (mode != cfg.LastMode)
+                if (mode != cfg.Cpu.Active)
                 {
-                    // le test se fait dans le mode du profil : on y passe d'abord
+                    // le test se fait avec le profil concerné : on l'active d'abord
                     Cpu.TestUndervolt(mode, I(body, "core"), I(body, "gpu"), I(body, "sa"));
-                    var (mok, _) = modes.Apply(mode);
-                    if (!mok) return R(false, "Impossible de passer dans ce mode pour le test");
-                    extra = $" (passé en mode {ModeDefs.Label(mode)})";
+                    Cpu.SetProfile(mode);
+                    extra = $" (profil {CpuTuner.ProfileLabel(mode)} activé)";
                 }
                 var (ok, msg) = Cpu.TestUndervolt(mode, I(body, "core"), I(body, "gpu"), I(body, "sa"));
                 return R(ok, msg + extra);
+            }
+            case "cpu_profile":
+            {
+                var (ok, msg) = Cpu.SetProfile(S(body, "id"));
+                return R(ok, msg);
+            }
+            case "cpu_link":
+            {
+                cfg.Cpu.Linked = B(body, "on") ?? !cfg.Cpu.Linked;
+                cfg.Save();
+                if (cfg.Cpu.Linked) System.Threading.Tasks.Task.Run(() => Cpu.OnFanModeChanged(cfg.LastMode));
+                return R(true, cfg.Cpu.Linked ? "Le profil CPU suit la ventilation" : "Profil CPU et ventilation séparés");
             }
             case "cpu_uv_set":
             {
@@ -438,7 +450,7 @@ public sealed class Actions
                     t.Clamp();
                 }
                 cfg.Save();
-                if (mode == cfg.LastMode && cfg.Cpu.Enabled) Cpu.ApplyUndervolt(t.CoreMv, t.GpuMv, t.SaMv);
+                if (mode == cfg.Cpu.Active && cfg.Cpu.Enabled) Cpu.ApplyUndervolt(t.CoreMv, t.GpuMv, t.SaMv);
                 return R(true, "Undervolt enregistré");
             }
             case "cpu_uv_keep":
@@ -465,18 +477,17 @@ public sealed class Actions
                     if (Has(body, "epp")) t.EppRaw = I(body, "epp");
                     if (Has(body, "max_mhz")) t.MaxMhz = Math.Max(0, I(body, "max_mhz"));
                     t.Clamp();
-                    if (Has(body, "boost")) cfg.CpuBoost[mode] = Math.Clamp(I(body, "boost"), 0, 2);
+                    if (Has(body, "boost")) t.Boost = Math.Clamp(I(body, "boost"), 0, 2);
                 }
                 cfg.Save();
-                if (mode != cfg.LastMode) return R(true, $"Réglages enregistrés pour le mode {ModeDefs.Label(mode)}");
-                if (Has(body, "boost")) Win.SetCpuBoost(cfg.CpuBoost[mode]);
+                if (mode != cfg.Cpu.Active) return R(true, $"Profil {CpuTuner.ProfileLabel(mode)} enregistré");
                 if (!cfg.Cpu.Enabled) return R(true, "Enregistré. Active « PC Monitor gère le processeur » pour l'appliquer");
                 if (t.Limits && (B(body, "limits") == true || Has(body, "pl1") || Has(body, "pl2") || Has(body, "tau")))
                 {
                     var (ok, msg) = CpuTuner.WriteLimits(t.Pl1, t.Pl2, t.Tau);
                     if (!ok) return R(false, msg);
                 }
-                if (Has(body, "epp") || Has(body, "max_mhz")) CpuTuner.ApplyPowerPlan(t.EppRaw, t.MaxMhz);
+                if (Has(body, "epp") || Has(body, "max_mhz") || Has(body, "boost")) CpuTuner.ApplyPowerPlan(t.EppRaw, t.MaxMhz, t.Boost);
                 return R(true, "Réglages processeur appliqués");
             }
             case "cpu_tsboot":

@@ -119,6 +119,7 @@ public sealed class Controls
                     ["gpu"] = g.Gpu,
                     ["color"] = g.Color,
                     ["winkey"] = g.WinKey,
+                    ["cpu"] = g.CpuProfile,
                 }).ToList(),
                 ["active"] = games.ActiveName,
                 ["active_exe"] = games.ActiveExe,

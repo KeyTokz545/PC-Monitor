@@ -169,6 +169,7 @@ public sealed class Collector
             ["control_ok"] = asus.Connected,
         };
         s["lhm"] = new Dictionary<string, object> { ["ok"] = sensors.Ok, ["error"] = sensors.Error };
+        s["cpu_profile"] = cfg.Cpu.Enabled ? cfg.Cpu.Active : null;
         s["demo"] = false;
         s["app"] = "pcmonitor";
         s["version"] = Program.Version;

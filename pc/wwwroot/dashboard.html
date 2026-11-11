@@ -32,11 +32,18 @@ button:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
 
 /* ---------- Cadre de l'appli ---------- */
 .app{height:100%;display:grid;grid-template-rows:auto 1fr auto;grid-template-areas:"head" "main" "nav"}
-.head{grid-area:head;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"pc meta" "modes modes";
+.head{grid-area:head;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"pc meta" "modes modes" "cpus cpus";
   align-items:center;column-gap:12px;row-gap:8px;
   padding:calc(var(--safe-t) + 8px) calc(var(--safe-r) + 12px) 10px calc(var(--safe-l) + 12px)}
 .head .modes{grid-area:modes;margin:0}
 body:not([data-view="v-mon"]) .head .modes{display:none}
+.cpuprof{grid-area:cpus;display:none;grid-template-columns:auto 1fr;align-items:center;gap:4px;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--r-outer);padding:3px;margin-top:calc(-1 * var(--gap) + 2px)}
+body[data-view="v-mon"] .cpuprof.on{display:grid}
+.cpuprof .lbl{display:flex;align-items:center;gap:5px;padding:0 6px 0 8px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.cpuprof .lbl svg{width:17px;height:17px}
+.cpuprof .seg{border:0;padding:0;background:none}
+.cpuprof .seg button{height:32px;font-size:13.5px}
 .pc{grid-area:pc;display:flex;align-items:center;gap:8px;min-width:0;font-weight:600;padding-left:4px}
 .pc span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none;transition:background .3s}
@@ -370,6 +377,7 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .uv-test .pair .wide{margin-top:10px}
 #cm-lim-box[hidden]{display:none}
 #cm-mode{margin-bottom:4px}
+.cpu-only[hidden]{display:none}
 .cm-name{font-size:13px;color:var(--muted);margin:6px 2px 2px}
 .cm-name b{color:var(--text);font-weight:700}
 #v-cpu .srow .lab{width:106px;line-height:1.2}
@@ -419,6 +427,7 @@ html[data-density="compact"] .chips button{height:32px}
   .head{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pc modes meta";
     padding:6px calc(var(--safe-r) + 10px) 6px 10px;column-gap:14px}
   .head .modes{width:100%;max-width:520px;justify-self:center;padding:3px}
+  .cpuprof{display:none !important}
   .thumb{top:3px;bottom:3px;left:3px}
   .mode{height:30px;font-size:14px;gap:6px}
   .mode svg{width:15px;height:15px}
@@ -475,7 +484,8 @@ html[data-density="compact"] .chips button{height:32px}
     <div class="pc"><span class="dot" id="dot"></span><span id="pcname">PC</span></div>
     <div class="meta"><span id="power"></span><span class="num" id="clock">--:--</span>
       <button class="hbtn" id="custom-btn" aria-label="Personnaliser l'écran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button></div>
-    <div class="modes" id="modes" role="radiogroup" aria-label="Mode de performance"><div class="thumb" id="thumb"></div></div>
+    <div class="modes" id="modes" role="radiogroup" aria-label="Mode de ventilation"><div class="thumb" id="thumb"></div></div>
+    <div class="cpuprof" id="cpuprof"><span class="lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx=".8"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></svg>CPU</span><div class="seg cpu-seg" aria-label="Profil CPU"><button data-v="silent">Léger</button><button data-v="balanced">Médium</button><button data-v="turbo">Gros</button></div></div>
   </header>
 
   <main>
@@ -580,7 +590,10 @@ html[data-density="compact"] .chips button{height:32px}
         <div class="section">
           <h3>Raccourcis</h3>
           <div class="panel">
+            <div class="sub-h first">Ventilation</div>
             <div class="seg" id="g-modes"></div>
+            <div class="sub-h cpu-only">Profil CPU</div>
+            <div class="seg cpu-seg cpu-only" aria-label="Profil CPU"><button data-v="silent">Léger</button><button data-v="balanced">Médium</button><button data-v="turbo">Gros</button></div>
             <div class="trow"><div><div>Brider le GPU</div><div class="muted small" id="q-gpu-sub">à 1755 MHz</div></div><button class="switch" id="q-gpu" role="switch" aria-checked="false" aria-label="Brider le GPU"></button></div>
             <div class="trow"><div><div>Bloquer la touche Windows</div><div class="muted small">Plus de retour au bureau par erreur</div></div><button class="switch" id="q-winkey" role="switch" aria-checked="false" aria-label="Bloquer la touche Windows"></button></div>
             <div class="sub-h">Capturer</div>
@@ -637,6 +650,9 @@ html[data-density="compact"] .chips button{height:32px}
           <h3>Processeur</h3>
           <div class="panel">
             <div class="trow first"><div><div>PC Monitor gère le processeur</div><div class="muted small">Remplace ThrottleStop, appliqué à chaque démarrage</div></div><button class="switch" id="cpu-on" role="switch" aria-checked="false" aria-label="PC Monitor gère le processeur"></button></div>
+            <div class="sub-h">Profil actif</div>
+            <div class="seg cpu-seg" id="cpu-active" aria-label="Profil CPU actif"><button data-v="silent">Léger</button><button data-v="balanced">Médium</button><button data-v="turbo">Gros</button></div>
+            <div class="trow"><div><div>Lier à la ventilation</div><div class="muted small">Le profil change avec Silencieux / Équilibré / Turbo</div></div><button class="switch" id="cpu-link" role="switch" aria-checked="false" aria-label="Lier le profil CPU à la ventilation"></button></div>
             <div class="hud cpu-live">
               <div><span class="num" id="c-freq">–</span><small>Fréquence</small></div>
               <div><span class="num" id="c-vid">–</span><small>Tension</small></div>
@@ -672,7 +688,7 @@ html[data-density="compact"] .chips button{height:32px}
         </div>
 
         <div class="section">
-          <h3>Profils CPU (un par mode)</h3>
+          <h3>Réglages des profils CPU</h3>
           <div class="panel">
             <div class="seg" id="cm-mode"></div>
             <div class="cm-name" id="cm-name"></div>
@@ -910,8 +926,10 @@ html[data-density="compact"] .chips button{height:32px}
     <div class="chips" id="g-running"></div>
     <div class="sub-h">Nom affiché</div>
     <input class="field" id="g-name" placeholder="ex. Warzone" autocomplete="off" maxlength="40">
-    <div class="sub-h">Mode</div>
+    <div class="sub-h">Ventilation</div>
     <div class="seg small" id="g-mode"><button data-v="">Inchangé</button><button data-v="silent">Silence</button><button data-v="balanced">Équilibré</button><button data-v="turbo">Turbo</button></div>
+    <div class="sub-h">Profil CPU</div>
+    <div class="seg small" id="g-cpu"><button data-v="">Inchangé</button><button data-v="silent">Léger</button><button data-v="balanced">Médium</button><button data-v="turbo">Gros</button></div>
     <div class="sub-h">Carte graphique</div>
     <div class="seg small" id="g-gpu"><button data-v="">Inchangée</button><button data-v="on">Bridée</button><button data-v="off">Normale</button></div>
     <div class="sub-h">Couleurs de l'écran</div>
@@ -1089,6 +1107,7 @@ function render(s) {
   const c = s.cpu || {}, g = s.gpu || {};
   $("cpu-name").textContent = shortName(c.name); $("gpu-name").textContent = shortName(g.name);
   setDial(dials.cpu, c.temp, c.temp_max); setDial(dials.gpu, g.temp, g.temp_max);
+  paintCpuProfile(s.cpu_profile || null, s.cpu_profile != null);
   const peaks = (x, d) => x.temp_max != null ? `↑${Math.round(x.temp_max)}° ↓${Math.round(x.temp_min)}°` : d.max != null ? `max ${Math.round(d.max)}°` : "";
   dials.cpu.lbl.textContent = peaks(c, dials.cpu);
   dials.gpu.lbl.textContent = peaks(g, dials.gpu);
@@ -1899,6 +1918,7 @@ const MODE_SHORT = { silent: "Silence", balanced: "Équilibré", turbo: "Turbo" 
 function gameSummary(g) {
   const parts = [];
   if (g.mode) parts.push(MODE_SHORT[g.mode] || g.mode);
+  if (g.cpu) parts.push("CPU " + (CPU_PROFILE[g.cpu] || g.cpu));
   if (g.gpu === true) parts.push(`GPU bridé`);
   if (g.gpu === false) parts.push("GPU normal");
   if (g.color) parts.push(g.color);
@@ -1929,10 +1949,11 @@ $("game-list").addEventListener("click", async e => {
 let gEdit = null;
 function segVal(box) { const b = box.querySelector('button[aria-pressed="true"]'); return b ? b.dataset.v : ""; }
 function openGame(g, exe) {
-  gEdit = g ? Object.assign({}, g) : { exe: exe || "", name: "", mode: "turbo", gpu: true, color: null, winkey: true, enabled: true };
+  gEdit = g ? Object.assign({}, g) : { exe: exe || "", name: "", mode: "turbo", cpu: "turbo", gpu: true, color: null, winkey: true, enabled: true };
   $("g-title").textContent = g ? `Profil ${g.name}` : "Nouveau profil de jeu";
   $("g-exe").value = gEdit.exe; $("g-name").value = gEdit.name;
   press($("g-mode"), gEdit.mode || "");
+  press($("g-cpu"), gEdit.cpu || "");
   press($("g-gpu"), gEdit.gpu === true ? "on" : gEdit.gpu === false ? "off" : "");
   const cols = [{ name: "" }].concat(colProfiles());
   $("g-color").innerHTML = cols.map(p => `<button data-v="${esc(p.name)}" aria-pressed="${(gEdit.color || "") === p.name}">${p.name ? esc(p.name) : "Inchangées"}</button>`).join("");
@@ -1954,7 +1975,7 @@ $("g-running").addEventListener("click", e => {
   if (!$("g-name").value.trim()) $("g-name").value = b.dataset.t.split(/\s[-–—|]\s/)[0].slice(0, 40);
   $("g-running").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
 });
-["g-mode", "g-gpu", "g-color"].forEach(id => $(id).addEventListener("click", e => {
+["g-mode", "g-cpu", "g-gpu", "g-color"].forEach(id => $(id).addEventListener("click", e => {
   const b = e.target.closest("button[data-v]"); if (b) press($(id), b.dataset.v);
 }));
 $("g-winkey").addEventListener("click", () => setSwitch($("g-winkey"), !isOn($("g-winkey"))));
@@ -1966,7 +1987,7 @@ $("g-save").addEventListener("click", async () => {
   if (!normExe(exe)) return toast("Indique le programme du jeu (ex. cod.exe)", true);
   const gpu = segVal($("g-gpu"));
   const body = { action: "game_save", old: gEdit && gEdit.exe ? gEdit.exe : undefined, exe, name: $("g-name").value.trim(),
-    mode: segVal($("g-mode")) || null, gpu: gpu === "on" ? true : gpu === "off" ? false : null,
+    mode: segVal($("g-mode")) || null, cpu: segVal($("g-cpu")) || null, gpu: gpu === "on" ? true : gpu === "off" ? false : null,
     color: segVal($("g-color")) || null, winkey: isOn($("g-winkey")), enabled: gEdit ? gEdit.enabled !== false : true };
   const r = await api("/api/action", body).catch(() => null);
   toast(r ? r.msg || "Enregistré" : "Le PC ne répond pas", !r || !r.ok);
@@ -2000,6 +2021,30 @@ $("timer-min").addEventListener("click", async e => {
 });
 
 
+/* ---------- Profil CPU actif (indépendant de la ventilation) ---------- */
+let cpuActive = null, cpuPending = null, cpuPendingUntil = 0;
+function paintCpuProfile(active, managed) {
+  if (active !== undefined) cpuActive = active;
+  const cur = cpuPending && Date.now() < cpuPendingUntil ? cpuPending : cpuActive;
+  document.querySelectorAll(".cpu-seg").forEach(b => press(b, cur || ""));
+  if (managed !== undefined) {
+    $("cpuprof").classList.toggle("on", !!managed);
+    document.querySelectorAll(".cpu-only").forEach(e => e.hidden = !managed);
+  }
+}
+document.querySelectorAll(".cpu-seg").forEach(box => box.addEventListener("click", async e => {
+  const b = e.target.closest("button[data-v]"); if (!b) return;
+  cpuPending = b.dataset.v; cpuPendingUntil = Date.now() + 4000; paintCpuProfile();
+  const r = await act({ action: "cpu_profile", id: b.dataset.v });
+  if (r && r.ok) { cpuActive = b.dataset.v; if (CPU && CPU.settings) CPU.settings.active = cpuActive; }
+  cpuPending = null; paintCpuProfile();
+  if (document.body.dataset.view === "v-cpu") loadCpu();
+}));
+$("cpu-link").addEventListener("click", async () => {
+  const on = !isOn($("cpu-link")); setSwitch($("cpu-link"), on);
+  await act({ action: "cpu_link", on }); loadCpu();
+});
+
 /* ---------- Onglet Processeur (remplace ThrottleStop) ---------- */
 let cpuTick = 0;
 let CPU = null, cpuBusy = false, cmMode = null, cmDirty = false, uvDirty = false;
@@ -2015,6 +2060,8 @@ function renderCpu() {
   $("cpu-ts").hidden = !c.throttlestop;
   $("cpu-err").hidden = !c.error; $("cpu-err").textContent = c.error || "";
   setSwitch($("cpu-on"), !!st.enabled);
+  setSwitch($("cpu-link"), !!st.linked);
+  paintCpuProfile(st.active || null);
   const avail = !!c.available;
   $("c-freq").textContent = c.ratio ? nf(c.ratio / 10, 1) + " GHz" : "–";
   $("c-vid").textContent = c.vid != null ? nf(c.vid, 3) + " V" : "–";
@@ -2037,7 +2084,7 @@ function renderCpu() {
     const box = $(id);
     if (box.children.length !== MODES.length) box.innerHTML = MODES.map(m => `<button data-v="${esc(m.id)}">${esc(CPU_PROFILE[m.id] || m.label)}</button>`).join("");
   });
-  if (!cmMode) cmMode = c.mode || (MODES[1] && MODES[1].id) || "balanced";
+  if (!cmMode) cmMode = st.active || c.mode || "balanced";
   press($("cm-mode"), cmMode); press($("uv-mode"), cmMode);
   renderUv();
   ["uv-core", "uv-gpu", "uv-sa", "uv-apply", "uv-keep", "uv-cancel", "cm-save", "cpu-takeover", "cpu-tsboot"].forEach(id => $(id).disabled = !avail);
@@ -2048,8 +2095,8 @@ const ghz = v => v >= 41 ? "Sans limite" : nf(v / 10, 1) + " GHz";
 function profOf(mode) { return ((CPU && CPU.settings && CPU.settings.modes) || {})[mode] || {}; }
 function modeLabel(mode) { return (MODES.find(x => x.id === mode) || {}).label || mode; }
 function renderUv() {
-  const c = CPU || {}, t = c.test, p = profOf(cmMode), cur = c.mode === cmMode;
-  $("uv-name").innerHTML = `Profil <b>${esc(CPU_PROFILE[cmMode] || cmMode)}</b> (mode ${esc(modeLabel(cmMode))})` +
+  const c = CPU || {}, t = c.test, p = profOf(cmMode), cur = ((c.settings || {}).active) === cmMode;
+  $("uv-name").innerHTML = `Profil <b>${esc(CPU_PROFILE[cmMode] || cmMode)}</b>${cur ? " · actif" : ""}` +
     (p.core ? ` · gardé : ${esc(mvTxt(p.core))}` : " · aucun undervolt");
   $("uv-test").hidden = !t;
   if (t) $("uv-test-txt").innerHTML = `<b>En test sur ${esc(CPU_PROFILE[t.mode] || t.mode)} : ${esc(mvTxt(t.core))}</b>${t.gpu ? ` · GPU ${t.gpu} mV` : ""}${t.sa ? ` · SA ${t.sa} mV` : ""}<br>Joue ou lance un test 10 à 15 min. Tout va bien ? Appuie sur Garder.`;
@@ -2057,12 +2104,13 @@ function renderUv() {
     const src = t && t.mode === cmMode ? t : { core: p.core || 0, gpu: p.gpu || 0, sa: p.sa || 0 };
     ["core", "gpu", "sa"].forEach(k => { const el = $("uv-" + k); el.value = src[k] || 0; fill(el); $("uv-" + k + "-v").textContent = mvTxt(+el.value); });
   }
-  $("uv-apply").textContent = cur ? `Tester sur le profil ${CPU_PROFILE[cmMode] || ""}` : `Passer en ${modeLabel(cmMode)} et tester`;
+  $("uv-apply").textContent = cur ? `Tester sur le profil ${CPU_PROFILE[cmMode] || ""}` : `Activer ${CPU_PROFILE[cmMode] || ""} et tester`;
 }
 function fillCpuMode() {
   const m = ((CPU && CPU.settings && CPU.settings.modes) || {})[cmMode] || { limits: false, pl1: 45, pl2: 90, tau: 28, epp: -1, max_mhz: 0, boost: 2 };
   const ml = (MODES.find(x => x.id === cmMode) || {}).label || cmMode;
-  $("cm-name").innerHTML = `Profil <b>${esc(CPU_PROFILE[cmMode] || ml)}</b>, appliqué en mode ${esc(ml)}`;
+  const isCur = ((CPU && CPU.settings) || {}).active === cmMode;
+  $("cm-name").innerHTML = `Profil <b>${esc(CPU_PROFILE[cmMode] || ml)}</b>${isCur ? " · actif" : ""}`;
   const fr = $("cm-freq"); fr.value = m.max_mhz ? Math.round(m.max_mhz / 100) : 41; fill(fr); $("cm-freq-v").textContent = ghz(+fr.value);
   setSwitch($("cm-limits"), !!m.limits);
   $("cm-lim-box").hidden = !m.limits;
@@ -2073,8 +2121,7 @@ function fillCpuMode() {
   press($("cm-tau"), String(nearestTau(m.limits ? m.tau : l ? l.tau : m.tau)));
   press($("cm-boost"), String(m.boost != null ? m.boost : 2));
   press($("cm-epp"), String(m.epp != null ? m.epp : -1));
-  const cur = CPU && CPU.mode === cmMode;
-  $("cm-hint").textContent = (cur ? "Mode actuel : appliqué dès l'enregistrement." : "S'appliquera quand tu passeras dans ce mode.") +
+  $("cm-hint").textContent = (isCur ? "Profil actif : appliqué dès l'enregistrement." : "S'appliquera quand tu choisiras ce profil.") +
     " PL1 = puissance tenue dans la durée, PL2 = pic pendant la durée du boost (le i7-8750H est prévu pour 45 W). Fréquence max et EPP passent par Windows, comme le Speed Shift de ThrottleStop.";
 }
 function nearestTau(v) { const opts = [8, 28, 56, 96, 128]; return opts.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a, 28); }
