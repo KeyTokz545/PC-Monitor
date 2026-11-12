@@ -51,6 +51,54 @@ html[data-anim="on"] .btn:active,html[data-anim="on"] .wide:active,html[data-ani
 html[data-anim="on"] .view.active{animation:ks-fade .22s ease both}
 @media (prefers-reduced-motion:reduce){.splash-in,.ks-stone,.ks-pulse,.view.active{animation:none!important}}
 
+/* ---------- Menus en colonnes sans trou (chaque fenêtre va dans la colonne la plus courte) ---------- */
+.cols.masonry{display:flex;align-items:flex-start;gap:0 14px}
+.cols.masonry>.mcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column}
+
+/* ---------- Déplacer une fenêtre : appui long puis glisser ---------- */
+.drag-ph{border:2px dashed var(--cool);border-radius:var(--r-outer);background:rgba(79,195,224,.06);margin-bottom:18px;
+  border-color:color-mix(in srgb,var(--cool) 65%,transparent);background:color-mix(in srgb,var(--cool) 8%,transparent)}
+.grid>.drag-ph{margin:0}
+.dragging{position:fixed!important;z-index:150;pointer-events:none;margin:0!important;transform-origin:center;will-change:transform;
+  border-radius:var(--r-outer);box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 2px var(--cool)}
+.dragging.section{background:var(--ink)}
+body.drag-on main{scroll-behavior:auto}
+
+/* ---------- Indicateur glissant de l'onglet actif ---------- */
+.nav{position:relative}
+.nav .tab{position:relative;z-index:1}
+.tab-ind{position:absolute;left:0;top:0;width:0;height:0;border-radius:14px;pointer-events:none;opacity:0;
+  background:rgba(79,195,224,.14);background:color-mix(in srgb,var(--cool) 15%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cool) 30%,transparent)}
+.tab-ind.show{opacity:1}
+html[data-anim="on"] .tab-ind{transition:transform .34s cubic-bezier(.3,.7,.2,1),width .34s,height .34s,opacity .2s}
+html[data-anim="on"] .tab[aria-selected="true"] svg{color:var(--cool)}
+
+/* ---------- Animations complètes ---------- */
+@keyframes ks-item-in{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+html[data-fx="full"] .stagger{animation:ks-item-in .4s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*45ms)}
+html[data-fx="full"] :is(.btn,.wide,.tab,.mode,.seg button,.chips button){position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);
+  animation:ks-ripple .55s ease-out forwards}
+@keyframes ks-ripple{to{transform:scale(1);opacity:0}}
+html[data-fx="full"] .wide.primary{box-shadow:0 8px 24px -10px var(--cool)}
+html[data-fx="full"] .switch[aria-checked="true"]{box-shadow:0 0 14px -3px var(--cool)}
+html[data-fx="full"] .dot.on{animation:ks-pulse-dot 2.4s ease-in-out infinite}
+@keyframes ks-pulse-dot{50%{box-shadow:0 0 0 6px rgba(79,195,224,0)}}
+
+/* ---------- Fond animé (aurore) ---------- */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .8s}
+html[data-bg="on"] .aurora{opacity:1}
+.aurora i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--cool) 20%,transparent),transparent)}
+.aurora i:nth-child(1){left:-25vmax;top:-30vmax}
+.aurora i:nth-child(2){right:-30vmax;bottom:-35vmax;background:radial-gradient(closest-side,color-mix(in srgb,var(--cool) 13%,transparent),transparent)}
+html[data-bg="on"] .aurora i:nth-child(1){animation:ks-drift1 24s ease-in-out infinite alternate}
+html[data-bg="on"] .aurora i:nth-child(2){animation:ks-drift2 31s ease-in-out infinite alternate}
+@keyframes ks-drift1{to{transform:translate(30vw,25vh) scale(1.25)}}
+@keyframes ks-drift2{to{transform:translate(-25vw,-20vh) scale(.85)}}
+.app{position:relative;z-index:1}
+
 /* ---------- Cadre de l'appli ---------- */
 .app{height:100%;display:grid;grid-template-rows:auto 1fr auto;grid-template-areas:"head" "main" "nav"}
 .head{grid-area:head;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"pc meta" "modes modes" "cpus cpus";
@@ -445,6 +493,15 @@ html[data-theme="rog"] .num{letter-spacing:0}
 html[data-theme="abysse"]{--ink:#06121C;--panel:#0D2130;--raise:#143044;--line:#1E3A4F;--text:#DCEAF2;--muted:#6E8EA3;--faint:#365062}
 html[data-theme="nebuleuse"]{--ink:#0C0A16;--panel:#171329;--raise:#201A3A;--line:#2C2450;--text:#E9E4F5;--muted:#8C82A8;--faint:#4A4268}
 html[data-theme="foret"]{--ink:#07130D;--panel:#0E2018;--raise:#153022;--line:#1F4030;--text:#DFEEE4;--muted:#6F9080;--faint:#355043}
+html[data-theme="braise"]{--ink:#130B08;--panel:#21130E;--raise:#2C1A13;--line:#3D251B;--text:#F3E6DF;--muted:#A88E82;--faint:#5E4339}
+html[data-theme="sakura"]{--ink:#130A10;--panel:#21111B;--raise:#2C1724;--line:#3E2133;--text:#F6E7EF;--muted:#B08AA0;--faint:#5E3B4F}
+html[data-theme="ardoise"]{--ink:#111315;--panel:#1A1D21;--raise:#23272C;--line:#30353B;--text:#E8EAED;--muted:#8C939B;--faint:#4A5058}
+html[data-theme="cyber"]{--ink:#06050C;--panel:#0D0B1A;--raise:#151229;--line:#28224D;--text:#EEEBFF;--muted:#8A85B5;--faint:#443E70}
+html[data-theme="cyber"] .section h3,html[data-theme="cyber"] .card h2{color:var(--cool);text-transform:uppercase;letter-spacing:.07em;font-size:12.5px;
+  text-shadow:0 0 10px color-mix(in srgb,var(--cool) 70%,transparent)}
+html[data-theme="cyber"] .card h2 small{color:var(--muted);text-transform:none;letter-spacing:0;text-shadow:none}
+html[data-theme="cyber"] .card,html[data-theme="cyber"] .panel{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cool) 16%,transparent),0 0 26px -14px var(--cool)}
+html[data-theme="cyber"] .num{text-shadow:0 0 12px color-mix(in srgb,var(--cool) 35%,transparent)}
 html[data-density="compact"]{--gap:7px}
 html[data-density="compact"] body{font-size:14px}
 html[data-density="compact"] .card{padding:9px 11px}
@@ -455,7 +512,7 @@ html[data-density="compact"] .wide{height:42px;margin-top:10px}
 html[data-density="compact"] .seg button{height:34px}
 html[data-density="compact"] .chips button{height:32px}
 .app{transition:transform 3s ease}
-.themes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
 .themes button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:12px;border:1px solid var(--line);
   font-size:13px;font-weight:600;color:var(--muted)}
 .themes button[aria-pressed="true"]{border-color:var(--cool);color:var(--text)}
@@ -527,6 +584,7 @@ html[data-density="compact"] .chips button{height:32px}
 </style>
 </head>
 <body data-view="v-mon">
+<div class="aurora" aria-hidden="true"><i></i><i></i></div>
 <div class="splash" id="splash" aria-hidden="true">
   <div class="splash-in">
     <svg class="ks-logo" viewBox="0 0 48 48" aria-hidden="true">
@@ -712,7 +770,7 @@ html[data-density="compact"] .chips button{height:32px}
     <!-- Processeur : remplace ThrottleStop -->
     <section class="view" id="v-cpu" aria-label="Processeur">
       <div class="note ts-note" id="cpu-ts" hidden>
-        <div><b>ThrottleStop est ouvert</b> : il écrase les réglages de cet onglet. Reprends ses réglages actuels, PC Monitor s'en occupera à sa place.</div>
+        <div><b>ThrottleStop est ouvert</b> : il écrase les réglages de cet onglet. Reprends ses réglages actuels, Keystone s'en occupera à sa place.</div>
         <button class="wide primary" id="cpu-takeover">Reprendre ses réglages et le fermer</button>
       </div>
       <div class="note" id="cpu-err" hidden></div>
@@ -720,7 +778,7 @@ html[data-density="compact"] .chips button{height:32px}
         <div class="section">
           <h3>Processeur</h3>
           <div class="panel">
-            <div class="trow first"><div><div>PC Monitor gère le processeur</div><div class="muted small">Remplace ThrottleStop, appliqué à chaque démarrage</div></div><button class="switch" id="cpu-on" role="switch" aria-checked="false" aria-label="PC Monitor gère le processeur"></button></div>
+            <div class="trow first"><div><div>Keystone gère le processeur</div><div class="muted small">Remplace ThrottleStop, appliqué à chaque démarrage</div></div><button class="switch" id="cpu-on" role="switch" aria-checked="false" aria-label="Keystone gère le processeur"></button></div>
             <div class="sub-h">Profil actif</div>
             <div class="seg cpu-seg" id="cpu-active" aria-label="Profil CPU actif"><button data-v="silent">Léger</button><button data-v="balanced">Médium</button><button data-v="turbo">Gros</button></div>
             <div class="trow"><div><div>Lier à la ventilation</div><div class="muted small">Le profil change avec Silencieux / Équilibré / Turbo</div></div><button class="switch" id="cpu-link" role="switch" aria-checked="false" aria-label="Lier le profil CPU à la ventilation"></button></div>
@@ -779,7 +837,7 @@ html[data-density="compact"] .chips button{height:32px}
               <button class="wide" id="st-stop">Arrêter le test</button>
             </div>
             <div class="st-res" id="st-res" hidden></div>
-            <p class="hint in">Charge maximale sur tous les cœurs avec le profil actif et son undervolt (en test ou gardé). Ferme tes jeux avant. Si le PC plante, PC Monitor le verra au redémarrage.</p>
+            <p class="hint in">Charge maximale sur tous les cœurs avec le profil actif et son undervolt (en test ou gardé). Ferme tes jeux avant. Si le PC plante, Keystone le verra au redémarrage.</p>
           </div>
         </div>
 
@@ -1011,7 +1069,10 @@ html[data-density="compact"] .chips button{height:32px}
   <div class="box tall" role="dialog" aria-modal="true" aria-labelledby="custom-t">
     <p id="custom-t">Personnaliser</p>
     <div class="sub">Sur ce téléphone seulement.</div>
-    <div class="sub-h first">Cartes du monitoring</div>
+    <div class="sub-h first">Disposition des menus</div>
+    <div class="muted small" style="margin:0 4px 10px;line-height:1.4">Reste appuyé sur une fenêtre (sur son titre ou une zone vide), puis glisse-la où tu veux. Les autres se rangent toutes seules, sans trou. Ça marche dans tous les onglets, y compris les cartes du monitoring.</div>
+    <button class="wide" id="layout-reset">Remettre la disposition d'origine</button>
+    <div class="sub-h">Cartes du monitoring</div>
     <div id="card-list"></div>
     <div class="sub-h">Thème</div>
     <div class="themes" id="themes">
@@ -1021,12 +1082,19 @@ html[data-density="compact"] .chips button{height:32px}
       <button data-t="abysse"><i style="background:#06121C"><b style="background:#4FC3E0"></b></i>Abysse</button>
       <button data-t="nebuleuse"><i style="background:#0C0A16"><b style="background:#A98BFF"></b></i>Nébuleuse</button>
       <button data-t="foret"><i style="background:#07130D"><b style="background:#5BE08A"></b></i>Forêt</button>
+      <button data-t="braise"><i style="background:#130B08"><b style="background:#FF7A59"></b></i>Braise</button>
+      <button data-t="sakura"><i style="background:#130A10"><b style="background:#FF7AC6"></b></i>Sakura</button>
+      <button data-t="ardoise"><i style="background:#111315"><b style="background:#7AA2FF"></b></i>Ardoise</button>
+      <button data-t="cyber"><i style="background:#06050C"><b style="background:#00F0FF;box-shadow:0 0 10px #00F0FF"></b></i>Cyber</button>
     </div>
     <div class="sub-h">Couleur d'accent</div>
     <div class="swatches" id="accents"></div>
     <div class="sub-h">Taille de l'affichage</div>
     <div class="seg small" id="density"><button data-v="normal">Confort</button><button data-v="compact">Compacte</button></div>
-    <div class="trow"><div><div>Animations</div><div class="muted small">Écran de démarrage, transitions et effets. Désactive pour un rendu plus sobre et réactif.</div></div><button class="switch" id="anim-switch" role="switch" aria-checked="true" aria-label="Animations"></button></div>
+    <div class="sub-h">Animations</div>
+    <div class="seg small" id="fx"><button data-v="off">Aucune</button><button data-v="soft">Sobres</button><button data-v="full">Complètes</button></div>
+    <div class="muted small" style="margin:8px 4px 0;line-height:1.4">Sobres : écran de démarrage, transitions, indicateur d'onglet. Complètes : en plus, fenêtres qui arrivent en cascade, effet d'onde au toucher, halos lumineux.</div>
+    <div class="trow"><div><div>Fond animé</div><div class="muted small">Aurore lumineuse qui dérive lentement derrière les fenêtres, dans ta couleur d'accent</div></div><button class="switch" id="bg-switch" role="switch" aria-checked="false" aria-label="Fond animé"></button></div>
     <div class="trow"><div><div>Anti-marquage de l'écran</div><div class="muted small">Décale l'affichage de 2 px toutes les 4 min, utile si le téléphone reste allumé en permanence</div></div><button class="switch" id="shift-switch" role="switch" aria-checked="false" aria-label="Anti-marquage de l'écran"></button></div>
     <div class="sub-h">Alerte surchauffe</div>
     <div class="trow"><span id="alert-label">Au-delà de 90 °C</span><button class="switch" id="alert-switch" role="switch" aria-checked="true" aria-label="Alerte surchauffe"></button></div>
@@ -1293,11 +1361,11 @@ function render(s) {
   if (heat) notes.push([heat, "bad"]);
   if (s.demo) notes.push(["Mode démo : les valeurs sont fausses.", ""]);
   if (s.lhm && !s.lhm.ok) notes.push([s.app === "pcmonitor"
-    ? "Capteurs indisponibles : vérifie que le pilote PawnIO est installé et que PC Monitor tourne en administrateur."
+    ? "Capteurs indisponibles : vérifie que le pilote PawnIO est installé et que Keystone tourne en administrateur."
     : "Températures indisponibles : lance LibreHardwareMonitor en administrateur et active Options > Remote Web Server > Run.", "bad"]);
   if (!s.demo && s.lhm && s.lhm.ok && c.temp == null) notes.push(["Température CPU vide : installe le pilote PawnIO (pawnio.eu) sur le PC, puis relance LibreHardwareMonitor en administrateur.", ""]);
   if (m.ghelper_running === false) notes.push(["G-Helper n'est pas lancé sur le PC : les modes ne changeront pas.", ""]);
-  if (m.control_ok === false) notes.push(["Modes ASUS indisponibles : PC Monitor n'a pas accès au pilote ASUS (ATKACPI).", ""]);
+  if (m.control_ok === false) notes.push(["Modes ASUS indisponibles : Keystone n'a pas accès au pilote ASUS (ATKACPI).", ""]);
   setNotes(notes);
 }
 function renderWifi(w) {
@@ -1332,9 +1400,9 @@ async function tick() {
     if (view === "v-cpu" && (cpuTick = (cpuTick + 1) % 2) === 0) loadCpu();
   } catch (e) {
     fails++;
-    if (e.auth) { setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]); $("dot").className = "dot off"; }
+    if (e.auth) { setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par Keystone sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]); $("dot").className = "dot off"; }
     if (!e.auth && fails >= 2) { $("dot").className = "dot off";
-      setNotes([["PC injoignable : vérifie que PC Monitor tourne sur le PC et que le téléphone est sur le même Wi-Fi.", "bad"]]); }
+      setNotes([["PC injoignable : vérifie que Keystone tourne sur le PC et que le téléphone est sur le même Wi-Fi.", "bad"]]); }
   } finally { busy = false; }
 }
 async function init() {
@@ -1344,7 +1412,7 @@ async function init() {
     buildModes(cfg.modes || []);
   } catch (e) {
     buildModes([{ id: "silent", label: "Silencieux" }, { id: "balanced", label: "Équilibré" }, { id: "turbo", label: "Turbo" }]);
-    if (e.auth) setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]);
+    if (e.auth) setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par Keystone sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]);
     setTimeout(init, 4000);
   }
   tick();
@@ -1594,7 +1662,7 @@ function renderGpu() {
   press($("gpu-presets"), gpuMhz);
   $("gpu-mhz").closest(".stepper").classList.toggle("dim", !(ok && g.on));
   $("gpu-hint").textContent = ok
-    ? "Moins de chaleur et de bruit en jeu, pour quelques images par seconde en moins. Désactive pour rendre la main au pilote."
+    ? "Plafonne la fréquence pour maîtriser la chauffe. Avec un décalage cœur positif, ce plafond est atteint à moins de tension : c'est là que l'undervolt opère."
     : "Carte graphique NVIDIA introuvable : le bridage n'est pas disponible sur ce PC.";
 }
 function gpuSend() {
@@ -1721,12 +1789,16 @@ function renderPerfLive(s) {
 
 /* ---------- Personnaliser (réglages propres à ce téléphone) ---------- */
 const CARDS = [["cpu", "CPU"], ["gpu", "GPU"], ["net", "Connexion"], ["ram", "Mémoire"], ["sys", "Système"]];
-const ACCENTS = ["#4FC3E0", "#5BE08A", "#FFB547", "#FF7A59", "#FF2D46", "#A98BFF", "#FF7AC6"];
-const THEME_INK = { nuit: "#0E1822", oled: "#000000", rog: "#08080A", abysse: "#06121C", nebuleuse: "#0C0A16", foret: "#07130D" };
-const THEME_ACCENT = { nuit: "#4FC3E0", oled: "#4FC3E0", rog: "#FF2D46", abysse: "#4FC3E0", nebuleuse: "#A98BFF", foret: "#5BE08A" };
+const ACCENTS = ["#4FC3E0", "#00F0FF", "#7AA2FF", "#5BE08A", "#FFD84F", "#FFB547", "#FF7A59", "#FF2D46", "#A98BFF", "#FF7AC6"];
+const THEME_INK = { nuit: "#0E1822", oled: "#000000", rog: "#08080A", abysse: "#06121C", nebuleuse: "#0C0A16", foret: "#07130D",
+  braise: "#130B08", sakura: "#130A10", ardoise: "#111315", cyber: "#06050C" };
+const THEME_ACCENT = { nuit: "#4FC3E0", oled: "#4FC3E0", rog: "#FF2D46", abysse: "#4FC3E0", nebuleuse: "#A98BFF", foret: "#5BE08A",
+  braise: "#FF7A59", sakura: "#FF7AC6", ardoise: "#7AA2FF", cyber: "#00F0FF" };
 const THEME_DEFAULT_ACCENTS = new Set(Object.values(THEME_ACCENT));
-let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false, anim: true };
+let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false, anim: true, bg: false, layoutHint: 0 };
 try { const saved = JSON.parse(localStorage.getItem("pcmon-ui") || "null"); if (saved) UI = Object.assign(UI, saved); } catch (e) {}
+// niveau d'animations : aucune / sobres / complètes (l'ancien réglage oui/non est repris)
+if (!["off", "soft", "full"].includes(UI.fx)) UI.fx = UI.anim === false ? "off" : "full";
 CARDS.forEach(c => { if (!UI.order.includes(c[0])) UI.order.push(c[0]); });
 function saveUI() { try { localStorage.setItem("pcmon-ui", JSON.stringify(UI)); } catch (e) {} }
 function applyUI() {
@@ -1735,7 +1807,10 @@ function applyUI() {
   root.style.setProperty("--cool", UI.accent);
   if (UI.theme && UI.theme !== "nuit") root.dataset.theme = UI.theme; else delete root.dataset.theme;
   if (UI.density === "compact") root.dataset.density = "compact"; else delete root.dataset.density;
+  UI.anim = UI.fx !== "off";
   root.dataset.anim = UI.anim ? "on" : "off";
+  root.dataset.fx = UI.fx;
+  root.dataset.bg = UI.bg && UI.anim ? "on" : "off";
   const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = THEME_INK[UI.theme] || THEME_INK.nuit;
   setShift(UI.shift);
 }
@@ -1758,9 +1833,12 @@ function renderCustom() {
   }).join("");
   $("themes").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === (UI.theme || "nuit")));
   press($("density"), UI.density || "normal");
-  setSwitch($("anim-switch"), UI.anim !== false);
+  press($("fx"), UI.fx);
+  setSwitch($("bg-switch"), !!UI.bg); $("bg-switch").disabled = UI.fx === "off";
   setSwitch($("shift-switch"), !!UI.shift);
-  $("accents").innerHTML = ACCENTS.map(c => `<button data-a="${c}" style="background:${c}" aria-pressed="${c === UI.accent}" aria-label="Accent ${c}"></button>`).join("");
+  const perso = !ACCENTS.includes(UI.accent);
+  $("accents").innerHTML = ACCENTS.map(c => `<button data-a="${c}" style="background:${c}" aria-pressed="${c === UI.accent}" aria-label="Accent ${c}"></button>`).join("")
+    + `<label aria-pressed="${perso}" title="Couleur perso"${perso ? ` style="background:${UI.accent}"` : ""}><input type="color" value="${UI.accent}" aria-label="Choisir une couleur perso"></label>`;
   setSwitch($("alert-switch"), UI.alert.on);
   $("alert-temp").value = UI.alert.temp; fill($("alert-temp"));
   $("alert-label").textContent = `Au-delà de ${UI.alert.temp} °C`;
@@ -1787,7 +1865,14 @@ $("themes").addEventListener("click", e => {
   if (UI.theme === "oled" && prev !== "oled") UI.shift = true;
   saveUI(); applyUI(); renderCustom(); redrawAll();
 });
-$("anim-switch").addEventListener("click", () => { UI.anim = !UI.anim; saveUI(); applyUI(); renderCustom(); });
+$("fx").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; UI.fx = b.dataset.v; saveUI(); applyUI(); renderCustom(); Layout.indicator(); });
+$("bg-switch").addEventListener("click", () => { UI.bg = !UI.bg; saveUI(); applyUI(); renderCustom(); });
+// couleur perso : aperçu en direct, enregistrée au relâchement
+$("accents").addEventListener("input", e => { if (e.target.type !== "color") return; UI.accent = e.target.value; applyUI(); e.target.parentNode.style.background = UI.accent; });
+$("accents").addEventListener("change", e => { if (e.target.type !== "color") return; saveUI(); renderCustom(); redrawAll(); });
+$("layout-reset").addEventListener("click", () => confirmSheet("Remettre la disposition d'origine ?",
+  "Toutes les fenêtres de tous les onglets, et les cartes du monitoring, reprennent leur place de départ.",
+  () => { Layout.reset(); toast("Disposition d'origine remise"); }, "Remettre"));
 $("density").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; UI.density = b.dataset.v; saveUI(); applyUI(); renderCustom(); redrawAll(); });
 $("shift-switch").addEventListener("click", () => { UI.shift = !UI.shift; saveUI(); applyUI(); renderCustom(); });
 function redrawAll() { try { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); } catch (e) {} }
@@ -1802,10 +1887,340 @@ applyUI();
 (function () {
   const sp = $("splash"); if (!sp) return;
   const hide = () => sp.classList.add("gone");
-  setTimeout(hide, UI.anim === false ? 250 : 1600);
+  setTimeout(hide, UI.fx === "off" ? 250 : 1600);
   sp.addEventListener("click", hide);
   setTimeout(() => { try { sp.remove(); } catch (e) {} }, 2400);
 })();
+
+/* ---------- Disposition libre : fenêtres rangées sans trou + appui long pour les déplacer ---------- */
+const Layout = (() => {
+  const LKEY = "pcmon-layout";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(LKEY) || "{}") || {}; } catch (e) { saved = {}; }
+  const persist = () => { try { localStorage.setItem(LKEY, JSON.stringify(saved)); } catch (e) {} };
+  const narrow = matchMedia("(orientation:landscape) and (max-height:520px)");
+  const mainEl = document.querySelector("main");
+  const fxOn = () => document.documentElement.dataset.anim === "on";
+  const slug = t => (t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const conts = [];            // un par onglet : { view, el, cols, items (clé → fenêtre), def, order, shownAt }
+  let drag = null, press = null, fingerDown = false;
+  const pending = new Set();
+
+  // ---- rangement : chaque fenêtre, dans l'ordre, va dans la colonne la plus courte
+  function ncols(c) {
+    const min = narrow.matches ? 290 : 330, gap = 14;
+    return Math.max(1, Math.floor(((c.el.clientWidth || mainEl.clientWidth) + gap) / (min + gap)));
+  }
+  function rects(els) { return els.map(e => e.getBoundingClientRect()); }
+  function flip(els, before) {
+    const after = rects(els);
+    els.forEach((e, i) => {
+      if (!e || (drag && e === drag.el)) return;
+      const a = before[i], b = after[i];
+      if (!a.width || !b.width) return;
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      e.style.transition = "none"; e.style.transform = `translate(${dx}px,${dy}px)`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        e.style.transition = "transform .3s cubic-bezier(.3,.7,.2,1)"; e.style.transform = "";
+      }));
+      clearTimeout(e._flipT); e._flipT = setTimeout(() => { e.style.transition = ""; }, 420);
+    });
+  }
+  function layout(c, animate) {
+    if (c.el.offsetParent === null) return;                 // onglet caché : on rangera à l'affichage
+    if (fingerDown && !drag) { pending.add(c); return; }     // pas pendant qu'on manipule un curseur
+    const n = ncols(c), first = !c.cols.length;
+    while (c.cols.length < n) { const d = document.createElement("div"); d.className = "mcol"; c.el.appendChild(d); c.cols.push(d); }
+    while (c.cols.length > n) { const d = c.cols.pop(); [...d.children].forEach(ch => c.cols[0].appendChild(ch)); d.remove(); }
+    if (first) c.order.forEach(k => { const e = c.items.get(k); if (e) c.cols[0].appendChild(e); });
+    const els = c.order.map(k => k === "__ph" ? (drag && drag.ph) : c.items.get(k)).filter(Boolean);
+    const before = animate && fxOn() && !first ? rects(els) : null;
+    const h = new Array(n).fill(0), plan = c.cols.map(() => []);
+    els.forEach(e => {
+      let j = c.pins[drag && e === drag.ph ? "__ph" : e.dataset.key];
+      if (!(Number.isInteger(j) && j >= 0 && j < n)) { j = 0; for (let i = 1; i < n; i++) if (h[i] < h[j] - 1) j = i; }
+      plan[j].push(e);
+      const eh = e.offsetHeight; if (eh) h[j] += eh + 18;
+    });
+    let moved = false;
+    plan.forEach((list, j) => {
+      const cur = [...c.cols[j].children];
+      if (cur.length === list.length && cur.every((e, i) => e === list[i])) return;
+      list.forEach(e => c.cols[j].appendChild(e)); moved = true;
+    });
+    if (moved && before) flip(els, before);
+  }
+  function schedule(c, animate) {
+    c._anim = (c._anim || false) || animate;
+    if (c._raf) return;
+    c._raf = requestAnimationFrame(() => {
+      c._raf = 0; const a = c._anim; c._anim = false;
+      layout(c, a && performance.now() - c.shownAt > 700);
+    });
+  }
+  const ro = "ResizeObserver" in window ? new ResizeObserver(entries => {
+    const set = new Set();
+    entries.forEach(en => { const c = conts.find(x => x.items.get(en.target.dataset.key) === en.target); if (c) set.add(c); });
+    set.forEach(c => schedule(c, true));
+  }) : null;
+
+  function merge(sv, def) {
+    if (!Array.isArray(sv)) return def.slice();
+    const out = sv.filter(k => def.includes(k));
+    def.forEach((k, i) => { if (!out.includes(k)) out.splice(Math.min(i, out.length), 0, k); });
+    return out;
+  }
+  function setup() {
+    document.querySelectorAll(".view > .cols").forEach(el => {
+      const view = el.closest(".view").id, items = new Map(), def = [];
+      [...el.children].forEach(s => {
+        if (!s.classList.contains("section")) return;
+        const key = s.id || view + ":" + slug(s.querySelector("h3") && s.querySelector("h3").textContent);
+        s.dataset.key = key; items.set(key, s); def.push(key);
+        if (ro) ro.observe(s);
+      });
+      el.classList.add("masonry");
+      const sv = saved[view], old = Array.isArray(sv);
+      conts.push({ view, el, cols: [], items, def, order: merge(old ? sv : sv && sv.order, def),
+        pins: (!old && sv && sv.pins) || {}, shownAt: 0 });
+    });
+    conts.forEach(c => layout(c, false));
+  }
+
+  // ---- cascade d'arrivée des fenêtres (animations complètes)
+  function stagger(v) {
+    if (!v || document.documentElement.dataset.fx !== "full") return;
+    const els = [...v.querySelectorAll(".mcol > .section, .grid > .card")].filter(e => e.offsetParent);
+    els.map(e => [e, e.getBoundingClientRect()]).sort((a, b) => (a[1].top - b[1].top) || (a[1].left - b[1].left))
+      .forEach(([e], i) => {
+        e.style.setProperty("--i", Math.min(i, 10));
+        e.classList.remove("stagger"); void e.offsetWidth; e.classList.add("stagger");
+        e.addEventListener("animationend", () => e.classList.remove("stagger"), { once: true });
+      });
+  }
+
+  // ---- indicateur glissant sous l'onglet actif
+  let ind = null;
+  function indicator() {
+    const nav = document.querySelector(".nav"); if (!nav) return;
+    if (!ind) { ind = document.createElement("div"); ind.className = "tab-ind"; nav.prepend(ind); }
+    const t = nav.querySelector('.tab[aria-selected="true"]');
+    if (!t || !t.offsetWidth) { ind.classList.remove("show"); return; }
+    const nr = nav.getBoundingClientRect(), tr = t.getBoundingClientRect();
+    ind.style.width = tr.width + "px"; ind.style.height = tr.height + "px";
+    ind.style.transform = `translate(${tr.left - nr.left - nav.clientLeft}px,${tr.top - nr.top - nav.clientTop}px)`;
+    ind.classList.add("show");
+  }
+
+  function shown(view) {
+    conts.filter(c => c.view === view).forEach(c => { c.shownAt = performance.now(); layout(c, false); });
+    stagger($(view));
+    indicator();
+  }
+
+  // ---- glisser-déposer
+  const NO_DRAG = 'input,select,textarea,button,a,label,[role="switch"],.seg,.chips,.stepper,.swatches,.field,#fan-chart';
+  const vib = ms => { try { if (window.AndroidApp && AndroidApp.vibrate) AndroidApp.vibrate(ms); else if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} };
+  const cardId = el => { const k = [...el.classList].find(x => x.startsWith("c-")); return k ? k.slice(2) : null; };
+  function itemOf(t) {
+    const s = t.closest(".view .mcol > .section"); if (s) return { el: s, kind: "m" };
+    const c = t.closest(".view .grid > .card"); if (c && cardId(c)) return { el: c, kind: "g" };
+    return null;
+  }
+  function cancelPress() { if (press) { clearTimeout(press.t); press = null; } }
+
+  document.addEventListener("pointerdown", e => {
+    fingerDown = true;
+    if (drag || press || e.button > 0 || e.target.closest(NO_DRAG)) return;
+    const it = itemOf(e.target); if (!it) return;
+    press = { it, x: e.clientX, y: e.clientY, id: e.pointerId };
+    press.t = setTimeout(() => startDrag(), 450);
+  }, true);
+  document.addEventListener("pointermove", e => {
+    if (press && e.pointerId === press.id) {
+      if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) cancelPress(); else { press.lx = e.clientX; press.ly = e.clientY; }
+    } else if (drag && e.pointerId === drag.id) { drag.px = e.clientX; drag.py = e.clientY; }
+  }, true);
+  const up = e => {
+    if (press && e.pointerId === press.id) cancelPress();
+    if (drag && e.pointerId === drag.id) drop();
+    fingerDown = false;
+    if (pending.size && !drag) { const p = [...pending]; pending.clear(); p.forEach(c => schedule(c, true)); }
+  };
+  document.addEventListener("pointerup", up, true);
+  document.addEventListener("pointercancel", up, true);
+  // pendant un déplacement, le doigt ne fait plus défiler la page
+  document.addEventListener("touchmove", e => { if (drag) e.preventDefault(); }, { passive: false });
+  document.addEventListener("contextmenu", e => { if (press || drag || e.target.closest(".view .section, .view .card")) e.preventDefault(); });
+
+  function startDrag() {
+    const { it, id } = press; const x = press.lx ?? press.x, y = press.ly ?? press.y; press = null;
+    const el = it.el, r = el.getBoundingClientRect();
+    const ph = document.createElement("div"); ph.className = "drag-ph";
+    const d = { el, ph, kind: it.kind, id, dx: x - r.left, dy: y - r.top, x0: r.left, y0: r.top, px: x, py: y,
+      last: "", lastT: 0, lx: x, ly: y, ls: mainEl.scrollTop };
+    if (it.kind === "m") {
+      d.c = conts.find(c => c.items.get(el.dataset.key) === el); if (!d.c) return;
+      ph.style.height = r.height + "px";
+      el.parentNode.insertBefore(ph, el);
+      d.c.order = d.c.order.map(k => k === el.dataset.key ? "__ph" : k);
+      // dès qu'on réorganise, chaque fenêtre garde sa colonne : rien ne bouge à part celle qu'on tient
+      if (d.c.cols.length > 1) {
+        d.c.cols.forEach((col, j) => [...col.children].forEach(ch => { if (ch.dataset.key) d.c.pins[ch.dataset.key] = j; }));
+        d.c.pins.__ph = d.c.pins[el.dataset.key]; delete d.c.pins[el.dataset.key];
+      }
+    } else {
+      const cs = getComputedStyle(el);
+      d.gid = cardId(el); d.gorder = UI.order.slice();
+      ph.style.gridRowEnd = cs.gridRowEnd; ph.style.gridColumnEnd = cs.gridColumnEnd; ph.style.order = el.style.order;
+      ph.style.minHeight = r.height + "px";
+      el.parentNode.insertBefore(ph, el);
+    }
+    drag = d;
+    el.classList.remove("stagger");
+    el.style.left = r.left + "px"; el.style.top = r.top + "px"; el.style.width = r.width + "px"; el.style.height = r.height + "px";
+    el.classList.add("dragging");
+    el.style.transition = fxOn() ? "transform .15s ease" : "none";
+    el.style.transform = "scale(1.03)";
+    setTimeout(() => { if (drag === d) el.style.transition = "none"; }, 160);
+    document.body.classList.add("drag-on");
+    vib(20);
+    requestAnimationFrame(loop);
+  }
+  function loop() {
+    const d = drag; if (!d) return;
+    d.el.style.transform = `translate(${d.px - d.dx - d.x0}px,${d.py - d.dy - d.y0}px) scale(1.03)`;
+    // défilement automatique près des bords
+    const mr = mainEl.getBoundingClientRect(), zone = 64;
+    if (d.py < mr.top + zone) mainEl.scrollTop -= Math.ceil((mr.top + zone - d.py) / 5);
+    else if (d.py > mr.bottom - zone) mainEl.scrollTop += Math.ceil((d.py - (mr.bottom - zone)) / 5);
+    retarget(d);
+    requestAnimationFrame(loop);
+  }
+  function retarget(d) {
+    const now = performance.now();
+    if (now - d.lastT < 110) return;
+    if (d.last && Math.hypot(d.px - d.lx, d.py - d.ly) < 6 && mainEl.scrollTop === d.ls) return;
+    const hit = document.elementFromPoint(d.px, d.py); if (!hit) return;
+    let changed = false;
+    if (d.kind === "m") {
+      const c = d.c;
+      let t = hit.closest(".mcol > .section, .mcol > .drag-ph");
+      if (t && !c.el.contains(t)) t = null;
+      if (t === d.ph) return;
+      const order = c.order.filter(k => k !== "__ph");
+      let sig, colIdx;
+      if (t) {
+        const r = t.getBoundingClientRect(), after = d.py > r.top + r.height / 2;
+        const i = order.indexOf(t.dataset.key); if (i < 0) return;
+        order.splice(after ? i + 1 : i, 0, "__ph"); sig = t.dataset.key + (after ? ">" : "<");
+        colIdx = c.cols.indexOf(t.parentNode);
+      } else {
+        // zone vide sous une colonne : on se place après sa dernière fenêtre
+        const col = c.cols.find(cl => { const r = cl.getBoundingClientRect(); return d.px >= r.left && d.px <= r.right; });
+        if (!col) return;
+        const kids = [...col.children].filter(k => k !== d.ph && k.offsetHeight);
+        const lastK = kids[kids.length - 1];
+        if (lastK && d.py < lastK.getBoundingClientRect().bottom) return;
+        if (lastK) { order.splice(order.indexOf(lastK.dataset.key) + 1, 0, "__ph"); sig = lastK.dataset.key + ">"; }
+        else { order.push("__ph"); sig = "end"; }
+        colIdx = c.cols.indexOf(col);
+      }
+      if (c.cols.length < 2) colIdx = undefined;
+      sig += "@" + colIdx;
+      if (sig === d.last) return;
+      d.last = sig;
+      const pinChanged = colIdx !== undefined && c.pins.__ph !== colIdx;
+      if (pinChanged) c.pins.__ph = colIdx;
+      if (pinChanged || order.join("|") !== c.order.join("|")) { c.order = order; layout(c, true); changed = true; }
+    } else {
+      const t = hit.closest(".grid > .card");
+      if (!t || t.classList.contains("off")) return;
+      const tid = cardId(t), o = d.gorder.slice();
+      const from = o.indexOf(d.gid), to = o.indexOf(tid);
+      if (from < 0 || to < 0 || from === to) return;
+      o.splice(from, 1); o.splice(to, 0, d.gid);
+      const els = [...d.ph.parentNode.children].filter(e => e !== d.el);
+      const before = fxOn() ? rects(els) : null;
+      d.gorder = o;
+      o.forEach((id, i) => { const e = id === d.gid ? d.ph : document.querySelector(".grid > .c-" + id); if (e) e.style.order = i; });
+      if (before) flip(els, before);
+      changed = true;
+    }
+    if (changed) { d.lastT = now; d.lx = d.px; d.ly = d.py; d.ls = mainEl.scrollTop; vib(6); }
+  }
+  function drop() {
+    const d = drag; if (!d) return;
+    drag = null;
+    const from = d.el.getBoundingClientRect();
+    d.el.classList.remove("dragging");
+    ["left", "top", "width", "height", "transform", "transition"].forEach(p => { d.el.style[p] = ""; });
+    if (d.kind === "m") {
+      d.ph.parentNode.replaceChild(d.el, d.ph);
+      d.c.order = d.c.order.map(k => k === "__ph" ? d.el.dataset.key : k);
+      if ("__ph" in d.c.pins) { d.c.pins[d.el.dataset.key] = d.c.pins.__ph; delete d.c.pins.__ph; }
+      saved[d.c.view] = { order: d.c.order.slice(), pins: Object.assign({}, d.c.pins) }; persist();
+    } else {
+      d.ph.remove();
+      UI.order = d.gorder.slice();
+    }
+    if (UI.layoutHint !== 2) UI.layoutHint = 2;
+    saveUI();
+    if (d.kind === "g") applyUI();
+    document.body.classList.remove("drag-on");
+    // la fenêtre se pose en douceur à sa nouvelle place
+    if (fxOn()) {
+      const to = d.el.getBoundingClientRect();
+      d.el.style.transition = "none";
+      d.el.style.transform = `translate(${from.left - to.left}px,${from.top - to.top}px) scale(1.03)`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        d.el.style.transition = "transform .32s cubic-bezier(.3,.7,.2,1)"; d.el.style.transform = "";
+      }));
+      setTimeout(() => { d.el.style.transition = ""; }, 450);
+    }
+    if (d.kind === "m") schedule(d.c, true);
+    // pas de clic parasite sur ce qui se trouve sous le doigt au relâchement
+    const kill = ev => { ev.stopPropagation(); ev.preventDefault(); };
+    document.addEventListener("click", kill, { capture: true, once: true });
+    setTimeout(() => document.removeEventListener("click", kill, { capture: true }), 450);
+    vib(12);
+  }
+
+  function reset() {
+    saved = {}; persist();
+    conts.forEach(c => { c.order = c.def.slice(); c.pins = {}; schedule(c, true); });
+    UI.order = CARDS.map(c => c[0]); saveUI(); applyUI(); renderCustom();
+  }
+
+  const refresh = () => { conts.forEach(c => schedule(c, false)); indicator(); };
+  window.addEventListener("resize", refresh);
+  if (narrow.addEventListener) narrow.addEventListener("change", refresh);
+
+  return { setup, shown, reset, indicator, stagger, refresh };
+})();
+Layout.setup();
+Layout.indicator();
+// cascade d'arrivée sur le premier onglet, une fois l'écran de démarrage parti
+setTimeout(() => Layout.stagger(document.querySelector(".view.active")), UI.fx === "off" ? 0 : 1450);
+// une seule fois : faire découvrir le déplacement des fenêtres
+if (!UI.layoutHint) setTimeout(() => {
+  toast("Nouveau : reste appuyé sur une fenêtre puis glisse-la pour réorganiser le menu");
+  UI.layoutHint = 1; saveUI();
+}, 2600);
+
+/* ---------- Effet d'onde au toucher (animations complètes) ---------- */
+document.addEventListener("pointerdown", e => {
+  if (document.documentElement.dataset.fx !== "full") return;
+  const b = e.target.closest(".btn,.wide,.tab,.mode,.seg button,.chips button");
+  if (!b || b.disabled) return;
+  const r = b.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.2;
+  const s = document.createElement("span"); s.className = "ripple";
+  s.style.width = s.style.height = size + "px";
+  s.style.left = (e.clientX - r.left - size / 2) + "px"; s.style.top = (e.clientY - r.top - size / 2) + "px";
+  b.appendChild(s);
+  s.addEventListener("animationend", () => s.remove(), { once: true });
+}, { passive: true });
 
 /* Alerte surchauffe : bandeau rouge, et vibration sur l'appli Android */
 let lastAlarm = 0;
@@ -1934,7 +2349,7 @@ function renderGameCtl() {
   const c = CTL || {};
   const gpu = c.gpu || {};
   setSwitch($("q-gpu"), !!(gpu.supported && gpu.on)); $("q-gpu").disabled = !gpu.supported;
-  $("q-gpu-sub").textContent = gpu.supported ? `à ${gpu.mhz || 1755} MHz (réglable dans Perf)` : "NVIDIA introuvable";
+  $("q-gpu-sub").textContent = gpu.supported ? `à ${gpu.mhz || 1755} MHz (réglable dans l'onglet GPU)` : "NVIDIA introuvable";
   setSwitch($("q-winkey"), !!c.winkey);
   renderColors();
   renderGames();
@@ -2366,7 +2781,7 @@ $("cpu-on").addEventListener("click", async () => {
   await act({ action: "cpu_enable", on }); loadCpu();
 });
 $("cpu-takeover").addEventListener("click", () => confirmSheet("Remplacer ThrottleStop ?",
-  "PC Monitor lit l'undervolt et les limites que ThrottleStop a appliqués, les garde, ferme ThrottleStop et coupe son lancement automatique.",
+  "Keystone lit l'undervolt et les limites que ThrottleStop a appliqués, les garde, ferme ThrottleStop et coupe son lancement automatique.",
   async () => { cmDirty = false; uvDirty = false; await act({ action: "cpu_takeover" }); loadCpu(); }, "Remplacer"));
 
 /* ---------- Onglets ---------- */
@@ -2379,6 +2794,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf" || t.dataset.view === "v-game" || t.dataset.view === "v-gpu") loadControls();
   if (t.dataset.view === "v-game") { loadGame(); renderGame(); loadReports(); }
   if (t.dataset.view === "v-cpu") { cmMode = null; cmDirty = false; uvDirty = false; loadControls(); loadCpu(); }
+  Layout.shown(t.dataset.view);
 }));
 window.addEventListener("resize", () => { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); });
 

@@ -23,7 +23,7 @@ public sealed class PairForm : Form
     public PairForm(AppConfig cfg, Icon icon)
     {
         this.cfg = cfg;
-        Text = "PC Monitor : connecter un téléphone";
+        Text = "Keystone : connecter un téléphone";
         Icon = icon;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -68,7 +68,7 @@ public sealed class PairForm : Form
             Location = new Point(20, 440),
             ForeColor = TextC,
             Text = "iPhone : ouvre l'appareil photo et vise le QR code, puis dans Safari touche Partager → « Sur l'écran d'accueil ».\n\n" +
-                   "Android (appli PC Monitor) : choisis ce PC dans la liste et tape le code ci-dessus.\n\n" +
+                   "Android (appli Keystone) : choisis ce PC dans la liste et tape le code ci-dessus.\n\n" +
                    "Le téléphone doit être sur le même Wi-Fi que le PC.",
         };
 

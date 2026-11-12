@@ -111,7 +111,7 @@ public static class Touchpad
                 };
                 if (!SetupDiSetClassInstallParams(set, ref info, ref pp, Marshal.SizeOf<SpPropchangeParams>())
                     || !SetupDiCallClassInstaller(DIF_PROPERTYCHANGE, set, ref info))
-                    return (false, "Windows a refusé (lance PC Monitor en administrateur)");
+                    return (false, "Windows a refusé (lance Keystone en administrateur)");
                 return (true, on ? "Pavé tactile activé" : "Pavé tactile désactivé");
             }
             return (false, "Pavé tactile introuvable sur ce PC");

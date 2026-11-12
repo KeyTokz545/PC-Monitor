@@ -1,4 +1,4 @@
-// Profils de jeu automatiques : quand un jeu se lance, PC Monitor applique ses réglages (mode, bridage GPU,
+// Profils de jeu automatiques : quand un jeu se lance, Keystone applique ses réglages (mode, bridage GPU,
 // couleurs, touche Windows) puis remet tout comme avant quand le jeu se ferme.
 using System;
 using System.Collections.Generic;
@@ -133,7 +133,7 @@ public static class Tweaks
             TimerAt = null;
             Log.Info("Minuteur : " + (what == "sleep" ? "mise en veille" : "arrêt"));
             if (what == "sleep") Win.Sleep();
-            else Win.Run("shutdown", "/s /t 30 /c \"PC Monitor : arrêt programmé\"", 5000);
+            else Win.Run("shutdown", "/s /t 30 /c \"Keystone : arrêt programmé\"", 5000);
         });
         var h = minutes >= 60 ? $"{minutes / 60} h{(minutes % 60 > 0 ? $" {minutes % 60:00}" : "")}" : $"{minutes} min";
         return (true, (what == "sleep" ? "Mise en veille" : "Arrêt") + $" dans {h}");

@@ -59,12 +59,12 @@ public sealed class TrayApp : ApplicationContext
         catch (Exception e)
         {
             Log.Error("Serveur web", e);
-            webError = $"Le port {cfg.Port} est déjà utilisé. Ferme l'ancienne fenêtre noire (pc_monitor.py) puis relance PC Monitor.";
+            webError = $"Le port {cfg.Port} est déjà utilisé. Ferme l'ancienne fenêtre noire (pc_monitor.py) puis relance Keystone.";
         }
         discovery = new Discovery(cfg.DiscoveryPort, web.Hello);
         discovery.Start();
 
-        tray = new NotifyIcon { Icon = icon, Text = "PC Monitor", Visible = true, ContextMenuStrip = new ContextMenuStrip() };
+        tray = new NotifyIcon { Icon = icon, Text = "Keystone", Visible = true, ContextMenuStrip = new ContextMenuStrip() };
         tray.ContextMenuStrip.Opening += (s, e) => { FillMenu(tray.ContextMenuStrip); e.Cancel = false; };
         tray.DoubleClick += (s, e) => ShowPair();
         tray.BalloonTipClicked += (s, e) => ShowPair();
@@ -97,7 +97,7 @@ public sealed class TrayApp : ApplicationContext
 
         if (webError != null)
         {
-            MessageBox.Show(webError, "PC Monitor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(webError, "Keystone", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
         else if (!cfg.FirstRunDone)
         {
@@ -108,15 +108,15 @@ public sealed class TrayApp : ApplicationContext
                 startupEnabled = Startup.IsEnabled() || Startup.Enable();
             });
             ShowPair();
-            Balloon("PC Monitor tourne près de l'horloge. Clic droit sur l'icône pour les réglages.");
+            Balloon("Keystone tourne près de l'horloge. Clic droit sur l'icône pour les réglages.");
         }
 
         if (!sensors.Ok)
             Balloon("Capteurs indisponibles : vérifie que le pilote PawnIO est installé (voir le journal).");
         else if (Win.IsRunning("GHelper.exe"))
-            Balloon("Ferme G-Helper et retire-le du démarrage : PC Monitor s'occupe maintenant des modes et des ventilos.");
+            Balloon("Ferme G-Helper et retire-le du démarrage : Keystone s'occupe maintenant des modes et des ventilos.");
         else if (Win.IsRunning("LibreHardwareMonitor.exe"))
-            Balloon("Tu peux fermer LibreHardwareMonitor : PC Monitor lit les capteurs lui-même.");
+            Balloon("Tu peux fermer LibreHardwareMonitor : Keystone lit les capteurs lui-même.");
     }
 
     static Icon LoadIcon()
@@ -135,7 +135,7 @@ public sealed class TrayApp : ApplicationContext
         catch { }
     }
 
-    void Balloon(string text) => OnUi(() => tray.ShowBalloonTip(5000, "PC Monitor", text, ToolTipIcon.None));
+    void Balloon(string text) => OnUi(() => tray.ShowBalloonTip(5000, "Keystone", text, ToolTipIcon.None));
 
     void UpdateTip()
     {
@@ -144,7 +144,7 @@ public sealed class TrayApp : ApplicationContext
             string T(float? v) => v.HasValue ? Math.Round(v.Value) + " °C" : "–";
             var mode = (string.IsNullOrEmpty(cfg.LastMode) ? "" : "\n" + cfg.ModeLabel(cfg.LastMode)) +
                        (cfg.Cpu.Enabled ? " · CPU " + CpuTuner.ProfileLabel(cfg.Cpu.Active) : "");
-            var text = $"PC Monitor\nCPU {T(collector.CpuTemp)}  GPU {T(collector.GpuTemp)}{mode}";
+            var text = $"Keystone\nCPU {T(collector.CpuTemp)}  GPU {T(collector.GpuTemp)}{mode}";
             tray.Text = text.Length > 127 ? text[..127] : text;
         });
     }
@@ -167,7 +167,7 @@ public sealed class TrayApp : ApplicationContext
     void FillMenu(ContextMenuStrip m)
     {
         m.Items.Clear();
-        m.Items.Add(new ToolStripMenuItem($"PC Monitor {Program.Version}  ({NetInfo.LocalIp()})") { Enabled = false });
+        m.Items.Add(new ToolStripMenuItem($"Keystone {Program.Version}  ({NetInfo.LocalIp()})") { Enabled = false });
         m.Items.Add("Connecter un téléphone…", null, (s, e) => ShowPair());
         m.Items.Add("Ouvrir le tableau de bord", null, (s, e) => Win.OpenAsUser($"http://localhost:{cfg.Port}/?k={cfg.Token}"));
         m.Items.Add(new ToolStripSeparator());
@@ -233,7 +233,7 @@ public sealed class TrayApp : ApplicationContext
         m.Items.Add(winkey);
         m.Items.Add(new ToolStripSeparator());
 
-        var launch = new ToolStripMenuItem("Lancer avec PC Monitor");
+        var launch = new ToolStripMenuItem("Lancer avec Keystone");
         var tools = Catalog.FindTools();
         if (tools.Count == 0)
             launch.DropDownItems.Add(new ToolStripMenuItem(Catalog.Loading ? "Recherche en cours…" : "ThrottleStop / Afterburner introuvables") { Enabled = false });

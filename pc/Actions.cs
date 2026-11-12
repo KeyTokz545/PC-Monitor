@@ -422,7 +422,7 @@ public sealed class Actions
                 cfg.Cpu.Enabled = on;
                 cfg.Save();
                 if (on) System.Threading.Tasks.Task.Run(Cpu.Reapply);
-                return R(true, on ? "PC Monitor gère le processeur" : "PC Monitor ne touche plus au processeur (au prochain démarrage)");
+                return R(true, on ? "Keystone gère le processeur" : "Keystone ne touche plus au processeur (au prochain démarrage)");
             }
             case "cpu_uv_test":
             {
@@ -508,7 +508,7 @@ public sealed class Actions
                 }
                 cfg.Save();
                 if (mode != cfg.Cpu.Active) return R(true, $"Profil {CpuTuner.ProfileLabel(mode)} enregistré");
-                if (!cfg.Cpu.Enabled) return R(true, "Enregistré. Active « PC Monitor gère le processeur » pour l'appliquer");
+                if (!cfg.Cpu.Enabled) return R(true, "Enregistré. Active « Keystone gère le processeur » pour l'appliquer");
                 if (t.Limits && (B(body, "limits") == true || Has(body, "pl1") || Has(body, "pl2") || Has(body, "tau")))
                 {
                     var (ok, msg) = CpuTuner.WriteLimits(t.Pl1, t.Pl2, t.Tau);

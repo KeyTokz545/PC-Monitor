@@ -68,7 +68,7 @@ public sealed class ModeService
             }
             else
             {
-                return (false, "Contrôle ASUS indisponible : relance PC Monitor en administrateur");
+                return (false, "Contrôle ASUS indisponible : relance Keystone en administrateur");
             }
 
             if (ok)

@@ -7,7 +7,7 @@ namespace PCMonitor;
 
 internal static class Program
 {
-    public const string Version = "2.9.1";
+    public const string Version = "2.10.0";
 
     [STAThread]
     static void Main(string[] args)
@@ -15,7 +15,7 @@ internal static class Program
         using var mutex = new Mutex(true, @"Global\PCMonitor-KeyTokz545", out bool first);
         if (!first)
         {
-            MessageBox.Show("PC Monitor est déjà lancé : son icône est près de l'horloge.", "PC Monitor",
+            MessageBox.Show("Keystone est déjà lancé : son icône est près de l'horloge.", "Keystone",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
@@ -27,8 +27,8 @@ internal static class Program
         Application.ThreadException += (s, e) => Log.Error("Interface", e.Exception);
         AppDomain.CurrentDomain.UnhandledException += (s, e) => Log.Error("Erreur fatale", e.ExceptionObject as Exception);
 
-        Log.Info($"Démarrage de PC Monitor {Version} ({string.Join(' ', args)})");
+        Log.Info($"Démarrage de Keystone {Version} ({string.Join(' ', args)})");
         Application.Run(new TrayApp(args));
-        Log.Info("Arrêt de PC Monitor");
+        Log.Info("Arrêt de Keystone");
     }
 }

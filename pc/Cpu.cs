@@ -53,7 +53,7 @@ public sealed class CpuModeTune
 
 public sealed class CpuSettings
 {
-    /// <summary>PC Monitor gère le processeur (remplace ThrottleStop).</summary>
+    /// <summary>Keystone gère le processeur (remplace ThrottleStop).</summary>
     public bool Enabled { get; set; }
     /// <summary>Undervolt validé, en mV (négatif) : cœurs + cache, GPU Intel, System Agent.</summary>
     public int CoreMv { get; set; }
@@ -499,7 +499,7 @@ public sealed class CpuTuner
         if (!ModeDefs.Known(id)) return (false, "Profil CPU inconnu");
         cfg.Cpu.Active = id;
         if (save) cfg.Save();
-        if (!cfg.Cpu.Enabled) return (true, $"Profil {ProfileLabel(id)} choisi (active « PC Monitor gère le processeur » pour l'appliquer)");
+        if (!cfg.Cpu.Enabled) return (true, $"Profil {ProfileLabel(id)} choisi (active « Keystone gère le processeur » pour l'appliquer)");
         ApplyProfile(id);
         try { ProfileChanged?.Invoke(id); } catch { }
         return (true, $"Profil CPU {ProfileLabel(id)}");
@@ -635,7 +635,7 @@ public sealed class CpuTuner
 
     /// <summary>
     /// Si le seuil n'est plus à TjMax (redémarrage, veille), lance ThrottleStop caché, attend qu'il ait réglé le seuil,
-    /// le ferme et remet les réglages de PC Monitor par-dessus. Au plus une fois toutes les 10 minutes.
+    /// le ferme et remet les réglages de Keystone par-dessus. Au plus une fois toutes les 10 minutes.
     /// </summary>
     public void EnsureThreshold(bool force = false)
     {
