@@ -12,7 +12,7 @@ android {
         targetSdk 35
         // le numéro de compilation GitHub fait monter la version à chaque build
         versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger())
-        versionName '2.10.0'
+        versionName '2.11.0'
     }
 
     signingConfigs {

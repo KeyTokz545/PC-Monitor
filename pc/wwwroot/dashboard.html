@@ -86,6 +86,61 @@ html[data-fx="full"] .switch[aria-checked="true"]{box-shadow:0 0 14px -3px var(-
 html[data-fx="full"] .dot.on{animation:ks-pulse-dot 2.4s ease-in-out infinite}
 @keyframes ks-pulse-dot{50%{box-shadow:0 0 0 6px rgba(79,195,224,0)}}
 
+/* ---------- Fenêtres repliables : toucher le titre ---------- */
+.view .section>h3{display:flex;align-items:center;gap:8px;min-height:26px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;user-select:none}
+.view .section>h3::after{content:"";flex:none;margin:0 6px 0 auto;width:7px;height:7px;border:solid currentColor;
+  border-width:0 2px 2px 0;transform:translateY(-2px) rotate(45deg);opacity:.55}
+html[data-anim="on"] .view .section>h3::after{transition:transform .25s ease}
+.view .section.collapsed>:not(h3){display:none!important}
+.view .section.collapsed>h3{margin:0;padding:12px 14px;min-height:48px;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r-outer);color:var(--text);font-size:14px}
+.view .section.collapsed>h3::after{transform:rotate(-45deg)}
+html[data-anim="on"] .section.unfold>:not(h3){animation:ks-fade .26s ease both}
+
+/* ---------- Glisser pour changer d'onglet ---------- */
+main{touch-action:pan-y}
+@keyframes ks-from-r{from{opacity:0;transform:translateX(42px)}to{opacity:1;transform:none}}
+@keyframes ks-from-l{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:none}}
+html[data-anim="on"] .view.active.from-r{animation:ks-from-r .26s cubic-bezier(.2,.7,.2,1) both}
+html[data-anim="on"] .view.active.from-l{animation:ks-from-l .26s cubic-bezier(.2,.7,.2,1) both}
+
+/* ---------- HUD jeu plein écran ---------- */
+.ghud{position:fixed;inset:0;z-index:35;background:var(--ink);opacity:0;transform:scale(.985)}
+html[data-anim="on"] .ghud{transition:opacity .25s ease,transform .25s ease}
+.ghud.show{opacity:1;transform:none}
+.ghud[hidden]{display:none}
+.gh-in{height:100%;display:flex;flex-direction:column;
+  padding:calc(var(--safe-t) + 10px) calc(var(--safe-r) + 14px) calc(var(--safe-b) + 14px) calc(var(--safe-l) + 14px)}
+.gh-top{display:flex;align-items:center;gap:10px;flex:none}
+.gh-game{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.gh-game b{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gh-game span{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-x{width:42px;height:42px;border-radius:13px;background:var(--raise);color:var(--muted);display:grid;place-items:center;flex:none}
+.gh-x svg{width:20px;height:20px}
+.gh-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;gap:14px;margin-top:6px}
+.gh-fps{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gh-n{font-family:var(--num);font-weight:800;font-size:clamp(84px,32vw,180px);line-height:.92;letter-spacing:-.045em;color:var(--cool)}
+html[data-fx="full"] .gh-n{text-shadow:0 0 34px color-mix(in srgb,var(--cool) 45%,transparent)}
+.gh-l{font-size:13px;font-weight:800;letter-spacing:.22em;color:var(--muted);margin-top:2px}
+.gh-sub{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;margin-top:10px;font-size:13px;color:var(--muted);font-weight:600}
+.gh-sub b{color:var(--text);font-size:17px;margin-left:6px}
+.gh-graph{width:100%;max-width:560px;height:54px;margin-top:12px;display:block}
+.gh-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:none}
+.gh-t{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 6px 9px;text-align:center;min-width:0}
+.gh-t .num{display:block;font-size:clamp(24px,7.5vw,40px);font-weight:700;line-height:1.05;white-space:nowrap}
+.gh-t small{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-t em{display:block;font-style:normal;font-size:13px;color:var(--muted);font-family:var(--num);font-weight:600;margin-top:1px;white-space:nowrap}
+#hud-open{display:flex;align-items:center;justify-content:center;gap:8px}
+#hud-open svg{width:18px;height:18px}
+@media (orientation:landscape){
+  .gh-body{flex-direction:row;align-items:center}
+  .gh-fps{flex:1.15}
+  .gh-n{font-size:clamp(80px,34vh,200px)}
+  .gh-tiles{flex:1;grid-template-columns:repeat(3,1fr);align-content:center}
+  .gh-t .num{font-size:clamp(22px,7.5vh,40px)}
+}
+
 /* ---------- Fond animé (aurore) ---------- */
 .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .8s}
 html[data-bg="on"] .aurora{opacity:1}
@@ -698,6 +753,7 @@ html[data-density="compact"] .chips button{height:32px}
             <div class="graph-cap"><span>FPS sur 2 min</span><span id="hist-cap"></span></div>
             <p class="hint in" id="fps-hint">Lance un jeu : les FPS s'affichent ici (jeux DirectX 9 à 12).</p>
             <button class="link" id="fps-add" hidden>Créer un profil pour ce jeu</button>
+            <button class="wide" id="hud-open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5A1.5 1.5 0 015.5 4H9M15 4h3.5A1.5 1.5 0 0120 5.5V9M20 15v3.5a1.5 1.5 0 01-1.5 1.5H15M9 20H5.5A1.5 1.5 0 014 18.5V15"/></svg>HUD plein écran</button>
           </div>
           <div class="hud" id="hud">
             <div><span class="num" id="h-cpu">–</span><small>CPU</small></div>
@@ -983,9 +1039,18 @@ html[data-density="compact"] .chips button{height:32px}
       </div>
     </section>
 
-    <!-- Performances : carte graphique et ventilateurs -->
-    <section class="view" id="v-perf" aria-label="Performances">
+    <!-- Carte graphique + ventilateurs (l'ancien onglet Perf) -->
+    <section class="view" id="v-gpu" aria-label="Carte graphique">
       <div class="cols">
+        <div class="section">
+          <h3>Carte graphique</h3>
+          <div class="hud cpu-live">
+            <div><span class="num" id="gpu-t-load">–</span><small>Charge</small></div>
+            <div><span class="num" id="gpu-t-temp">–</span><small>Température</small></div>
+            <div><span class="num" id="gpu-t-power">–</span><small>Conso</small></div>
+          </div>
+        </div>
+
         <div class="section" id="sec-fans">
           <h3>Ventilateurs</h3>
           <div class="panel">
@@ -1001,20 +1066,6 @@ html[data-density="compact"] .chips button{height:32px}
             </div>
             <button class="wide primary" id="fan-apply">Appliquer</button>
             <p class="hint in" id="fan-rpm"></p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Carte graphique -->
-    <section class="view" id="v-gpu" aria-label="Carte graphique">
-      <div class="cols">
-        <div class="section">
-          <h3>Carte graphique</h3>
-          <div class="hud cpu-live">
-            <div><span class="num" id="gpu-t-load">–</span><small>Charge</small></div>
-            <div><span class="num" id="gpu-t-temp">–</span><small>Température</small></div>
-            <div><span class="num" id="gpu-t-power">–</span><small>Conso</small></div>
           </div>
         </div>
 
@@ -1058,20 +1109,46 @@ html[data-density="compact"] .chips button{height:32px}
     <button class="tab" role="tab" aria-selected="true" data-view="v-mon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4.5 17a8.5 8.5 0 1115 0"/><path d="M12 13l4-4.5"/><circle cx="12" cy="13" r="1.2" fill="currentColor"/></svg>Monitoring</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 7h9a4.5 4.5 0 014.4 3.6l.9 4.6a2.6 2.6 0 01-4.6 2.1L15.6 15H8.4l-1.6 2.3a2.6 2.6 0 01-4.6-2.1l.9-4.6A4.5 4.5 0 017.5 7z"/><path d="M8 10v3M6.5 11.5h3"/><circle cx="15.5" cy="10.6" r=".7" fill="currentColor"/><circle cx="17.4" cy="12.6" r=".7" fill="currentColor"/></svg>Jeu</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><rect x="3" y="13" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="10" y="7" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="17" y="11" width="4" height="3" rx="1" fill="var(--ink)"/></svg>Contrôles</button>
-    <button class="tab" role="tab" aria-selected="false" data-view="v-perf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2c-.6-2.9.1-5.6 2.6-6.4 2.2-.7 3.4 1.6 2 3.2-1.1 1.3-2.8 2.3-4.6 3.2"/><path d="M13.6 12.9c2.8 1 4.7 3 4.2 5.6-.5 2.2-3.1 2.3-3.8.3-.6-1.6-.6-3.6-.4-5.9"/><path d="M10.4 12.9c-2.2 2-4.9 2.7-6.8.9-1.7-1.6-.3-3.8 1.8-3.4 1.7.3 3.3 1.3 5 2.5"/></svg>Perf</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-cpu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx=".8"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/></svg>CPU</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-gpu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="9" cy="12" r="2.6"/><path d="M9 9.4v5.2M6.4 12h5.2"/><path d="M15 10h3.5M15 13h3.5"/></svg>GPU</button>
   </nav>
 </div>
 
+<div class="ghud" id="ghud" hidden role="dialog" aria-label="HUD en jeu">
+  <div class="gh-in">
+    <div class="gh-top">
+      <span class="dot on"></span>
+      <div class="gh-game"><b id="gh-name">En jeu</b><span id="gh-meta"></span></div>
+      <button class="gh-x" id="gh-close" aria-label="Fermer le HUD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="gh-body">
+      <div class="gh-fps">
+        <div class="gh-n num" id="gh-fps">–</div>
+        <div class="gh-l">FPS</div>
+        <div class="gh-sub"><span>1 % bas<b class="num" id="gh-low">–</b></span><span>moyenne<b class="num" id="gh-avg">–</b></span><span>image<b class="num" id="gh-ft">–</b></span></div>
+        <canvas class="gh-graph" id="gh-graph" aria-label="Temps par image"></canvas>
+      </div>
+      <div class="gh-tiles">
+        <div class="gh-t"><span class="num" id="gh-ct">–</span><small>CPU</small><em id="gh-cw">–</em></div>
+        <div class="gh-t"><span class="num" id="gh-gt">–</span><small>GPU</small><em id="gh-gw">–</em></div>
+        <div class="gh-t"><span class="num" id="gh-cl">–</span><small>Charge CPU</small><em id="gh-cf">–</em></div>
+        <div class="gh-t"><span class="num" id="gh-gl">–</span><small>Charge GPU</small><em id="gh-gf">–</em></div>
+        <div class="gh-t"><span class="num" id="gh-vr">–</span><small>VRAM</small><em id="gh-ram">–</em></div>
+        <div class="gh-t"><span class="num" id="gh-ping">–</span><small>Ping</small><em id="gh-jit">–</em></div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast" role="status"></div>
 <div class="sheet" id="custom">
   <div class="box tall" role="dialog" aria-modal="true" aria-labelledby="custom-t">
     <p id="custom-t">Personnaliser</p>
     <div class="sub">Sur ce téléphone seulement.</div>
     <div class="sub-h first">Disposition des menus</div>
-    <div class="muted small" style="margin:0 4px 10px;line-height:1.4">Reste appuyé sur une fenêtre (sur son titre ou une zone vide), puis glisse-la où tu veux. Les autres se rangent toutes seules, sans trou. Ça marche dans tous les onglets, y compris les cartes du monitoring.</div>
+    <div class="muted small" style="margin:0 4px 10px;line-height:1.4">Reste appuyé sur une fenêtre (sur son titre ou une zone vide), puis glisse-la où tu veux. Les autres se rangent toutes seules, sans trou. Ça marche dans tous les onglets, y compris les cartes du monitoring. Touche le titre d'une fenêtre pour la replier ou la déplier.</div>
     <button class="wide" id="layout-reset">Remettre la disposition d'origine</button>
+    <div class="trow"><div><div>Changer d'onglet en glissant</div><div class="muted small">Glisse le doigt vers la gauche ou la droite sur un menu pour passer à l'onglet voisin</div></div><button class="switch" id="swipe-switch" role="switch" aria-checked="true" aria-label="Changer d'onglet en glissant"></button></div>
+    <div class="trow"><div><div>HUD automatique en jeu</div><div class="muted small">S'affiche en plein écran quand un jeu avec un profil automatique se lance, et disparaît à sa fermeture</div></div><button class="switch" id="hud-switch" role="switch" aria-checked="true" aria-label="HUD automatique en jeu"></button></div>
     <div class="sub-h">Cartes du monitoring</div>
     <div id="card-list"></div>
     <div class="sub-h">Thème</div>
@@ -1393,9 +1470,9 @@ async function tick() {
   if (busy || document.hidden) return; busy = true;
   try {
     const s = await api("/api/stats");
-    if (s && s.cpu) { render(s); fails = 0; $("dot").className = "dot on"; }
+    if (s && s.cpu) { render(s); Hud.update(s); fails = 0; $("dot").className = "dot on"; }
     const view = document.body.dataset.view;
-    if ((view === "v-ctl" || view === "v-perf" || view === "v-game") && Date.now() - ctlAt > 8000 && !Object.values(dragging).some(Boolean) && !colEdit) loadControls();
+    if ((view === "v-ctl" || view === "v-gpu" || view === "v-game") && Date.now() - ctlAt > 8000 && !Object.values(dragging).some(Boolean) && !colEdit) loadControls();
     if (view === "v-game") loadGame();
     if (view === "v-cpu" && (cpuTick = (cpuTick + 1) % 2) === 0) loadCpu();
   } catch (e) {
@@ -1779,7 +1856,7 @@ function drawFan() {
   svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
 })();
 
-/* Valeurs en direct sur l'onglet Perf */
+/* Valeurs en direct sur l'onglet GPU (fréquence, ventilateurs) */
 function renderPerfLive(s) {
   const g = s.gpu || {};
   $("gpu-now").textContent = "Fréquence actuelle : " + (g.clock != null ? nf(g.clock) + " MHz" : "–");
@@ -1795,7 +1872,7 @@ const THEME_INK = { nuit: "#0E1822", oled: "#000000", rog: "#08080A", abysse: "#
 const THEME_ACCENT = { nuit: "#4FC3E0", oled: "#4FC3E0", rog: "#FF2D46", abysse: "#4FC3E0", nebuleuse: "#A98BFF", foret: "#5BE08A",
   braise: "#FF7A59", sakura: "#FF7AC6", ardoise: "#7AA2FF", cyber: "#00F0FF" };
 const THEME_DEFAULT_ACCENTS = new Set(Object.values(THEME_ACCENT));
-let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false, anim: true, bg: false, layoutHint: 0 };
+let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false, anim: true, bg: false, layoutHint: 0, swipe: true, hudAuto: true, collapsed: [] };
 try { const saved = JSON.parse(localStorage.getItem("pcmon-ui") || "null"); if (saved) UI = Object.assign(UI, saved); } catch (e) {}
 // niveau d'animations : aucune / sobres / complètes (l'ancien réglage oui/non est repris)
 if (!["off", "soft", "full"].includes(UI.fx)) UI.fx = UI.anim === false ? "off" : "full";
@@ -1817,11 +1894,12 @@ function applyUI() {
 let shiftTimer = null;
 function setShift(on) {
   const app = document.querySelector(".app");
-  if (!on) { clearInterval(shiftTimer); shiftTimer = null; if (app) app.style.transform = ""; return; }
+  const els = [app, document.querySelector(".gh-in")].filter(Boolean);
+  if (!on) { clearInterval(shiftTimer); shiftTimer = null; els.forEach(e => e.style.transform = ""); return; }
   if (shiftTimer) return;
   const moves = [[0, 0], [2, 0], [2, 2], [0, 2], [-2, 2], [-2, 0], [-2, -2], [0, -2], [2, -2]];
   let i = 0;
-  shiftTimer = setInterval(() => { i = (i + 1) % moves.length; if (app) app.style.transform = `translate(${moves[i][0]}px,${moves[i][1]}px)`; }, 240000);
+  shiftTimer = setInterval(() => { i = (i + 1) % moves.length; els.forEach(e => e.style.transform = `translate(${moves[i][0]}px,${moves[i][1]}px)`); }, 240000);
 }
 function renderCustom() {
   $("card-list").innerHTML = UI.order.map((id, i) => {
@@ -1836,6 +1914,8 @@ function renderCustom() {
   press($("fx"), UI.fx);
   setSwitch($("bg-switch"), !!UI.bg); $("bg-switch").disabled = UI.fx === "off";
   setSwitch($("shift-switch"), !!UI.shift);
+  setSwitch($("swipe-switch"), UI.swipe !== false);
+  setSwitch($("hud-switch"), UI.hudAuto !== false);
   const perso = !ACCENTS.includes(UI.accent);
   $("accents").innerHTML = ACCENTS.map(c => `<button data-a="${c}" style="background:${c}" aria-pressed="${c === UI.accent}" aria-label="Accent ${c}"></button>`).join("")
     + `<label aria-pressed="${perso}" title="Couleur perso"${perso ? ` style="background:${UI.accent}"` : ""}><input type="color" value="${UI.accent}" aria-label="Choisir une couleur perso"></label>`;
@@ -1875,6 +1955,8 @@ $("layout-reset").addEventListener("click", () => confirmSheet("Remettre la disp
   () => { Layout.reset(); toast("Disposition d'origine remise"); }, "Remettre"));
 $("density").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; UI.density = b.dataset.v; saveUI(); applyUI(); renderCustom(); redrawAll(); });
 $("shift-switch").addEventListener("click", () => { UI.shift = !UI.shift; saveUI(); applyUI(); renderCustom(); });
+$("swipe-switch").addEventListener("click", () => { UI.swipe = UI.swipe === false; saveUI(); renderCustom(); });
+$("hud-switch").addEventListener("click", () => { UI.hudAuto = UI.hudAuto === false; saveUI(); renderCustom(); });
 function redrawAll() { try { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); } catch (e) {} }
 $("alert-temp").addEventListener("input", e => { UI.alert.temp = +e.target.value; fill(e.target); $("alert-label").textContent = `Au-delà de ${UI.alert.temp} °C`; });
 $("alert-temp").addEventListener("change", saveUI);
@@ -2189,6 +2271,8 @@ const Layout = (() => {
 
   function reset() {
     saved = {}; persist();
+    document.querySelectorAll(".view .section.collapsed").forEach(x => x.classList.remove("collapsed"));
+    UI.collapsed = [];
     conts.forEach(c => { c.order = c.def.slice(); c.pins = {}; schedule(c, true); });
     UI.order = CARDS.map(c => c[0]); saveUI(); applyUI(); renderCustom();
   }
@@ -2197,17 +2281,197 @@ const Layout = (() => {
   window.addEventListener("resize", refresh);
   if (narrow.addEventListener) narrow.addEventListener("change", refresh);
 
-  return { setup, shown, reset, indicator, stagger, refresh };
+  // change la taille d'une fenêtre (repli) : les autres glissent en douceur vers leur nouvelle place
+  function around(el, fn) {
+    const c = conts.find(x => x.items.get(el.dataset.key) === el);
+    if (!c) { fn(); return; }
+    const els = c.order.map(k => c.items.get(k)).filter(Boolean);
+    const before = fxOn() ? rects(els) : null;
+    fn();
+    layout(c, false);
+    if (before) flip(els, before);
+  }
+  const dragging = () => !!(drag || press);
+
+  return { setup, shown, reset, indicator, stagger, refresh, around, dragging };
 })();
 Layout.setup();
 Layout.indicator();
 // cascade d'arrivée sur le premier onglet, une fois l'écran de démarrage parti
 setTimeout(() => Layout.stagger(document.querySelector(".view.active")), UI.fx === "off" ? 0 : 1450);
-// une seule fois : faire découvrir le déplacement des fenêtres
-if (!UI.layoutHint) setTimeout(() => {
-  toast("Nouveau : reste appuyé sur une fenêtre puis glisse-la pour réorganiser le menu");
-  UI.layoutHint = 1; saveUI();
+// une seule fois : faire découvrir les gestes (déplacer, replier, changer d'onglet)
+if (!UI.hint211) setTimeout(() => {
+  toast(UI.layoutHint
+    ? "Nouveau : touche le titre d'une fenêtre pour la replier, glisse à gauche ou à droite pour changer d'onglet"
+    : "Astuce : reste appuyé sur une fenêtre pour la déplacer, touche son titre pour la replier");
+  clearTimeout(toastT); toastT = setTimeout(() => $("toast").className = "toast", 4500);
+  UI.layoutHint = UI.layoutHint || 1; UI.hint211 = 1; saveUI();
 }, 2600);
+
+/* ---------- Fenêtres repliables : toucher le titre d'une fenêtre ---------- */
+(() => {
+  const folded = new Set(Array.isArray(UI.collapsed) ? UI.collapsed : []);
+  document.querySelectorAll(".view .section").forEach(sec => {
+    const h = sec.querySelector(":scope > h3"); if (!h) return;
+    if (sec.dataset.key && folded.has(sec.dataset.key)) sec.classList.add("collapsed");
+    h.setAttribute("role", "button"); h.tabIndex = 0;
+    h.setAttribute("aria-expanded", String(!sec.classList.contains("collapsed")));
+    h.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.click(); } });
+  });
+  document.addEventListener("click", e => {
+    const h = e.target.closest(".view .section > h3"); if (!h) return;
+    const sec = h.parentNode, key = sec.dataset.key; if (!key) return;
+    const fold = !sec.classList.contains("collapsed");
+    Layout.around(sec, () => {
+      sec.classList.toggle("collapsed", fold);
+      sec.classList.remove("unfold");
+      if (!fold) { void sec.offsetWidth; sec.classList.add("unfold"); setTimeout(() => sec.classList.remove("unfold"), 420); }
+    });
+    h.setAttribute("aria-expanded", String(!fold));
+    const list = new Set(Array.isArray(UI.collapsed) ? UI.collapsed : []);
+    if (fold) list.add(key); else list.delete(key);
+    UI.collapsed = [...list]; saveUI();
+    if (!fold && sec.querySelector("canvas")) renderGame();   // les graphiques se redessinent à leur vraie taille
+    try { if (window.AndroidApp && AndroidApp.vibrate) AndroidApp.vibrate(8); } catch (err) {}
+  });
+})();
+
+/* ---------- Onglets : glisser à gauche / à droite, et le menu arrive du bon côté ---------- */
+const navTabs = () => [...document.querySelectorAll(".nav .tab")].filter(t => t.offsetParent !== null);
+const curTab = list => list.findIndex(x => x.getAttribute("aria-selected") === "true");
+function slideIn(v, from) {
+  if (!v || document.documentElement.dataset.anim !== "on") return;
+  v.classList.remove("from-r", "from-l"); void v.offsetWidth; v.classList.add("from-" + from);
+  const done = e => { if (e.target !== v) return; v.classList.remove("from-r", "from-l"); v.removeEventListener("animationend", done); };
+  v.addEventListener("animationend", done);
+}
+(() => {
+  const nav = document.querySelector(".nav");
+  let prev = -1;
+  nav.addEventListener("click", () => { prev = curTab(navTabs()); }, true);
+  nav.addEventListener("click", e => {
+    const t = e.target.closest(".tab"); if (!t) return;
+    const i = navTabs().indexOf(t);
+    if (i >= 0 && prev >= 0 && i !== prev) slideIn($(t.dataset.view), i > prev ? "r" : "l");
+  });
+
+  const mainEl = document.querySelector("main");
+  let s = null;
+  const back = v => {
+    if (!v) return;
+    if (document.documentElement.dataset.anim === "on" && v.style.transform) {
+      v.style.transition = "transform .22s ease, opacity .22s ease";
+      setTimeout(() => { v.style.transition = ""; }, 240);
+    }
+    v.style.transform = ""; v.style.opacity = "";
+  };
+  mainEl.addEventListener("touchstart", e => {
+    s = null;
+    if (UI.swipe === false || e.touches.length !== 1 || document.body.classList.contains("drag-on")) return;
+    if (e.target.closest('input,textarea,select,#fan-chart')) return;
+    const t = e.touches[0];
+    s = { x: t.clientX, y: t.clientY, t: performance.now(), dir: 0, dx: 0, v: document.querySelector(".view.active") };
+  }, { passive: true });
+  mainEl.addEventListener("touchmove", e => {
+    if (!s) return;
+    if (Layout.dragging() || document.body.classList.contains("drag-on") || e.touches.length !== 1) { back(s.v); s = null; return; }
+    const t = e.touches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+    if (!s.dir) {
+      if (Math.abs(dx) > 16 && Math.abs(dx) > Math.abs(dy) * 1.7) s.dir = 1;
+      else { if (Math.abs(dy) > 12) s = null; return; }
+    }
+    s.dx = dx;
+    const list = navTabs(), i = curTab(list), can = dx < 0 ? i < list.length - 1 : i > 0;
+    if (document.documentElement.dataset.anim === "on" && s.v) {
+      s.v.style.transition = "";
+      s.v.style.transform = `translateX(${Math.round(dx * (can ? .42 : .12))}px)`;
+      s.v.style.opacity = String(Math.max(.45, 1 - Math.abs(dx) / 650));
+    }
+  }, { passive: true });
+  mainEl.addEventListener("touchend", () => {
+    const d = s; s = null;
+    if (!d || d.dir !== 1) return;
+    const list = navTabs(), i = curTab(list), j = d.dx < 0 ? i + 1 : i - 1;
+    const v = Math.abs(d.dx) / Math.max(performance.now() - d.t, 1);
+    if ((Math.abs(d.dx) > 80 || (Math.abs(d.dx) > 40 && v > .45)) && j >= 0 && j < list.length) {
+      if (d.v) { d.v.style.transform = ""; d.v.style.opacity = ""; d.v.style.transition = ""; }
+      list[j].click();
+    } else back(d.v);
+  }, { passive: true });
+  mainEl.addEventListener("touchcancel", () => { if (s) { back(s.v); s = null; } }, { passive: true });
+})();
+
+/* ---------- HUD en jeu : plein écran, s'ouvre tout seul quand un jeu à profil se lance ---------- */
+const Hud = (() => {
+  const el = $("ghud");
+  let open = false, auto = false, lastGame = null, closedFor = null, poll = 0, game = null;
+  const pad = n => String(n).padStart(2, "0");
+  const dur = sec => { const t = Math.max(0, sec | 0), h = t / 3600 | 0, m = t % 3600 / 60 | 0; return h ? `${h} h ${pad(m)}` : `${m}:${pad(t % 60)}`; };
+  function show(isAuto) {
+    if (open) return;
+    open = true; auto = isAuto;
+    el.hidden = false; void el.offsetWidth; el.classList.add("show");
+    if (lastStats) paint(lastStats);
+    fetchFps(); clearInterval(poll); poll = setInterval(fetchFps, 1000);
+  }
+  function hide() {
+    if (!open) return;
+    open = false; clearInterval(poll); poll = 0;
+    el.classList.remove("show");
+    setTimeout(() => { if (!open) el.hidden = true; }, document.documentElement.dataset.anim === "on" ? 260 : 0);
+  }
+  async function fetchFps() {
+    if (!open || document.hidden) return;
+    try { const g = await api("/api/game"); if (g && open) { GAME = g; paintFps(g); } } catch (e) {}
+  }
+  function paintFps(g) {
+    const has = g.app != null && g.fps != null;
+    $("gh-fps").textContent = has ? g.fps : "–";
+    $("gh-low").textContent = has ? g.low1 : "–";
+    $("gh-avg").textContent = has ? g.avg : "–";
+    $("gh-ft").textContent = has && g.frametime != null ? nf(g.frametime, 1) + " ms" : "–";
+    const prof = has ? profileFor(g.app) : null;
+    $("gh-name").textContent = game ? game.name : has ? (prof ? prof.name : g.app) : "En jeu";
+    drawFrames($("gh-graph"), has ? g.frames || [] : []);
+  }
+  function paint(s) {
+    const c = s.cpu || {}, g = s.gpu || {}, n = s.net || {}, r = s.ram || {};
+    const temp = (id, v) => { $(id).textContent = v != null ? Math.round(v) + "°" : "–"; $(id).style.color = v != null ? thermal(v) : ""; };
+    temp("gh-ct", c.temp); temp("gh-gt", g.temp);
+    $("gh-cw").textContent = c.power != null ? nf(c.power) + " W" : "–";
+    $("gh-gw").textContent = g.power != null ? nf(g.power) + " W" : "–";
+    $("gh-cl").textContent = c.load != null ? nf(c.load) + " %" : "–";
+    $("gh-cf").textContent = c.clock != null ? nf(c.clock, 1) + " GHz" : "–";
+    $("gh-gl").textContent = g.load != null ? nf(g.load) + " %" : "–";
+    $("gh-gf").textContent = g.clock != null ? nf(g.clock) + " MHz" : "–";
+    $("gh-vr").textContent = g.vram_used != null ? nf(g.vram_used, 1) + " Go" : "–";
+    $("gh-ram").textContent = r.load != null ? "RAM " + nf(r.load) + " %" : "–";
+    $("gh-ping").textContent = n.latency != null ? n.latency + " ms" : "–";
+    $("gh-ping").style.color = n.history && n.history.length ? latColor(n.latency) : "";
+    $("gh-jit").textContent = n.jitter != null ? `gigue ${n.jitter} ms` : "–";
+    const m = (s.mode || {}).current, meta = [];
+    if (game && game.since != null) meta.push(dur(game.since));
+    if (m) meta.push(MODE_SHORT[m] || m);
+    if (s.cpu_profile) meta.push("CPU " + (CPU_PROFILE[s.cpu_profile] || s.cpu_profile));
+    $("gh-meta").textContent = meta.join(" · ");
+    if (game) $("gh-name").textContent = game.name;
+  }
+  function update(s) {
+    game = s.game && s.game.name ? s.game : null;
+    const key = game ? game.name : null;
+    if (key !== lastGame) {
+      if (key) { if (UI.hudAuto !== false && closedFor !== key) show(true); }
+      else { closedFor = null; if (auto) hide(); }
+      lastGame = key;
+    }
+    if (open) paint(s);
+  }
+  $("gh-close").addEventListener("click", () => { if (lastGame) closedFor = lastGame; hide(); });
+  $("hud-open").addEventListener("click", () => show(false));
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && open) $("gh-close").click(); });
+  window.addEventListener("resize", () => { if (open && GAME) paintFps(GAME); });
+  return { update, show, hide, isOpen: () => open };
+})();
 
 /* ---------- Effet d'onde au toucher (animations complètes) ---------- */
 document.addEventListener("pointerdown", e => {
@@ -2791,7 +3055,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   document.body.dataset.view = t.dataset.view;
   document.querySelector("main").scrollTop = 0;
   if (t.dataset.view === "v-mon") { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); }
-  if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf" || t.dataset.view === "v-game" || t.dataset.view === "v-gpu") loadControls();
+  if (t.dataset.view === "v-ctl" || t.dataset.view === "v-game" || t.dataset.view === "v-gpu") loadControls();
   if (t.dataset.view === "v-game") { loadGame(); renderGame(); loadReports(); }
   if (t.dataset.view === "v-cpu") { cmMode = null; cmDirty = false; uvDirty = false; loadControls(); loadCpu(); }
   Layout.shown(t.dataset.view);
@@ -2799,6 +3063,16 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
 window.addEventListener("resize", () => { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); });
 
 /* ---------- Appli Android : toucher le nom du PC ouvre les réglages de connexion ---------- */
+// bouton Retour d'Android : ferme d'abord le HUD ou la fenêtre ouverte (vrai = géré ici)
+window.ksBack = () => {
+  if (Hud.isOpen()) { $("gh-close").click(); return true; }
+  const sh = [...document.querySelectorAll(".sheet.show")].pop();
+  if (!sh) return false;
+  if (sh.id === "gsheet") closeGame();
+  else sh.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  sh.classList.remove("show");
+  return true;
+};
 const IN_APP = typeof window.AndroidApp !== "undefined";
 if (IN_APP) {
   document.querySelector(".pc").style.cursor = "pointer";

@@ -48,6 +48,17 @@ public sealed class TrayApp : ApplicationContext
         cpu = new CpuTuner(cfg);
         cpu.Stress = new StressTest(cfg, collector);
         games = new GameWatcher(cfg, modes, cpu) { Collector = collector };
+        collector.GameInfo = () =>
+        {
+            var name = games.ActiveName;
+            if (name == null) return null;
+            var since = games.Since;
+            return new Dictionary<string, object>
+            {
+                ["name"] = name,
+                ["since"] = since.HasValue ? (long)(DateTime.Now - since.Value).TotalSeconds : 0L,
+            };
+        };
         controls = new Controls(cfg, asus, modes, games);
         var actions = new Actions(cfg, modes, asus, games, cpu) { ResetPeaks = collector.ResetPeaks };
         web = new WebServer(cfg, collector, actions, controls);
@@ -84,6 +95,7 @@ public sealed class TrayApp : ApplicationContext
         {
             Startup.EnsureFirewall(cfg.Port, cfg.DiscoveryPort);
             startupEnabled = Startup.IsEnabled();
+            if (startupEnabled) Startup.EnsurePath();
             await Task.Delay(2500);
             modes.Reapply();
             controls.Reapply();

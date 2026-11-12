@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        s.setUserAgentString(s.getUserAgentString() + " KeystoneApp/2.10.0");
+        s.setUserAgentString(s.getUserAgentString() + " KeystoneApp/2.11.0");
         web.addJavascriptInterface(new Bridge(), "AndroidApp");
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -237,6 +237,18 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (web != null) web.onPause();
+    }
+
+    /** Retour : ferme d'abord le HUD ou la fenêtre ouverte du tableau de bord, puis quitte l'appli. */
+    @Override
+    public void onBackPressed() {
+        if (web == null || (overlay != null && overlay.getVisibility() == View.VISIBLE)) {
+            super.onBackPressed();
+            return;
+        }
+        web.evaluateJavascript("window.ksBack ? String(window.ksBack()) : 'false'", v -> {
+            if (!"\"true\"".equals(v) && !isFinishing()) super.onBackPressed();
+        });
     }
 
     @Override

@@ -296,7 +296,7 @@ public sealed class GameWatcher
     {
         var skip = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "explorer", "ApplicationFrameHost", "SystemSettings", "TextInputHost", "ShellExperienceHost", "PCMonitor",
+            "explorer", "ApplicationFrameHost", "SystemSettings", "TextInputHost", "ShellExperienceHost", "PCMonitor", "Keystone",
             "StartMenuExperienceHost", "SearchHost", "LockApp", "Taskmgr", "CalculatorApp",
         };
         var list = new List<Dictionary<string, object>>();

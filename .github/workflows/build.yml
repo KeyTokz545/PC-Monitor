@@ -23,7 +23,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Compiler PCMonitor.exe
+      - name: Compiler Keystone.exe
         run: >
           dotnet publish pc/PCMonitor.csproj -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
@@ -31,8 +31,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PCMonitor-exe
-          path: out/PCMonitor.exe
+          name: Keystone-exe
+          path: out/Keystone.exe
           if-no-files-found: error
 
   android:
@@ -50,16 +50,16 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
-      - name: Compiler PCMonitor.apk
+      - name: Compiler Keystone.apk
         run: gradle -p android assembleRelease --no-daemon --stacktrace
 
       - name: Renommer
-        run: cp android/app/build/outputs/apk/release/app-release.apk PCMonitor.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk Keystone.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PCMonitor-apk
-          path: PCMonitor.apk
+          name: Keystone-apk
+          path: Keystone.apk
           if-no-files-found: error
 
   release:
@@ -77,8 +77,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          gh release delete latest --yes --cleanup-tag -R "$REPO" || true
-          gh release create latest dist/PCMonitor.exe dist/PCMonitor.apk -R "$REPO" \
-            --target "${{ github.sha }}" \
-            --title "PC Monitor (compilation ${{ github.run_number }})" \
-            --notes "PCMonitor.exe : logiciel pour le PC Windows. PCMonitor.apk : appli pour le téléphone Android. Voir le README pour l'installation."
+          # GitHub renvoie parfois une erreur 502 passagère : on réessaie
+          for i in 1 2 3 4; do
+            gh release delete latest --yes --cleanup-tag -R "$REPO" || true
+            if gh release create latest dist/Keystone.exe dist/Keystone.apk -R "$REPO" \
+              --target "${{ github.sha }}" \
+              --title "Keystone (compilation ${{ github.run_number }})" \
+              --notes "Keystone.exe : logiciel pour le PC Windows. Keystone.apk : appli pour le téléphone Android. Voir le README pour l'installation."; then
+              exit 0
+            fi
+            sleep 20
+          done
+          exit 1

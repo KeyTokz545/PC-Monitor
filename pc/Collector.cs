@@ -27,6 +27,9 @@ public sealed class Collector
     public float? GpuTemp { get; private set; }
     public float? CpuPower { get; private set; }
 
+    /// <summary>Jeu à profil automatique en cours (nom + secondes depuis son lancement), pour le HUD du téléphone.</summary>
+    public Func<object> GameInfo { get; set; }
+
     // max / min depuis la dernière remise à zéro (gardés par le PC, communs à tous les téléphones)
     readonly object peakGate = new();
     float? cpuMin, cpuMax, gpuMin, gpuMax;
@@ -172,6 +175,7 @@ public sealed class Collector
         s["lhm"] = new Dictionary<string, object> { ["ok"] = sensors.Ok, ["error"] = sensors.Error };
         s["cpu_profile"] = cfg.Cpu.Enabled ? cfg.Cpu.Active : null;
         s["last_report"] = GameReports.LatestId;
+        try { s["game"] = GameInfo?.Invoke(); } catch { s["game"] = null; }
         s["demo"] = false;
         s["app"] = "pcmonitor";
         s["version"] = Program.Version;

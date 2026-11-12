@@ -20,7 +20,7 @@ public static class Fps
 
     static readonly HashSet<string> Ignored = new(StringComparer.OrdinalIgnoreCase)
     {
-        "dwm", "PCMonitor", "explorer", "System", "Idle", "csrss", "ShellExperienceHost", "StartMenuExperienceHost",
+        "dwm", "PCMonitor", "Keystone", "explorer", "System", "Idle", "csrss", "ShellExperienceHost", "StartMenuExperienceHost",
         "SearchHost", "TextInputHost", "LockApp", "Widgets", "ApplicationFrameHost",
     };
 

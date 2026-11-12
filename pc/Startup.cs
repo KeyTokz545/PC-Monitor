@@ -11,9 +11,23 @@ public static class Startup
 {
     const string TaskName = "PC Monitor";
 
-    public static string ExePath => Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "PCMonitor.exe");
+    public static string ExePath => Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "Keystone.exe");
 
     public static bool IsEnabled() => Win.Run("schtasks", $"/Query /TN \"{TaskName}\"", 8000).Code == 0;
+
+    /// <summary>
+    /// Si le démarrage automatique lance encore un autre fichier (ancien PCMonitor.exe, exe déplacé),
+    /// la tâche est refaite sur le fichier en cours.
+    /// </summary>
+    public static void EnsurePath()
+    {
+        var (code, raw) = Win.Run("schtasks", $"/Query /TN \"{TaskName}\" /XML", 8000);
+        if (code != 0 || raw.Length == 0) return;
+        var xml = raw.Length > 1 && raw[1] == 0 ? Encoding.Unicode.GetString(raw) : Win.Decode(raw);
+        if (xml.Contains(ExePath, StringComparison.OrdinalIgnoreCase)) return;
+        Log.Info("Démarrage automatique : la tâche lançait un autre fichier, elle pointe maintenant sur " + ExePath);
+        Enable();
+    }
 
     public static bool Enable()
     {
@@ -22,7 +36,7 @@ public static class Startup
         // Les réglages par défaut de schtasks empêchent le démarrage sur batterie : on passe par un fichier XML.
         var xml = $@"<?xml version=""1.0"" encoding=""UTF-16""?>
 <Task version=""1.2"" xmlns=""http://schemas.microsoft.com/windows/2004/02/mit/task"">
-  <RegistrationInfo><Description>Lance PC Monitor à l'ouverture de session.</Description></RegistrationInfo>
+  <RegistrationInfo><Description>Lance Keystone à l'ouverture de session.</Description></RegistrationInfo>
   <Triggers>
     <LogonTrigger><Enabled>true</Enabled><UserId>{user}</UserId><Delay>PT10S</Delay></LogonTrigger>
   </Triggers>

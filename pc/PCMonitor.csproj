@@ -7,16 +7,16 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
-    <AssemblyName>PCMonitor</AssemblyName>
+    <AssemblyName>Keystone</AssemblyName>
     <RootNamespace>PCMonitor</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.10.0</Version>
+    <Version>2.11.0</Version>
     <!-- léger : un seul tas mémoire compact, pas de fil de nettoyage en arrière-plan -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <TieredPGO>false</TieredPGO>
-    <Product>PC Monitor</Product>
+    <Product>Keystone</Product>
     <Company>KeyTokz545</Company>
     <Description>Monitoring et contrôle du PC depuis un téléphone</Description>
     <SatelliteResourceLanguages>fr</SatelliteResourceLanguages>
