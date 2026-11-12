@@ -28,8 +28,9 @@ public static class Bios
     [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     static extern bool LookupPrivilegeValue(string host, string name, out long luid);
 
-    [StructLayout(LayoutKind.Sequential)]
-    struct TokenPriv { public int Count; public long Luid; public int Attr; }
+    // Pack=4 impératif : sinon le champ LUID (8 octets) serait aligné sur 8 et décalerait la structure.
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    struct TokenPriv { public int Count; public uint LuidLow; public int LuidHigh; public uint Attr; }
 
     [DllImport("advapi32.dll", SetLastError = true)]
     static extern bool AdjustTokenPrivileges(IntPtr token, bool disableAll, ref TokenPriv newState, int len, IntPtr prev, IntPtr prevLen);
@@ -40,15 +41,16 @@ public static class Bios
     [DllImport("kernel32.dll", SetLastError = true)]
     static extern bool CloseHandle(IntPtr h);
 
-    /// <summary>Donne au processus le privilège d'accès à l'environnement firmware (nécessite l'admin).</summary>
-    static bool EnablePrivilege()
+    /// <summary>Donne au processus le privilège d'accès à l'environnement firmware (nécessite l'admin). Renvoie le code d'erreur Windows (0 = ok).</summary>
+    static int EnablePrivilege()
     {
-        if (!OpenProcessToken(GetCurrentProcess(), 0x20 /*ADJUST*/ | 0x8 /*QUERY*/, out var token)) return false;
+        if (!OpenProcessToken(GetCurrentProcess(), 0x20 /*ADJUST*/ | 0x8 /*QUERY*/, out var token)) return Marshal.GetLastWin32Error();
         try
         {
-            if (!LookupPrivilegeValue(null, "SeSystemEnvironmentPrivilege", out var luid)) return false;
-            var tp = new TokenPriv { Count = 1, Luid = luid, Attr = 0x2 /*ENABLED*/ };
-            return AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero) && Marshal.GetLastWin32Error() == 0;
+            if (!LookupPrivilegeValue(null, "SeSystemEnvironmentPrivilege", out var luid)) return Marshal.GetLastWin32Error();
+            var tp = new TokenPriv { Count = 1, LuidLow = (uint)luid, LuidHigh = (int)(luid >> 32), Attr = 0x2 /*ENABLED*/ };
+            AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+            return Marshal.GetLastWin32Error(); // 0 = ok, 1300 = privilège absent (pas admin)
         }
         finally { CloseHandle(token); }
     }
@@ -70,16 +72,24 @@ public static class Bios
         var d = new Dictionary<string, object>();
         try
         {
-            EnablePrivilege();
+            var priv = EnablePrivilege();
+            if (priv == 1300)
+            {
+                // ERROR_NOT_ALL_ASSIGNED : le privilège n'est pas dans le jeton -> pas administrateur
+                d["readable"] = false;
+                d["reason"] = "PC Monitor n'a pas les droits administrateur. Ferme-le, puis relance-le en administrateur (clic droit sur PCMonitor.exe > Exécuter en tant qu'administrateur).";
+                return d;
+            }
             var data = ReadSetup(out var attr, out var err);
             if (data == null)
             {
                 d["readable"] = false;
-                // 1 = ERROR_INVALID_FUNCTION (pas de firmware UEFI accessible), 5 = refus, 203 = variable absente
+                // 1 = ERROR_INVALID_FUNCTION (BIOS refuse), 5 = refus, 203 = variable absente, 1314 = privilège non détenu
                 d["reason"] = err switch
                 {
                     1 => "Le BIOS n'autorise pas Windows à lire cette zone (variable réservée au démarrage). Le déblocage depuis Windows est impossible : il faudra la clé USB.",
                     5 => "Accès refusé par Windows (lance PC Monitor en administrateur).",
+                    1314 => "PC Monitor n'a pas pu obtenir le droit d'accès au firmware. Relance-le en administrateur ; si ça persiste, il faudra la clé USB.",
                     203 => "Variable Setup introuvable à chaud : le déblocage depuis Windows est impossible, il faudra la clé USB.",
                     _ => $"Lecture impossible (code {err}) : le déblocage depuis Windows n'est pas possible, il faudra la clé USB.",
                 };
