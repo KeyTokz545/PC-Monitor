@@ -41,7 +41,6 @@ button:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
 @keyframes ks-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes ks-draw{to{stroke-dashoffset:0}}
 @keyframes ks-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@keyframes ks-view-in{from{transform:translateY(5px)}to{transform:none}}
 html[data-anim="on"] .splash-in{animation:ks-rise .55s ease both}
 html[data-anim="on"] .ks-stone{stroke-dasharray:100;stroke-dashoffset:100;animation:ks-draw 1s ease forwards}
 html[data-anim="on"] .ks-pulse{stroke-dasharray:46;stroke-dashoffset:46;animation:ks-draw .7s .4s ease forwards}
@@ -49,8 +48,7 @@ html[data-anim="on"] .ks-pulse{stroke-dasharray:46;stroke-dashoffset:46;animatio
 html[data-anim="on"] .tab,html[data-anim="on"] .btn,html[data-anim="on"] .wide,
 html[data-anim="on"] .seg button,html[data-anim="on"] .chips button{transition:background .18s,color .18s,transform .1s,border-color .18s}
 html[data-anim="on"] .btn:active,html[data-anim="on"] .wide:active,html[data-anim="on"] .chips button:active{transform:scale(.97)}
-html[data-anim="on"] .view.active{animation:ks-view-in .18s ease-out backwards}
-@media (prefers-reduced-motion:reduce){.splash-in,.ks-stone,.ks-pulse,.view.active{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.splash-in,.ks-stone,.ks-pulse{animation:none!important}}
 
 /* ---------- Menus en colonnes sans trou (chaque fenêtre va dans la colonne la plus courte) ---------- */
 .cols.masonry{display:flex;align-items:flex-start;gap:0 14px}
@@ -101,10 +99,6 @@ html[data-anim="on"] .section.unfold>:not(h3){animation:ks-fade .26s ease backwa
 
 /* ---------- Glisser pour changer d'onglet ---------- */
 main{touch-action:pan-y}
-@keyframes ks-from-r{from{transform:translateX(18px)}to{transform:none}}
-@keyframes ks-from-l{from{transform:translateX(-18px)}to{transform:none}}
-html[data-anim="on"] .view.active.from-r{animation:ks-from-r .22s cubic-bezier(.2,.7,.2,1) backwards}
-html[data-anim="on"] .view.active.from-l{animation:ks-from-l .22s cubic-bezier(.2,.7,.2,1) backwards}
 
 /* ---------- HUD jeu plein écran ---------- */
 .ghud{position:fixed;inset:0;z-index:35;background:var(--ink);opacity:0;transform:scale(.985)}
@@ -161,10 +155,9 @@ html[data-bg="on"] .aurora i:nth-child(2){animation:ks-drift2 31s ease-in-out in
   align-items:center;column-gap:12px;row-gap:8px;
   padding:calc(var(--safe-t) + 8px) calc(var(--safe-r) + 12px) 10px calc(var(--safe-l) + 12px)}
 .head .modes{grid-area:modes;margin:0}
-body:not([data-view="v-mon"]) .head .modes{display:none}
 .cpuprof{grid-area:cpus;display:none;grid-template-columns:auto 1fr;align-items:center;gap:4px;background:var(--panel);
   border:1px solid var(--line);border-radius:var(--r-outer);padding:3px;margin-top:calc(-1 * var(--gap) + 2px)}
-body[data-view="v-mon"] .cpuprof.on{display:grid}
+.cpuprof.on{display:grid}
 .cpuprof .lbl{display:flex;align-items:center;gap:5px;padding:0 6px 0 8px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
 .cpuprof .lbl svg{width:17px;height:17px}
 .cpuprof .seg{border:0;padding:0;background:none}
@@ -2368,25 +2361,10 @@ if (!UI.hint211) setTimeout(() => {
   });
 })();
 
-/* ---------- Onglets : glisser à gauche / à droite, et le menu arrive du bon côté ---------- */
+/* ---------- Onglets : glisser à gauche / à droite pour passer à l'onglet voisin ---------- */
 const navTabs = () => [...document.querySelectorAll(".nav .tab")].filter(t => t.offsetParent !== null);
 const curTab = list => list.findIndex(x => x.getAttribute("aria-selected") === "true");
-function slideIn(v, from) {
-  if (!v || document.documentElement.dataset.anim !== "on") return;
-  v.classList.remove("from-r", "from-l"); void v.offsetWidth; v.classList.add("from-" + from);
-  const done = e => { if (e.target !== v) return; v.classList.remove("from-r", "from-l"); v.removeEventListener("animationend", done); };
-  v.addEventListener("animationend", done);
-}
 (() => {
-  const nav = document.querySelector(".nav");
-  let prev = -1;
-  nav.addEventListener("click", () => { prev = curTab(navTabs()); }, true);
-  nav.addEventListener("click", e => {
-    const t = e.target.closest(".tab"); if (!t) return;
-    const i = navTabs().indexOf(t);
-    if (i >= 0 && prev >= 0 && i !== prev) slideIn($(t.dataset.view), i > prev ? "r" : "l");
-  });
-
   const mainEl = document.querySelector("main");
   let s = null;
   const back = v => {
