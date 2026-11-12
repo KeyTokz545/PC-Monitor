@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        s.setUserAgentString(s.getUserAgentString() + " KeystoneApp/2.11.0");
+        s.setUserAgentString(s.getUserAgentString() + " KeystoneApp/2.11.1");
         web.addJavascriptInterface(new Bridge(), "AndroidApp");
         web.setWebViewClient(new WebViewClient() {
             @Override

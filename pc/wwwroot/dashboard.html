@@ -41,6 +41,7 @@ button:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
 @keyframes ks-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes ks-draw{to{stroke-dashoffset:0}}
 @keyframes ks-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes ks-view-in{from{transform:translateY(5px)}to{transform:none}}
 html[data-anim="on"] .splash-in{animation:ks-rise .55s ease both}
 html[data-anim="on"] .ks-stone{stroke-dasharray:100;stroke-dashoffset:100;animation:ks-draw 1s ease forwards}
 html[data-anim="on"] .ks-pulse{stroke-dasharray:46;stroke-dashoffset:46;animation:ks-draw .7s .4s ease forwards}
@@ -48,7 +49,7 @@ html[data-anim="on"] .ks-pulse{stroke-dasharray:46;stroke-dashoffset:46;animatio
 html[data-anim="on"] .tab,html[data-anim="on"] .btn,html[data-anim="on"] .wide,
 html[data-anim="on"] .seg button,html[data-anim="on"] .chips button{transition:background .18s,color .18s,transform .1s,border-color .18s}
 html[data-anim="on"] .btn:active,html[data-anim="on"] .wide:active,html[data-anim="on"] .chips button:active{transform:scale(.97)}
-html[data-anim="on"] .view.active{animation:ks-fade .22s ease both}
+html[data-anim="on"] .view.active{animation:ks-view-in .18s ease-out backwards}
 @media (prefers-reduced-motion:reduce){.splash-in,.ks-stone,.ks-pulse,.view.active{animation:none!important}}
 
 /* ---------- Menus en colonnes sans trou (chaque fenêtre va dans la colonne la plus courte) ---------- */
@@ -56,8 +57,8 @@ html[data-anim="on"] .view.active{animation:ks-fade .22s ease both}
 .cols.masonry>.mcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column}
 
 /* ---------- Déplacer une fenêtre : appui long puis glisser ---------- */
-.drag-ph{border:2px dashed var(--cool);border-radius:var(--r-outer);background:rgba(79,195,224,.06);margin-bottom:18px;
-  border-color:color-mix(in srgb,var(--cool) 65%,transparent);background:color-mix(in srgb,var(--cool) 8%,transparent)}
+.drag-ph{border:2px dashed var(--cool);border-radius:var(--r-outer);background:var(--ink);margin-bottom:18px;
+  border-color:color-mix(in srgb,var(--cool) 55%,transparent);background:color-mix(in srgb,var(--cool) 6%,var(--ink))}
 .grid>.drag-ph{margin:0}
 .dragging{position:fixed!important;z-index:150;pointer-events:none;margin:0!important;transform-origin:center;will-change:transform;
   border-radius:var(--r-outer);box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 2px var(--cool)}
@@ -76,7 +77,7 @@ html[data-anim="on"] .tab[aria-selected="true"] svg{color:var(--cool)}
 
 /* ---------- Animations complètes ---------- */
 @keyframes ks-item-in{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
-html[data-fx="full"] .stagger{animation:ks-item-in .4s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*45ms)}
+html[data-fx="full"] .stagger{animation:ks-item-in .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--i,0)*45ms)}
 html[data-fx="full"] :is(.btn,.wide,.tab,.mode,.seg button,.chips button){position:relative;overflow:hidden}
 .ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);
   animation:ks-ripple .55s ease-out forwards}
@@ -96,14 +97,14 @@ html[data-anim="on"] .view .section>h3::after{transition:transform .25s ease}
 .view .section.collapsed>h3{margin:0;padding:12px 14px;min-height:48px;background:var(--panel);border:1px solid var(--line);
   border-radius:var(--r-outer);color:var(--text);font-size:14px}
 .view .section.collapsed>h3::after{transform:rotate(-45deg)}
-html[data-anim="on"] .section.unfold>:not(h3){animation:ks-fade .26s ease both}
+html[data-anim="on"] .section.unfold>:not(h3){animation:ks-fade .26s ease backwards}
 
 /* ---------- Glisser pour changer d'onglet ---------- */
 main{touch-action:pan-y}
-@keyframes ks-from-r{from{opacity:0;transform:translateX(42px)}to{opacity:1;transform:none}}
-@keyframes ks-from-l{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:none}}
-html[data-anim="on"] .view.active.from-r{animation:ks-from-r .26s cubic-bezier(.2,.7,.2,1) both}
-html[data-anim="on"] .view.active.from-l{animation:ks-from-l .26s cubic-bezier(.2,.7,.2,1) both}
+@keyframes ks-from-r{from{transform:translateX(18px)}to{transform:none}}
+@keyframes ks-from-l{from{transform:translateX(-18px)}to{transform:none}}
+html[data-anim="on"] .view.active.from-r{animation:ks-from-r .22s cubic-bezier(.2,.7,.2,1) backwards}
+html[data-anim="on"] .view.active.from-l{animation:ks-from-l .22s cubic-bezier(.2,.7,.2,1) backwards}
 
 /* ---------- HUD jeu plein écran ---------- */
 .ghud{position:fixed;inset:0;z-index:35;background:var(--ink);opacity:0;transform:scale(.985)}
@@ -145,9 +146,9 @@ html[data-fx="full"] .gh-n{text-shadow:0 0 34px color-mix(in srgb,var(--cool) 45
 .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .8s}
 html[data-bg="on"] .aurora{opacity:1}
 .aurora i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;
-  background:radial-gradient(closest-side,color-mix(in srgb,var(--cool) 20%,transparent),transparent)}
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--cool) 14%,transparent),transparent)}
 .aurora i:nth-child(1){left:-25vmax;top:-30vmax}
-.aurora i:nth-child(2){right:-30vmax;bottom:-35vmax;background:radial-gradient(closest-side,color-mix(in srgb,var(--cool) 13%,transparent),transparent)}
+.aurora i:nth-child(2){right:-30vmax;bottom:-35vmax;background:radial-gradient(closest-side,color-mix(in srgb,var(--cool) 9%,transparent),transparent)}
 html[data-bg="on"] .aurora i:nth-child(1){animation:ks-drift1 24s ease-in-out infinite alternate}
 html[data-bg="on"] .aurora i:nth-child(2){animation:ks-drift2 31s ease-in-out infinite alternate}
 @keyframes ks-drift1{to{transform:translate(30vw,25vh) scale(1.25)}}
@@ -1470,7 +1471,7 @@ async function tick() {
   if (busy || document.hidden) return; busy = true;
   try {
     const s = await api("/api/stats");
-    if (s && s.cpu) { render(s); Hud.update(s); fails = 0; $("dot").className = "dot on"; }
+    if (s && s.cpu) { if (!Layout.held()) render(s); Hud.update(s); fails = 0; $("dot").className = "dot on"; }
     const view = document.body.dataset.view;
     if ((view === "v-ctl" || view === "v-gpu" || view === "v-game") && Date.now() - ctlAt > 8000 && !Object.values(dragging).some(Boolean) && !colEdit) loadControls();
     if (view === "v-game") loadGame();
@@ -1493,6 +1494,9 @@ async function init() {
     setTimeout(init, 4000);
   }
   tick();
+  // les réglages sont chargés d'avance : à la première ouverture d'un menu, ses fenêtres ont déjà
+  // leur vraie taille et rien ne saute quand les données arrivent
+  setTimeout(() => { if (!CTL) loadControls(); }, 1200);
 }
 setInterval(tick, 1000);
 const clock = () => { $("clock").textContent = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); };
@@ -1985,7 +1989,7 @@ const Layout = (() => {
   const fxOn = () => document.documentElement.dataset.anim === "on";
   const slug = t => (t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const conts = [];            // un par onglet : { view, el, cols, items (clé → fenêtre), def, order, shownAt }
-  let drag = null, press = null, fingerDown = false;
+  let drag = null, press = null, fingerDown = false, downAt = 0;
   const pending = new Set();
 
   // ---- rangement : chaque fenêtre, dans l'ordre, va dans la colonne la plus courte
@@ -2009,10 +2013,13 @@ const Layout = (() => {
       clearTimeout(e._flipT); e._flipT = setTimeout(() => { e.style.transition = ""; }, 420);
     });
   }
-  function layout(c, animate) {
+  // soft : une fenêtre a juste changé de hauteur (données reçues…) : on ne déplace rien sous les yeux,
+  // le rangement se refait à la prochaine ouverture de l'onglet, au repli, au déplacement ou en tournant l'écran
+  function layout(c, animate, soft) {
     if (c.el.offsetParent === null) return;                 // onglet caché : on rangera à l'affichage
     if (fingerDown && !drag) { pending.add(c); return; }     // pas pendant qu'on manipule un curseur
     const n = ncols(c), first = !c.cols.length;
+    if (soft && !first && !drag && c.cols.length === n) return;
     while (c.cols.length < n) { const d = document.createElement("div"); d.className = "mcol"; c.el.appendChild(d); c.cols.push(d); }
     while (c.cols.length > n) { const d = c.cols.pop(); [...d.children].forEach(ch => c.cols[0].appendChild(ch)); d.remove(); }
     if (first) c.order.forEach(k => { const e = c.items.get(k); if (e) c.cols[0].appendChild(e); });
@@ -2033,18 +2040,19 @@ const Layout = (() => {
     });
     if (moved && before) flip(els, before);
   }
-  function schedule(c, animate) {
+  function schedule(c, animate, soft) {
     c._anim = (c._anim || false) || animate;
+    c._full = (c._full || false) || !soft;
     if (c._raf) return;
     c._raf = requestAnimationFrame(() => {
-      c._raf = 0; const a = c._anim; c._anim = false;
-      layout(c, a && performance.now() - c.shownAt > 700);
+      c._raf = 0; const a = c._anim, f = c._full; c._anim = false; c._full = false;
+      layout(c, a && performance.now() - c.shownAt > 700, !f);
     });
   }
   const ro = "ResizeObserver" in window ? new ResizeObserver(entries => {
     const set = new Set();
     entries.forEach(en => { const c = conts.find(x => x.items.get(en.target.dataset.key) === en.target); if (c) set.add(c); });
-    set.forEach(c => schedule(c, true));
+    set.forEach(c => schedule(c, true, true));
   }) : null;
 
   function merge(sv, def) {
@@ -2097,7 +2105,6 @@ const Layout = (() => {
 
   function shown(view) {
     conts.filter(c => c.view === view).forEach(c => { c.shownAt = performance.now(); layout(c, false); });
-    stagger($(view));
     indicator();
   }
 
@@ -2113,7 +2120,7 @@ const Layout = (() => {
   function cancelPress() { if (press) { clearTimeout(press.t); press = null; } }
 
   document.addEventListener("pointerdown", e => {
-    fingerDown = true;
+    fingerDown = true; downAt = performance.now();
     if (drag || press || e.button > 0 || e.target.closest(NO_DRAG)) return;
     const it = itemOf(e.target); if (!it) return;
     press = { it, x: e.clientX, y: e.clientY, id: e.pointerId };
@@ -2128,7 +2135,7 @@ const Layout = (() => {
     if (press && e.pointerId === press.id) cancelPress();
     if (drag && e.pointerId === drag.id) drop();
     fingerDown = false;
-    if (pending.size && !drag) { const p = [...pending]; pending.clear(); p.forEach(c => schedule(c, true)); }
+    if (pending.size && !drag) { const p = [...pending]; pending.clear(); p.forEach(c => schedule(c, true, true)); }
   };
   document.addEventListener("pointerup", up, true);
   document.addEventListener("pointercancel", up, true);
@@ -2163,16 +2170,20 @@ const Layout = (() => {
     el.classList.remove("stagger");
     el.style.left = r.left + "px"; el.style.top = r.top + "px"; el.style.width = r.width + "px"; el.style.height = r.height + "px";
     el.classList.add("dragging");
-    el.style.transition = fxOn() ? "transform .15s ease" : "none";
-    el.style.transform = "scale(1.03)";
-    setTimeout(() => { if (drag === d) el.style.transition = "none"; }, 160);
+    el.style.transition = "none";                    // la fenêtre colle au doigt, sans retard
+    el.style.transform = "none";
+    const got = el.getBoundingClientRect();          // un parent transformé décalerait la fenêtre : on corrige
+    if (Math.abs(got.left - r.left) > .5 || Math.abs(got.top - r.top) > .5) {
+      el.style.left = (2 * r.left - got.left) + "px"; el.style.top = (2 * r.top - got.top) + "px";
+    }
+    el.style.transform = "scale(1.02)";
     document.body.classList.add("drag-on");
     vib(20);
     requestAnimationFrame(loop);
   }
   function loop() {
     const d = drag; if (!d) return;
-    d.el.style.transform = `translate(${d.px - d.dx - d.x0}px,${d.py - d.dy - d.y0}px) scale(1.03)`;
+    d.el.style.transform = `translate(${d.px - d.dx - d.x0}px,${d.py - d.dy - d.y0}px) scale(1.02)`;
     // défilement automatique près des bords
     const mr = mainEl.getBoundingClientRect(), zone = 64;
     if (d.py < mr.top + zone) mainEl.scrollTop -= Math.ceil((mr.top + zone - d.py) / 5);
@@ -2180,54 +2191,73 @@ const Layout = (() => {
     retarget(d);
     requestAnimationFrame(loop);
   }
+  // place d'un élément dans la page SANS les animations en cours : la cible ne « fuit » plus sous le doigt
+  function box(e, parent, pr) {
+    const l = pr.left + e.offsetLeft - parent.offsetLeft, t = pr.top + e.offsetTop - parent.offsetTop;
+    return { l, t, r: l + e.offsetWidth, b: t + e.offsetHeight };
+  }
   function retarget(d) {
     const now = performance.now();
-    if (now - d.lastT < 110) return;
-    if (d.last && Math.hypot(d.px - d.lx, d.py - d.ly) < 6 && mainEl.scrollTop === d.ls) return;
-    const hit = document.elementFromPoint(d.px, d.py); if (!hit) return;
     let changed = false;
     if (d.kind === "m") {
-      const c = d.c;
-      let t = hit.closest(".mcol > .section, .mcol > .drag-ph");
-      if (t && !c.el.contains(t)) t = null;
-      if (t === d.ph) return;
-      const order = c.order.filter(k => k !== "__ph");
-      let sig, colIdx;
-      if (t) {
-        const r = t.getBoundingClientRect(), after = d.py > r.top + r.height / 2;
-        const i = order.indexOf(t.dataset.key); if (i < 0) return;
-        order.splice(after ? i + 1 : i, 0, "__ph"); sig = t.dataset.key + (after ? ">" : "<");
-        colIdx = c.cols.indexOf(t.parentNode);
-      } else {
-        // zone vide sous une colonne : on se place après sa dernière fenêtre
-        const col = c.cols.find(cl => { const r = cl.getBoundingClientRect(); return d.px >= r.left && d.px <= r.right; });
-        if (!col) return;
-        const kids = [...col.children].filter(k => k !== d.ph && k.offsetHeight);
-        const lastK = kids[kids.length - 1];
-        if (lastK && d.py < lastK.getBoundingClientRect().bottom) return;
-        if (lastK) { order.splice(order.indexOf(lastK.dataset.key) + 1, 0, "__ph"); sig = lastK.dataset.key + ">"; }
-        else { order.push("__ph"); sig = "end"; }
-        colIdx = c.cols.indexOf(col);
+      if (now - d.lastT < 50) return;
+      const c = d.c, n = c.cols.length;
+      // colonne visée : celle sous le doigt, sinon la plus proche
+      let j = 0, best = Infinity;
+      c.cols.forEach((col, i) => {
+        const r = col.getBoundingClientRect(), dd = d.px < r.left ? r.left - d.px : d.px > r.right ? d.px - r.right : 0;
+        if (dd < best) { best = dd; j = i; }
+      });
+      // fenêtres de la colonne à leur place « comme si le trou n'existait pas » : la position visée
+      // ne dépend pas de l'endroit où est déjà le trou, donc plus d'aller-retour près d'une limite
+      const col = c.cols[j], cr = col.getBoundingClientRect(), list = [];
+      let shift = 0;
+      for (const k of col.children) {
+        if (k === d.el) continue;
+        if (k === d.ph) { shift = k.offsetHeight + 18; continue; }
+        if (!k.offsetHeight || !k.dataset.key) continue;
+        const top = cr.top + k.offsetTop - col.offsetTop - shift;
+        list.push({ key: k.dataset.key, mid: top + k.offsetHeight / 2 });
       }
-      if (c.cols.length < 2) colIdx = undefined;
-      sig += "@" + colIdx;
+      const idx = list.filter(x => x.mid < d.py).length;
+      const sig = j + ":" + (list[idx] ? list[idx].key : "fin");
       if (sig === d.last) return;
       d.last = sig;
-      const pinChanged = colIdx !== undefined && c.pins.__ph !== colIdx;
-      if (pinChanged) c.pins.__ph = colIdx;
+      const order = c.order.filter(k => k !== "__ph");
+      if (list[idx]) order.splice(order.indexOf(list[idx].key), 0, "__ph");
+      else if (list.length) order.splice(order.indexOf(list[list.length - 1].key) + 1, 0, "__ph");
+      else order.push("__ph");
+      const pinChanged = n > 1 && c.pins.__ph !== j;
+      if (pinChanged) c.pins.__ph = j;
       if (pinChanged || order.join("|") !== c.order.join("|")) { c.order = order; layout(c, true); changed = true; }
     } else {
-      const t = hit.closest(".grid > .card");
-      if (!t || t.classList.contains("off")) return;
+      if (now - d.lastT < 90) return;
+      if (d.lastT && Math.hypot(d.px - d.lx, d.py - d.ly) < 8 && mainEl.scrollTop === d.ls) return;
+      const grid = d.ph.parentNode, gr = grid.getBoundingClientRect();
+      let under = null, t = null;
+      for (const e of grid.children) {
+        if (e === d.el || e === d.ph || !e.classList.contains("card") || e.classList.contains("off") || !e.offsetWidth) continue;
+        const b = box(e, grid, gr);
+        if (d.px < b.l || d.px > b.r || d.py < b.t || d.py > b.b) continue;
+        under = e;
+        // il faut viser franchement la carte, pas son bord
+        const mx = (b.r - b.l) * .15, my = (b.b - b.t) * .15;
+        if (d.px > b.l + mx && d.px < b.r - mx && d.py > b.t + my && d.py < b.b - my) t = e;
+        break;
+      }
+      // la carte qui vient de glisser sous le doigt ne compte pas tant qu'on ne l'a pas quittée
+      if (d.lock && (!under || cardId(under) !== d.lock)) d.lock = null;
+      if (!t || cardId(t) === d.lock) return;
       const tid = cardId(t), o = d.gorder.slice();
       const from = o.indexOf(d.gid), to = o.indexOf(tid);
       if (from < 0 || to < 0 || from === to) return;
       o.splice(from, 1); o.splice(to, 0, d.gid);
-      const els = [...d.ph.parentNode.children].filter(e => e !== d.el);
+      const els = [...grid.children].filter(e => e !== d.el);
       const before = fxOn() ? rects(els) : null;
       d.gorder = o;
-      o.forEach((id, i) => { const e = id === d.gid ? d.ph : document.querySelector(".grid > .c-" + id); if (e) e.style.order = i; });
+      o.forEach((id, i) => { const e = id === d.gid ? d.ph : grid.querySelector(":scope > .c-" + id); if (e) e.style.order = i; });
       if (before) flip(els, before);
+      d.lock = tid;
       changed = true;
     }
     if (changed) { d.lastT = now; d.lx = d.px; d.ly = d.py; d.ls = mainEl.scrollTop; vib(6); }
@@ -2255,7 +2285,7 @@ const Layout = (() => {
     if (fxOn()) {
       const to = d.el.getBoundingClientRect();
       d.el.style.transition = "none";
-      d.el.style.transform = `translate(${from.left - to.left}px,${from.top - to.top}px) scale(1.03)`;
+      d.el.style.transform = `translate(${from.left - to.left}px,${from.top - to.top}px) scale(1.02)`;
       requestAnimationFrame(() => requestAnimationFrame(() => {
         d.el.style.transition = "transform .32s cubic-bezier(.3,.7,.2,1)"; d.el.style.transform = "";
       }));
@@ -2292,8 +2322,10 @@ const Layout = (() => {
     if (before) flip(els, before);
   }
   const dragging = () => !!(drag || press);
+  // doigt posé : on évite de réécrire l'écran dessous (sinon le geste en cours peut se perdre)
+  const held = () => !!drag || (fingerDown && performance.now() - downAt < 20000);
 
-  return { setup, shown, reset, indicator, stagger, refresh, around, dragging };
+  return { setup, shown, reset, indicator, stagger, refresh, around, dragging, held };
 })();
 Layout.setup();
 Layout.indicator();
@@ -2360,22 +2392,25 @@ function slideIn(v, from) {
   const back = v => {
     if (!v) return;
     if (document.documentElement.dataset.anim === "on" && v.style.transform) {
-      v.style.transition = "transform .22s ease, opacity .22s ease";
+      v.style.transition = "transform .22s ease";
       setTimeout(() => { v.style.transition = ""; }, 240);
     }
-    v.style.transform = ""; v.style.opacity = "";
+    v.style.transform = "";
   };
-  mainEl.addEventListener("touchstart", e => {
+  const cancel = () => { if (s) { back(s.v); s = null; } };
+  document.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "touch") return;
+    if (!e.isPrimary) { cancel(); return; }
     s = null;
-    if (UI.swipe === false || e.touches.length !== 1 || document.body.classList.contains("drag-on")) return;
-    if (e.target.closest('input,textarea,select,#fan-chart')) return;
-    const t = e.touches[0];
-    s = { x: t.clientX, y: t.clientY, t: performance.now(), dir: 0, dx: 0, v: document.querySelector(".view.active") };
-  }, { passive: true });
-  mainEl.addEventListener("touchmove", e => {
-    if (!s) return;
-    if (Layout.dragging() || document.body.classList.contains("drag-on") || e.touches.length !== 1) { back(s.v); s = null; return; }
-    const t = e.touches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+    if (UI.swipe === false || document.body.classList.contains("drag-on")) return;
+    if (!mainEl.contains(e.target) || e.target.closest('input,textarea,select,#fan-chart')) return;
+    s = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), dir: 0, dx: 0, v: document.querySelector(".view.active") };
+  }, true);
+  document.addEventListener("pointermove", e => {
+    if (!s || e.pointerId !== s.id) return;
+    if (Layout.dragging() && s.dir !== 1 && Math.hypot(e.clientX - s.x, e.clientY - s.y) < 10) return;  // peut-être un appui long
+    if (document.body.classList.contains("drag-on")) { cancel(); return; }
+    const dx = e.clientX - s.x, dy = e.clientY - s.y;
     if (!s.dir) {
       if (Math.abs(dx) > 16 && Math.abs(dx) > Math.abs(dy) * 1.7) s.dir = 1;
       else { if (Math.abs(dy) > 12) s = null; return; }
@@ -2384,21 +2419,21 @@ function slideIn(v, from) {
     const list = navTabs(), i = curTab(list), can = dx < 0 ? i < list.length - 1 : i > 0;
     if (document.documentElement.dataset.anim === "on" && s.v) {
       s.v.style.transition = "";
-      s.v.style.transform = `translateX(${Math.round(dx * (can ? .42 : .12))}px)`;
-      s.v.style.opacity = String(Math.max(.45, 1 - Math.abs(dx) / 650));
+      s.v.style.transform = `translateX(${Math.round(dx * (can ? .35 : .1))}px)`;
     }
-  }, { passive: true });
-  mainEl.addEventListener("touchend", () => {
+  }, true);
+  document.addEventListener("pointerup", e => {
+    if (!s || e.pointerId !== s.id) return;
     const d = s; s = null;
-    if (!d || d.dir !== 1) return;
+    if (d.dir !== 1) return;
     const list = navTabs(), i = curTab(list), j = d.dx < 0 ? i + 1 : i - 1;
     const v = Math.abs(d.dx) / Math.max(performance.now() - d.t, 1);
     if ((Math.abs(d.dx) > 80 || (Math.abs(d.dx) > 40 && v > .45)) && j >= 0 && j < list.length) {
-      if (d.v) { d.v.style.transform = ""; d.v.style.opacity = ""; d.v.style.transition = ""; }
+      if (d.v) { d.v.style.transform = ""; d.v.style.transition = ""; }
       list[j].click();
     } else back(d.v);
-  }, { passive: true });
-  mainEl.addEventListener("touchcancel", () => { if (s) { back(s.v); s = null; } }, { passive: true });
+  }, true);
+  document.addEventListener("pointercancel", e => { if (s && e.pointerId === s.id) cancel(); }, true);
 })();
 
 /* ---------- HUD en jeu : plein écran, s'ouvre tout seul quand un jeu à profil se lance ---------- */
