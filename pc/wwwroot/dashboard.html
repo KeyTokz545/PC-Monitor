@@ -68,6 +68,7 @@ main{grid-area:main;overflow-y:auto;-webkit-overflow-scrolling:touch;
 .note{background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.35);color:#FFD9A0;border-radius:var(--r-inner);
   padding:8px 12px;font-size:13px}
 .note.bad{background:rgba(255,90,78,.1);border-color:rgba(255,90,78,.4);color:#FFC2BC}
+.note.ok{background:rgba(90,210,130,.12);border-color:rgba(90,210,130,.4);color:#BDF0CE}
 
 /* ---------- Selecteur de mode ---------- */
 .modes{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--panel);
@@ -717,6 +718,15 @@ html[data-density="compact"] .chips button{height:32px}
           </div>
         </div>
 
+        <div class="section" id="sec-unlock" hidden>
+          <h3>Déblocage de l'undervolt</h3>
+          <div class="panel">
+            <p class="hint in">Ton BIOS bloque l'undervolt (verrou « Overclocking Lock »). Ce test vérifie, sans rien modifier, si Windows peut le débloquer tout seul. Aucun risque : c'est une simple lecture.</p>
+            <button class="wide primary" id="bios-test">Tester le déblocage depuis Windows</button>
+            <div class="note" id="bios-res" hidden></div>
+          </div>
+        </div>
+
         <div class="section">
           <h3>Test de stabilité</h3>
           <div class="panel">
@@ -850,6 +860,19 @@ html[data-density="compact"] .chips button{height:32px}
             <div class="sub-h first">Charge maximale</div>
             <div class="seg" id="batt"><button data-v="60">60 %</button><button data-v="80">80 %</button><button data-v="100">100 %</button></div>
             <p class="hint in">80 % ménage la batterie si le PC reste branché en permanence.</p>
+          </div>
+        </div>
+
+        <div class="section" id="sec-touchpad" hidden>
+          <h3>Pavé tactile</h3>
+          <div class="panel">
+            <div class="trow big">
+              <div>
+                <div class="strong">Pavé tactile</div>
+                <div class="muted small">Pratique avec une souris branchée, pour éviter les clics par erreur</div>
+              </div>
+              <button class="switch" id="touchpad-switch" role="switch" aria-checked="true" aria-label="Pavé tactile"></button>
+            </div>
           </div>
         </div>
 
@@ -1540,6 +1563,8 @@ function renderControls() {
   const bt = c.battery || {};
   $("sec-batt").hidden = !bt.supported;
   press($("batt"), bt.limit >= 40 ? bt.limit : 100);
+  // Pavé tactile
+  renderTouchpad();
   // Perf
   renderGpu();
   renderFans();
@@ -1547,6 +1572,19 @@ function renderControls() {
   renderGameCtl();
   renderTimer();
 }
+
+/* Pavé tactile */
+function renderTouchpad() {
+  const t = (CTL && CTL.touchpad) || {};
+  $("sec-touchpad").hidden = !t.supported;
+  if (!t.supported) return;
+  setSwitch($("touchpad-switch"), !!t.on);
+}
+$("touchpad-switch").addEventListener("click", async () => {
+  const on = !isOn($("touchpad-switch")); setSwitch($("touchpad-switch"), on);
+  if (CTL && CTL.touchpad) CTL.touchpad.on = on;
+  await act({ action: "touchpad_set", on }); reloadControls(400);
+});
 
 /* Carte graphique */
 let gpuMhz = 1755, gpuTimer = null;
@@ -2168,6 +2206,7 @@ function renderCpu() {
   setSwitch($("cpu-link"), !!st.linked);
   paintCpuProfile(st.active || null);
   const avail = !!c.available;
+  $("sec-unlock").hidden = !avail;
   $("c-freq").textContent = c.ratio ? nf(c.ratio / 10, 1) + " GHz" : "–";
   $("c-vid").textContent = c.vid != null ? nf(c.vid, 3) + " V" : "–";
   $("c-pow").textContent = cs.power != null ? nf(cs.power) + " W" : "–";
@@ -2322,6 +2361,23 @@ $("cpu-on").addEventListener("click", async () => {
 $("cpu-takeover").addEventListener("click", () => confirmSheet("Remplacer ThrottleStop ?",
   "PC Monitor lit l'undervolt et les limites que ThrottleStop a appliqués, les garde, ferme ThrottleStop et coupe son lancement automatique.",
   async () => { cmDirty = false; uvDirty = false; await act({ action: "cpu_takeover" }); loadCpu(); }, "Remplacer"));
+
+$("bios-test").addEventListener("click", async () => {
+  const btn = $("bios-test"), box = $("bios-res");
+  btn.disabled = true; btn.textContent = "Test en cours…";
+  const r = await act({ action: "bios_test" }, true);
+  btn.disabled = false; btn.textContent = "Tester le déblocage depuis Windows";
+  if (!r) return;
+  box.hidden = false;
+  box.classList.toggle("ok", !!r.writable);
+  box.classList.toggle("bad", !r.readable);
+  let html = `<div>${esc(r.reason || "")}</div>`;
+  if (r.readable) {
+    const yn = v => v === 1 ? "activé" : v === 0 ? "désactivé" : "?";
+    html += `<div class="muted small" style="margin-top:6px">Overclocking Lock : <b>${yn(r.oc_lock)}</b> · CFG Lock : <b>${yn(r.cfg_lock)}</b></div>`;
+  }
+  box.innerHTML = html;
+});
 
 /* ---------- Onglets ---------- */
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {

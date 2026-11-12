@@ -70,6 +70,13 @@ public sealed class Controls
             ["max"] = Gpu.MaxClock(),
         };
 
+        var (tpFound, tpOn) = Touchpad.State();
+        d["touchpad"] = new Dictionary<string, object>
+        {
+            ["supported"] = tpFound,
+            ["on"] = tpOn,
+        };
+
         var fanModes = new Dictionary<string, object>();
         foreach (var m in ModeDefs.Order)
         {
