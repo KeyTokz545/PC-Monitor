@@ -513,13 +513,6 @@ public sealed class Actions
             case "temps_reset":
                 ResetPeaks?.Invoke();
                 return R(true, "Températures max et min remises à zéro");
-            case "bios_test":
-            {
-                var res = Bios.Test();
-                res["ok"] = true;
-                res["msg"] = res.TryGetValue("reason", out var r) ? r : "Test effectué";
-                return res;
-            }
             case "touchpad_set":
             {
                 var on = B(body, "on") ?? !Touchpad.State().enabled;
