@@ -10,7 +10,7 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="PC Monitor"
+        android:label="Keystone"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
 
@@ -34,7 +34,7 @@
         <receiver
             android:name=".StatsWidget"
             android:exported="false"
-            android:label="PC Monitor">
+            android:label="Keystone">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

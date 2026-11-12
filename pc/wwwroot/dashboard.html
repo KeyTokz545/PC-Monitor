@@ -6,10 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PC Monitor">
+<meta name="apple-mobile-web-app-title" content="Keystone">
 <meta name="theme-color" content="#0E1822">
 <link rel="apple-touch-icon" href="/icon.png">
-<title>PC Monitor</title>
+<title>Keystone</title>
 <style>
 :root{
   --ink:#0E1822; --panel:#15212D; --raise:#1C2A38; --line:#243444;
@@ -29,6 +29,27 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
 button:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
 .num{font-family:var(--num);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.01em}
 .muted{color:var(--muted)}
+
+/* ---------- Écran de démarrage Keystone ---------- */
+.splash{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:var(--ink);transition:opacity .5s ease,visibility .5s}
+.splash.gone{opacity:0;visibility:hidden;pointer-events:none}
+.splash-in{display:flex;flex-direction:column;align-items:center;gap:12px}
+.ks-logo{width:86px;height:86px;filter:drop-shadow(0 8px 24px rgba(0,0,0,.45))}
+.ks-word{font-family:var(--num);font-weight:800;font-size:30px;letter-spacing:.01em;color:var(--text)}
+.ks-by{font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+@keyframes ks-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes ks-draw{to{stroke-dashoffset:0}}
+@keyframes ks-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+html[data-anim="on"] .splash-in{animation:ks-rise .55s ease both}
+html[data-anim="on"] .ks-stone{stroke-dasharray:100;stroke-dashoffset:100;animation:ks-draw 1s ease forwards}
+html[data-anim="on"] .ks-pulse{stroke-dasharray:46;stroke-dashoffset:46;animation:ks-draw .7s .4s ease forwards}
+/* transitions soignées quand les animations sont activées */
+html[data-anim="on"] .tab,html[data-anim="on"] .btn,html[data-anim="on"] .wide,
+html[data-anim="on"] .seg button,html[data-anim="on"] .chips button{transition:background .18s,color .18s,transform .1s,border-color .18s}
+html[data-anim="on"] .btn:active,html[data-anim="on"] .wide:active,html[data-anim="on"] .chips button:active{transform:scale(.97)}
+html[data-anim="on"] .view.active{animation:ks-fade .22s ease both}
+@media (prefers-reduced-motion:reduce){.splash-in,.ks-stone,.ks-pulse,.view.active{animation:none!important}}
 
 /* ---------- Cadre de l'appli ---------- */
 .app{height:100%;display:grid;grid-template-rows:auto 1fr auto;grid-template-areas:"head" "main" "nav"}
@@ -421,6 +442,9 @@ html[data-theme="rog"] :is(.chips button,.seg,.seg button,.wide,.hud div,.note,.
   .sheet .box,.sheet .acts button,.toast,.themes button,.themes i,.fps-box){border-radius:3px}
 html[data-theme="rog"] .wide.primary,html[data-theme="rog"] .sheet .acts .ok{clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
 html[data-theme="rog"] .num{letter-spacing:0}
+html[data-theme="abysse"]{--ink:#06121C;--panel:#0D2130;--raise:#143044;--line:#1E3A4F;--text:#DCEAF2;--muted:#6E8EA3;--faint:#365062}
+html[data-theme="nebuleuse"]{--ink:#0C0A16;--panel:#171329;--raise:#201A3A;--line:#2C2450;--text:#E9E4F5;--muted:#8C82A8;--faint:#4A4268}
+html[data-theme="foret"]{--ink:#07130D;--panel:#0E2018;--raise:#153022;--line:#1F4030;--text:#DFEEE4;--muted:#6F9080;--faint:#355043}
 html[data-density="compact"]{--gap:7px}
 html[data-density="compact"] body{font-size:14px}
 html[data-density="compact"] .card{padding:9px 11px}
@@ -503,6 +527,22 @@ html[data-density="compact"] .chips button{height:32px}
 </style>
 </head>
 <body data-view="v-mon">
+<div class="splash" id="splash" aria-hidden="true">
+  <div class="splash-in">
+    <svg class="ks-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <defs>
+        <linearGradient id="ksg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--cool)"/>
+          <stop offset="1" stop-color="var(--cool)" stop-opacity=".5"/>
+        </linearGradient>
+      </defs>
+      <path class="ks-stone" d="M10 12 L38 12 L34 32 L14 32 Z" fill="none" stroke="url(#ksg)" stroke-width="2.6" stroke-linejoin="round"/>
+      <path class="ks-pulse" d="M19 16.5 V27.5 M19 22 L28 16.5 M19 22 L28 27.5" fill="none" stroke="var(--cool)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="ks-word">Keystone</div>
+    <div class="ks-by">by KeyTokz545</div>
+  </div>
+</div>
 <div class="app">
   <header class="head">
     <div class="pc"><span class="dot" id="dot"></span><span id="pcname">PC</span></div>
@@ -978,11 +1018,15 @@ html[data-density="compact"] .chips button{height:32px}
       <button data-t="nuit"><i style="background:#0E1822"><b style="background:#1C2A38"></b></i>Nuit</button>
       <button data-t="oled"><i style="background:#000"><b style="background:#0E1216;box-shadow:inset 0 0 0 1px #1E252C"></b></i>OLED noir</button>
       <button data-t="rog"><i class="cut" style="background:#08080A"><b style="background:#FF2D46"></b></i>ROG</button>
+      <button data-t="abysse"><i style="background:#06121C"><b style="background:#4FC3E0"></b></i>Abysse</button>
+      <button data-t="nebuleuse"><i style="background:#0C0A16"><b style="background:#A98BFF"></b></i>Nébuleuse</button>
+      <button data-t="foret"><i style="background:#07130D"><b style="background:#5BE08A"></b></i>Forêt</button>
     </div>
     <div class="sub-h">Couleur d'accent</div>
     <div class="swatches" id="accents"></div>
     <div class="sub-h">Taille de l'affichage</div>
     <div class="seg small" id="density"><button data-v="normal">Confort</button><button data-v="compact">Compacte</button></div>
+    <div class="trow"><div><div>Animations</div><div class="muted small">Écran de démarrage, transitions et effets. Désactive pour un rendu plus sobre et réactif.</div></div><button class="switch" id="anim-switch" role="switch" aria-checked="true" aria-label="Animations"></button></div>
     <div class="trow"><div><div>Anti-marquage de l'écran</div><div class="muted small">Décale l'affichage de 2 px toutes les 4 min, utile si le téléphone reste allumé en permanence</div></div><button class="switch" id="shift-switch" role="switch" aria-checked="false" aria-label="Anti-marquage de l'écran"></button></div>
     <div class="sub-h">Alerte surchauffe</div>
     <div class="trow"><span id="alert-label">Au-delà de 90 °C</span><button class="switch" id="alert-switch" role="switch" aria-checked="true" aria-label="Alerte surchauffe"></button></div>
@@ -1678,8 +1722,10 @@ function renderPerfLive(s) {
 /* ---------- Personnaliser (réglages propres à ce téléphone) ---------- */
 const CARDS = [["cpu", "CPU"], ["gpu", "GPU"], ["net", "Connexion"], ["ram", "Mémoire"], ["sys", "Système"]];
 const ACCENTS = ["#4FC3E0", "#5BE08A", "#FFB547", "#FF7A59", "#FF2D46", "#A98BFF", "#FF7AC6"];
-const THEME_INK = { nuit: "#0E1822", oled: "#000000", rog: "#08080A" };
-let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false };
+const THEME_INK = { nuit: "#0E1822", oled: "#000000", rog: "#08080A", abysse: "#06121C", nebuleuse: "#0C0A16", foret: "#07130D" };
+const THEME_ACCENT = { nuit: "#4FC3E0", oled: "#4FC3E0", rog: "#FF2D46", abysse: "#4FC3E0", nebuleuse: "#A98BFF", foret: "#5BE08A" };
+const THEME_DEFAULT_ACCENTS = new Set(Object.values(THEME_ACCENT));
+let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false, anim: true };
 try { const saved = JSON.parse(localStorage.getItem("pcmon-ui") || "null"); if (saved) UI = Object.assign(UI, saved); } catch (e) {}
 CARDS.forEach(c => { if (!UI.order.includes(c[0])) UI.order.push(c[0]); });
 function saveUI() { try { localStorage.setItem("pcmon-ui", JSON.stringify(UI)); } catch (e) {} }
@@ -1689,6 +1735,7 @@ function applyUI() {
   root.style.setProperty("--cool", UI.accent);
   if (UI.theme && UI.theme !== "nuit") root.dataset.theme = UI.theme; else delete root.dataset.theme;
   if (UI.density === "compact") root.dataset.density = "compact"; else delete root.dataset.density;
+  root.dataset.anim = UI.anim ? "on" : "off";
   const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = THEME_INK[UI.theme] || THEME_INK.nuit;
   setShift(UI.shift);
 }
@@ -1711,6 +1758,7 @@ function renderCustom() {
   }).join("");
   $("themes").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === (UI.theme || "nuit")));
   press($("density"), UI.density || "normal");
+  setSwitch($("anim-switch"), UI.anim !== false);
   setSwitch($("shift-switch"), !!UI.shift);
   $("accents").innerHTML = ACCENTS.map(c => `<button data-a="${c}" style="background:${c}" aria-pressed="${c === UI.accent}" aria-label="Accent ${c}"></button>`).join("");
   setSwitch($("alert-switch"), UI.alert.on);
@@ -1734,12 +1782,12 @@ $("alert-switch").addEventListener("click", () => { UI.alert.on = !UI.alert.on; 
 $("themes").addEventListener("click", e => {
   const b = e.target.closest("button[data-t]"); if (!b) return;
   const prev = UI.theme || "nuit"; UI.theme = b.dataset.t;
-  // accent assorti au thème, sauf si une autre couleur avait été choisie
-  if (UI.theme === "rog" && UI.accent === ACCENTS[0]) UI.accent = "#FF2D46";
-  else if (prev === "rog" && UI.theme !== "rog" && UI.accent === "#FF2D46") UI.accent = ACCENTS[0];
+  // accent assorti au thème, sauf si l'utilisateur avait choisi une couleur perso
+  if (THEME_DEFAULT_ACCENTS.has(UI.accent)) UI.accent = THEME_ACCENT[UI.theme] || ACCENTS[0];
   if (UI.theme === "oled" && prev !== "oled") UI.shift = true;
   saveUI(); applyUI(); renderCustom(); redrawAll();
 });
+$("anim-switch").addEventListener("click", () => { UI.anim = !UI.anim; saveUI(); applyUI(); renderCustom(); });
 $("density").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; UI.density = b.dataset.v; saveUI(); applyUI(); renderCustom(); redrawAll(); });
 $("shift-switch").addEventListener("click", () => { UI.shift = !UI.shift; saveUI(); applyUI(); renderCustom(); });
 function redrawAll() { try { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); } catch (e) {} }
@@ -1749,6 +1797,15 @@ $("custom-btn").addEventListener("click", () => { renderCustom(); $("custom").cl
 $("custom-close").addEventListener("click", () => $("custom").classList.remove("show"));
 $("custom").addEventListener("click", e => { if (e.target.id === "custom") $("custom").classList.remove("show"); });
 applyUI();
+
+/* Écran de démarrage Keystone */
+(function () {
+  const sp = $("splash"); if (!sp) return;
+  const hide = () => sp.classList.add("gone");
+  setTimeout(hide, UI.anim === false ? 250 : 1600);
+  sp.addEventListener("click", hide);
+  setTimeout(() => { try { sp.remove(); } catch (e) {} }, 2400);
+})();
 
 /* Alerte surchauffe : bandeau rouge, et vibration sur l'appli Android */
 let lastAlarm = 0;

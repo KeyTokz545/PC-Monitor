@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        s.setUserAgentString(s.getUserAgentString() + " PCMonitorApp/2.8.0");
+        s.setUserAgentString(s.getUserAgentString() + " KeystoneApp/2.9.1");
         web.addJavascriptInterface(new Bridge(), "AndroidApp");
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -152,7 +152,7 @@ public class MainActivity extends Activity {
 
     private void showOverlay() {
         runOnUiThread(() -> {
-            overlayText.setText("Vérifie que " + pc.name + " est allumé, que PC Monitor tourne, et que ce téléphone est sur le même Wi-Fi.");
+            overlayText.setText("Vérifie que " + pc.name + " est allumé, que Keystone tourne, et que ce téléphone est sur le même Wi-Fi.");
             wakeButton.setVisibility(pc.macs == null || pc.macs.isEmpty() ? View.GONE : View.VISIBLE);
             overlay.setVisibility(View.VISIBLE);
         });
