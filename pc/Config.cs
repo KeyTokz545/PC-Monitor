@@ -41,8 +41,14 @@ public sealed class FanProfile
 
 public sealed class GpuLimitSettings
 {
+    // Verrouillage de la fréquence max (ancien « bridage »), via le pilote NVIDIA.
     public bool On { get; set; }
     public int Mhz { get; set; } = 1755;
+    // Undervolt par décalage de courbe (NVAPI) : décalage cœur positif + plafond de fréquence
+    // = la fréquence plafonnée est atteinte à une tension plus basse → moins de chauffe sans perte.
+    public bool TuneOn { get; set; }
+    public int CoreOffset { get; set; }   // MHz, décalage fréquence cœur (négatif possible)
+    public int MemOffset { get; set; }    // MHz, décalage fréquence mémoire
 }
 
 /// <summary>Réglages, enregistrés dans %AppData%\PCMonitor\config.json.</summary>

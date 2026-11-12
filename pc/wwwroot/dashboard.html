@@ -888,26 +888,6 @@ html[data-density="compact"] .chips button{height:32px}
     <!-- Performances : carte graphique et ventilateurs -->
     <section class="view" id="v-perf" aria-label="Performances">
       <div class="cols">
-        <div class="section" id="sec-gpu">
-          <h3>Carte graphique</h3>
-          <div class="panel">
-            <div class="trow big">
-              <div>
-                <div class="strong">Limiter la fréquence</div>
-                <div class="muted small" id="gpu-now">Fréquence actuelle : –</div>
-              </div>
-              <button class="switch" id="gpu-switch" role="switch" aria-checked="false" aria-label="Limiter la fréquence du GPU"></button>
-            </div>
-            <div class="stepper">
-              <button id="gpu-minus" aria-label="Moins 15 MHz">−</button>
-              <div><span class="num" id="gpu-mhz">1755</span><small> MHz</small></div>
-              <button id="gpu-plus" aria-label="Plus 15 MHz">+</button>
-            </div>
-            <div class="chips center" id="gpu-presets"><button data-v="1500">1500</button><button data-v="1755">1755</button><button data-v="1900">1900</button></div>
-            <p class="hint in" id="gpu-hint">Moins de chaleur et de bruit en jeu, pour quelques images par seconde en moins. Désactive pour rendre la main au pilote.</p>
-          </div>
-        </div>
-
         <div class="section" id="sec-fans">
           <h3>Ventilateurs</h3>
           <div class="panel">
@@ -928,11 +908,51 @@ html[data-density="compact"] .chips button{height:32px}
       </div>
     </section>
 
-    <!-- Applis -->
-    <section class="view" id="v-apps" aria-label="Applis">
-      <div class="apps-bar"><h3>Applis du PC</h3><button class="link" id="apps-edit">Modifier</button></div>
-      <div class="apps" id="apps"></div>
-      <p class="hint" id="apps-hint"></p>
+    <!-- Carte graphique -->
+    <section class="view" id="v-gpu" aria-label="Carte graphique">
+      <div class="cols">
+        <div class="section">
+          <h3>Carte graphique</h3>
+          <div class="hud cpu-live">
+            <div><span class="num" id="gpu-t-load">–</span><small>Charge</small></div>
+            <div><span class="num" id="gpu-t-temp">–</span><small>Température</small></div>
+            <div><span class="num" id="gpu-t-power">–</span><small>Conso</small></div>
+          </div>
+        </div>
+
+        <div class="section" id="sec-gpu-tune">
+          <h3>Undervolt / décalage</h3>
+          <div class="panel">
+            <div class="note" id="gpu-tune-err" hidden></div>
+            <div class="trow first"><div><div>Appliquer le décalage</div><div class="muted small">Réappliqué à chaque démarrage</div></div><button class="switch" id="gpu-tune-on" role="switch" aria-checked="false" aria-label="Appliquer le décalage GPU"></button></div>
+            <div class="srow"><span class="lab">Décalage cœur</span><input type="range" id="gpu-core" min="-200" max="300" step="15" aria-label="Décalage fréquence cœur"><span class="val num" id="gpu-core-v"></span></div>
+            <div class="srow"><span class="lab">Décalage mémoire</span><input type="range" id="gpu-mem" min="0" max="1500" step="50" aria-label="Décalage fréquence mémoire"><span class="val num" id="gpu-mem-v"></span></div>
+            <button class="wide primary" id="gpu-tune-apply">Appliquer</button>
+            <button class="link" id="gpu-tune-reset">Tout remettre d'origine</button>
+            <p class="hint in">Le décalage cœur pousse la performance à chaque palier de tension. Combiné au plafond de fréquence ci-dessous, la fréquence plafonnée est alors atteinte à une tension plus basse : c'est l'undervolt (moins de chaleur, mêmes images). Avance par petits paliers (cœur +15 à +30, mémoire +100 à +200) et valide en jeu : un décalage trop haut donne des artefacts ou un plantage du pilote, réparé par un simple redémarrage.</p>
+          </div>
+        </div>
+
+        <div class="section" id="sec-gpu">
+          <h3>Plafond de fréquence</h3>
+          <div class="panel">
+            <div class="trow big">
+              <div>
+                <div class="strong">Limiter la fréquence</div>
+                <div class="muted small" id="gpu-now">Fréquence actuelle : –</div>
+              </div>
+              <button class="switch" id="gpu-switch" role="switch" aria-checked="false" aria-label="Limiter la fréquence du GPU"></button>
+            </div>
+            <div class="stepper">
+              <button id="gpu-minus" aria-label="Moins 15 MHz">−</button>
+              <div><span class="num" id="gpu-mhz">1755</span><small> MHz</small></div>
+              <button id="gpu-plus" aria-label="Plus 15 MHz">+</button>
+            </div>
+            <div class="chips center" id="gpu-presets"><button data-v="1500">1500</button><button data-v="1755">1755</button><button data-v="1900">1900</button></div>
+            <p class="hint in" id="gpu-hint">Plafonne la fréquence pour maîtriser la chauffe. Avec un décalage cœur positif, ce plafond est atteint à moins de tension — c'est là que l'undervolt opère.</p>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -942,25 +962,10 @@ html[data-density="compact"] .chips button{height:32px}
     <button class="tab" role="tab" aria-selected="false" data-view="v-ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><rect x="3" y="13" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="10" y="7" width="4" height="3" rx="1" fill="var(--ink)"/><rect x="17" y="11" width="4" height="3" rx="1" fill="var(--ink)"/></svg>Contrôles</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-perf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2c-.6-2.9.1-5.6 2.6-6.4 2.2-.7 3.4 1.6 2 3.2-1.1 1.3-2.8 2.3-4.6 3.2"/><path d="M13.6 12.9c2.8 1 4.7 3 4.2 5.6-.5 2.2-3.1 2.3-3.8.3-.6-1.6-.6-3.6-.4-5.9"/><path d="M10.4 12.9c-2.2 2-4.9 2.7-6.8.9-1.7-1.6-.3-3.8 1.8-3.4 1.7.3 3.3 1.3 5 2.5"/></svg>Perf</button>
     <button class="tab" role="tab" aria-selected="false" data-view="v-cpu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx=".8"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/></svg>CPU</button>
-    <button class="tab" role="tab" aria-selected="false" data-view="v-apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Applis</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="v-gpu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="9" cy="12" r="2.6"/><path d="M9 9.4v5.2M6.4 12h5.2"/><path d="M15 10h3.5M15 13h3.5"/></svg>GPU</button>
   </nav>
 </div>
 
-<div class="picker" id="picker" role="dialog" aria-modal="true" aria-labelledby="pk-title">
-  <div class="pk-head"><p id="pk-title">Ajouter une appli</p><button class="link" id="pk-close">Terminé</button></div>
-  <div class="pk-tools">
-    <input id="pk-search" type="search" placeholder="Rechercher" autocomplete="off" autocorrect="off" enterkeyhint="search">
-    <button class="link" id="pk-refresh">Actualiser</button>
-  </div>
-  <div class="pk-list" id="pk-list"></div>
-</div>
-<div class="sheet" id="icosheet">
-  <div class="box" role="dialog" aria-modal="true" aria-labelledby="ico-q">
-    <p id="ico-q">Icône</p><div class="sub">Choisis l'icône affichée sur la tuile.</div>
-    <div class="icogrid" id="icogrid"></div>
-    <div class="acts one"><button id="ico-no">Annuler</button></div>
-  </div>
-</div>
 <div class="toast" id="toast" role="status"></div>
 <div class="sheet" id="custom">
   <div class="box tall" role="dialog" aria-modal="true" aria-labelledby="custom-t">
@@ -1197,6 +1202,11 @@ function render(s) {
   $("gpu-vram").textContent = g.vram_used != null ? nf(g.vram_used, 1) + (g.vram_total ? " / " + nf(g.vram_total) : "") + " Go" : "–";
   for (const k of ["cpu", "gpu"]) { hist[k].push(s[k]?.temp ?? null); if (hist[k].length > HMAX) hist[k].shift(); }
   drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu);
+  if (document.body.dataset.view === "v-gpu") {
+    $("gpu-t-load").textContent = g.load != null ? nf(g.load) + " %" : "–";
+    $("gpu-t-temp").textContent = g.temp != null ? nf(g.temp) + " °C" : "–";
+    $("gpu-t-power").textContent = g.power != null ? nf(g.power) + " W" : "–";
+  }
   // Reseau
   const n = s.net || {};
   $("nic-name").textContent = n.nic || "";
@@ -1287,7 +1297,7 @@ async function init() {
   try {
     const cfg = await api("/api/config");
     $("pcname").textContent = cfg.pc || "PC";
-    buildModes(cfg.modes || []); buildApps(cfg.apps || []);
+    buildModes(cfg.modes || []);
   } catch (e) {
     buildModes([{ id: "silent", label: "Silencieux" }, { id: "balanced", label: "Équilibré" }, { id: "turbo", label: "Turbo" }]);
     if (e.auth) setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par PC Monitor sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]);
@@ -1299,88 +1309,37 @@ setInterval(tick, 1000);
 const clock = () => { $("clock").textContent = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); };
 clock(); setInterval(clock, 1000);
 
-/* ---------- Applis ---------- */
-let APPS = [], editing = false;
-const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
-function buildApps(list) {
-  APPS = list;
-  const box = $("apps");
-  if (!list.length) editing = false;
-  box.classList.toggle("editing", editing);
-  $("apps-edit").textContent = editing ? "Terminé" : "Modifier";
-  $("apps-edit").style.visibility = list.length ? "visible" : "hidden";
-  box.innerHTML = list.map((a, i) => `<div class="appt">
-    <button class="open" data-i="${i}"><span class="ico">${esc(a.icon)}</span><span class="nm">${esc(a.name)}</span></button>
-    ${editing ? `<button class="remove" data-i="${i}">Retirer</button>` : a.can_close ? `<button class="close" data-i="${i}">Fermer</button>` : ""}</div>`).join("")
-    + (editing ? "" : `<div class="appt add"><button class="open" id="add-app"><span class="ico">${PLUS}</span><span class="nm">Ajouter</span></button></div>`);
-  $("apps-hint").textContent = editing
-    ? "Touche une appli pour changer son icône. « Retirer » l'enlève de cette liste seulement : rien n'est désinstallé du PC."
-    : "« Ajouter » liste les jeux Steam et les programmes du Bureau et du menu Démarrer du PC.";
-  box.querySelectorAll(".open[data-i]").forEach(b => b.addEventListener("click", () =>
-    editing ? openIcons(+b.dataset.i) : act({ action: "app_open", index: +b.dataset.i })));
-  box.querySelectorAll(".close").forEach(b => b.addEventListener("click", () =>
-    confirmSheet(`Fermer ${list[+b.dataset.i].name} ?`, "Le programme sera fermé de force : ce qui n'est pas enregistré sera perdu.",
-      () => act({ action: "app_close", index: +b.dataset.i }), "Fermer")));
-  box.querySelectorAll(".remove").forEach(b => b.addEventListener("click", () =>
-    confirmSheet(`Retirer ${list[+b.dataset.i].name} ?`, "L'appli disparaît de cette liste. Rien n'est désinstallé du PC.",
-      async () => { await act({ action: "app_remove", index: +b.dataset.i }); reloadApps(); }, "Retirer")));
-  const add = $("add-app"); if (add) add.addEventListener("click", openPicker);
+/* ---------- Onglet GPU : undervolt / décalage ---------- */
+let gpuCore = 0, gpuMem = 0;
+function renderGpuTab() {
+  const g = (CTL && CTL.gpu) || {};
+  const sup = !!g.tune_supported;
+  $("gpu-tune-err").hidden = !(g.supported && g.tune_err);
+  $("gpu-tune-err").textContent = g.tune_err || "";
+  if (!gpuTuneDirty) { gpuCore = g.core || 0; gpuMem = g.mem || 0; }
+  setSwitch($("gpu-tune-on"), !!g.tune_on);
+  ["gpu-tune-on", "gpu-core", "gpu-mem", "gpu-tune-apply"].forEach(id => $(id).disabled = !sup);
+  $("gpu-core").value = gpuCore; fill($("gpu-core")); $("gpu-core-v").textContent = (gpuCore > 0 ? "+" : "") + gpuCore + " MHz";
+  $("gpu-mem").value = gpuMem; fill($("gpu-mem")); $("gpu-mem-v").textContent = (gpuMem > 0 ? "+" : "") + gpuMem + " MHz";
+  // valeurs live depuis le monitoring
+  const s = (lastStats && lastStats.gpu) || {};
+  $("gpu-t-load").textContent = s.load != null ? Math.round(s.load) + " %" : "–";
+  $("gpu-t-temp").textContent = s.temp != null ? Math.round(s.temp) + " °C" : "–";
+  $("gpu-t-power").textContent = s.power != null ? Math.round(s.power) + " W" : "–";
 }
-async function reloadApps() { try { const cfg = await api("/api/config"); buildApps(cfg.apps || []); } catch (e) {} }
-$("apps-edit").addEventListener("click", () => { editing = !editing; buildApps(APPS); });
-
-/* Changer l'icone d'une appli (mode Modifier) */
-const ICON_CHOICES = ["🎮", "🕹️", "🔫", "🎯", "🏎️", "⚽", "🪓", "🧟", "🚀", "🐉", "💬", "🎵",
-  "📺", "🎥", "🌐", "🛠️", "📄", "📁", "🧩", "⭐", "🔥", "💀", "🏆", "⚙️"];
-function openIcons(i) {
-  $("ico-q").textContent = `Icône de ${APPS[i].name}`;
-  $("icogrid").innerHTML = ICON_CHOICES.map(e => `<button data-e="${e}" aria-label="${e}">${e}</button>`).join("");
-  $("icogrid").querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
-    $("icosheet").classList.remove("show");
-    await act({ action: "app_update", index: i, icon: b.dataset.e }, true); reloadApps(); }));
-  $("icosheet").classList.add("show");
-}
-$("ico-no").addEventListener("click", () => $("icosheet").classList.remove("show"));
-$("icosheet").addEventListener("click", e => { if (e.target.id === "icosheet") $("icosheet").classList.remove("show"); });
-
-/* Selecteur : jeux et programmes trouves sur le PC */
-let catalog = [], pkTimer = null, pkLoading = false;
-const norm = t => (t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-function openPicker() { $("pk-search").value = ""; $("picker").classList.add("show"); loadCatalog(false); }
-function closePicker() { $("picker").classList.remove("show"); clearTimeout(pkTimer); $("pk-search").blur(); reloadApps(); }
-async function loadCatalog(refresh) {
-  clearTimeout(pkTimer);
-  try {
-    const r = await api("/api/catalog" + (refresh ? "?refresh=1" : ""));
-    catalog = r.items || []; pkLoading = !!r.loading; renderCatalog();
-    if (pkLoading && $("picker").classList.contains("show")) pkTimer = setTimeout(() => loadCatalog(false), 1500);
-  } catch (e) { $("pk-list").innerHTML = `<p class="pk-empty">Le PC ne répond pas. Vérifie que le serveur tourne.</p>`; }
-}
-function renderCatalog() {
-  const q = norm($("pk-search").value.trim());
-  const items = catalog.filter(it => !q || norm(it.name).includes(q));
-  let html = pkLoading ? `<p class="pk-empty">Recherche des jeux et programmes du PC…</p>` : "";
-  if (!items.length && !pkLoading) html = `<p class="pk-empty">${q ? "Aucun résultat pour cette recherche." : "Aucune appli trouvée sur le PC."}</p>`;
-  let grp = "";
-  for (const it of items) {
-    if (it.src !== grp) { grp = it.src; html += `<div class="pk-group">${esc(grp === "Steam" ? "Jeux Steam" : grp)}</div>`; }
-    html += `<button class="pk-item${it.added ? " added" : ""}" data-id="${it.id}"><span class="ico">${esc(it.icon)}</span>` +
-      `<span class="nm">${esc(it.name)}</span><span class="add">${it.added ? "Ajouté" : "Ajouter"}</span></button>`;
-  }
-  $("pk-list").innerHTML = html;
-  $("pk-list").querySelectorAll(".pk-item").forEach(b => b.addEventListener("click", () => addFromCatalog(+b.dataset.id, b)));
-}
-async function addFromCatalog(id, btn) {
-  const it = catalog.find(x => x.id === id); if (!it || it.added) return;
-  try {
-    const r = await api("/api/action", { action: "app_add", id });
-    toast(r.msg || "Ajouté", !r.ok);
-    if (r.ok) { it.added = true; btn.classList.add("added"); btn.querySelector(".add").textContent = "Ajouté"; }
-  } catch (e) { toast("Le PC ne répond pas", true); }
-}
-$("pk-close").addEventListener("click", closePicker);
-$("pk-refresh").addEventListener("click", () => { pkLoading = true; renderCatalog(); loadCatalog(true); });
-$("pk-search").addEventListener("input", renderCatalog);
+let gpuTuneDirty = false;
+$("gpu-core").addEventListener("input", () => { gpuCore = +$("gpu-core").value; gpuTuneDirty = true; fill($("gpu-core")); $("gpu-core-v").textContent = (gpuCore > 0 ? "+" : "") + gpuCore + " MHz"; });
+$("gpu-mem").addEventListener("input", () => { gpuMem = +$("gpu-mem").value; gpuTuneDirty = true; fill($("gpu-mem")); $("gpu-mem-v").textContent = (gpuMem > 0 ? "+" : "") + gpuMem + " MHz"; });
+$("gpu-tune-on").addEventListener("click", async () => {
+  const on = !isOn($("gpu-tune-on")); setSwitch($("gpu-tune-on"), on);
+  await act({ action: "gpu_tune", on, core: gpuCore, mem: gpuMem }); gpuTuneDirty = false; reloadControls(300);
+});
+$("gpu-tune-apply").addEventListener("click", async () => {
+  await act({ action: "gpu_tune", on: true, core: gpuCore, mem: gpuMem }); gpuTuneDirty = false; reloadControls(300);
+});
+$("gpu-tune-reset").addEventListener("click", () => confirmSheet("Remettre le GPU d'origine ?",
+  "Décalage cœur/mémoire à 0 et plafond de fréquence retiré.",
+  async () => { gpuCore = 0; gpuMem = 0; gpuTuneDirty = false; await act({ action: "gpu_reset" }); reloadControls(300); }, "Remettre"));
 
 /* ---------- Actions ---------- */
 async function act(body, quiet) {
@@ -1556,8 +1515,9 @@ function renderControls() {
   press($("batt"), bt.limit >= 40 ? bt.limit : 100);
   // Pavé tactile
   renderTouchpad();
-  // Perf
+  // Perf + GPU
   renderGpu();
+  renderGpuTab();
   renderFans();
   // Jeu, minuteur
   renderGameCtl();
@@ -2359,7 +2319,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   document.body.dataset.view = t.dataset.view;
   document.querySelector("main").scrollTop = 0;
   if (t.dataset.view === "v-mon") { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); }
-  if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf" || t.dataset.view === "v-game") loadControls();
+  if (t.dataset.view === "v-ctl" || t.dataset.view === "v-perf" || t.dataset.view === "v-game" || t.dataset.view === "v-gpu") loadControls();
   if (t.dataset.view === "v-game") { loadGame(); renderGame(); loadReports(); }
   if (t.dataset.view === "v-cpu") { cmMode = null; cmDirty = false; uvDirty = false; loadControls(); loadCpu(); }
 }));

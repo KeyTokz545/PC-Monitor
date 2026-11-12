@@ -11,7 +11,7 @@
     <RootNamespace>PCMonitor</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>2.8.2</Version>
+    <Version>2.9.0</Version>
     <!-- léger : un seul tas mémoire compact, pas de fil de nettoyage en arrière-plan -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>

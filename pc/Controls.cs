@@ -68,6 +68,11 @@ public sealed class Controls
             ["on"] = cfg.GpuLimit.On,
             ["mhz"] = cfg.GpuLimit.Mhz,
             ["max"] = Gpu.MaxClock(),
+            ["tune_supported"] = Gpu.Supported && Gpu.TuneSupported,
+            ["tune_on"] = cfg.GpuLimit.TuneOn,
+            ["core"] = cfg.GpuLimit.CoreOffset,
+            ["mem"] = cfg.GpuLimit.MemOffset,
+            ["tune_err"] = Gpu.Supported && !Gpu.TuneSupported ? Gpu.NvError : null,
         };
 
         var (tpFound, tpOn) = Touchpad.State();
@@ -145,9 +150,9 @@ public sealed class Controls
     {
         try
         {
-            if (cfg.GpuLimit.On && cfg.GpuLimit.Mhz > 0) Gpu.SetLimit(cfg.GpuLimit.Mhz);
+            Tweaks.ReapplyGpu(cfg);
         }
-        catch (Exception e) { Log.Error("Limite GPU au démarrage", e); }
+        catch (Exception e) { Log.Error("Réglage GPU au démarrage", e); }
         try
         {
             if (cfg.Keyboard != null) Keyboard.Apply(cfg.Keyboard);

@@ -236,6 +236,21 @@ public sealed class Actions
                 var (ok, msg) = Tweaks.SetGpu(cfg, on, I(body, "mhz"));
                 return R(ok, msg);
             }
+            case "gpu_tune":
+            {
+                var on = B(body, "on") ?? cfg.GpuLimit.TuneOn;
+                var core = Has(body, "core") ? I(body, "core") : cfg.GpuLimit.CoreOffset;
+                var mem = Has(body, "mem") ? I(body, "mem") : cfg.GpuLimit.MemOffset;
+                var save = B(body, "save") ?? true;
+                var (ok, msg) = Tweaks.SetGpuTune(cfg, on, core, mem, save);
+                return R(ok, msg);
+            }
+            case "gpu_reset":
+            {
+                Tweaks.SetGpu(cfg, false);
+                var (ok, msg) = Tweaks.SetGpuTune(cfg, false, 0, 0, true);
+                return R(ok, ok ? "GPU remis à zéro (fréquence et décalage d'origine)" : msg);
+            }
 
             // ---------------------------------------------------------------- ventilateurs
             case "fan_curve":

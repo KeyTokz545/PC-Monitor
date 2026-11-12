@@ -53,6 +53,35 @@ public static class Tweaks
         return (ok, msg);
     }
 
+    /// <summary>Applique le décalage de courbe GPU (cœur/mémoire). save=false pour un essai non enregistré.</summary>
+    public static (bool Ok, string Message) SetGpuTune(AppConfig cfg, bool on, int core, int mem, bool save)
+    {
+        core = Math.Clamp(core, -500, 1000);
+        mem = Math.Clamp(mem, -2000, 3000);
+        var (ok, msg) = on ? Gpu.SetOffsets(core, mem) : Gpu.ClearOffsets();
+        if (ok && save)
+        {
+            cfg.GpuLimit.TuneOn = on;
+            cfg.GpuLimit.CoreOffset = core;
+            cfg.GpuLimit.MemOffset = mem;
+            cfg.Save();
+        }
+        return (ok, msg);
+    }
+
+    /// <summary>Réapplique le réglage GPU gardé (décalage + plafond) au démarrage / après veille.</summary>
+    public static void ReapplyGpu(AppConfig cfg)
+    {
+        try
+        {
+            if (cfg.GpuLimit.TuneOn && Gpu.TuneSupported)
+                Gpu.SetOffsets(cfg.GpuLimit.CoreOffset, cfg.GpuLimit.MemOffset);
+            if (cfg.GpuLimit.On)
+                Gpu.SetLimit(cfg.GpuLimit.Mhz);
+        }
+        catch (Exception e) { Log.Error("Réapplication GPU", e); }
+    }
+
     public static ColorProfile FindColor(AppConfig cfg, string name)
     {
         lock (AppConfig.Gate)
