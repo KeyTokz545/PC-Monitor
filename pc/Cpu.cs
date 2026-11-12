@@ -572,6 +572,64 @@ public sealed class CpuTuner
         return null;
     }
 
+    /// <summary>Remet à 0 le repère « dernier démarrage raté » de ThrottleStop.INI (ThrottleStop doit être fermé).</summary>
+    static void ClearStartFailed(string exe)
+    {
+        try
+        {
+            var ini = Path.Combine(Path.GetDirectoryName(exe) ?? "", "ThrottleStop.INI");
+            if (!File.Exists(ini) || ThrottleStopRunning()) return;
+            var enc = Encoding.Latin1;
+            var text = File.ReadAllText(ini, enc);
+            var fixedText = System.Text.RegularExpressions.Regex.Replace(text, @"(?im)^([ \t]*StartFailed[ \t]*=[ \t]*)1(?=[ \t]*\r?$)", "${1}0");
+            if (fixedText == text) return;
+            File.WriteAllText(ini, fixedText, enc);
+            Log.Info("ThrottleStop.INI : repère de démarrage raté effacé");
+        }
+        catch (Exception e)
+        {
+            Log.Error("ThrottleStop.INI", e);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct ShellExecuteInfo
+    {
+        public int cbSize;
+        public uint fMask;
+        public IntPtr hwnd;
+        public string lpVerb, lpFile, lpParameters, lpDirectory;
+        public int nShow;
+        public IntPtr hInstApp, lpIDList;
+        public string lpClass;
+        public IntPtr hkeyClass;
+        public uint dwHotKey;
+        public IntPtr hIcon, hProcess;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool ShellExecuteExW(ref ShellExecuteInfo info);
+
+    [DllImport("kernel32.dll")]
+    static extern bool CloseHandle(IntPtr h);
+
+    /// <summary>Lance un programme réduit sans lui donner le focus (ne sort pas d'un jeu en plein écran).</summary>
+    static bool StartInBackground(string exe)
+    {
+        var info = new ShellExecuteInfo
+        {
+            cbSize = Marshal.SizeOf<ShellExecuteInfo>(),
+            fMask = 0x40 | 0x100 | 0x400, // garder le processus, synchrone, pas de message d'erreur
+            lpVerb = "open",
+            lpFile = exe,
+            lpDirectory = Path.GetDirectoryName(exe),
+            nShow = 7, // SW_SHOWMINNOACTIVE
+        };
+        if (!ShellExecuteExW(ref info)) return false;
+        if (info.hProcess != IntPtr.Zero) CloseHandle(info.hProcess);
+        return true;
+    }
+
     long lastTs = -999_999;
     public string TsStatus { get; private set; }
 
@@ -594,12 +652,11 @@ public sealed class CpuTuner
                 Log.Info("Seuil thermique : ThrottleStop introuvable");
                 return;
             }
-            using var p = Process.Start(new ProcessStartInfo(path)
-            {
-                UseShellExecute = true,
-                WorkingDirectory = Path.GetDirectoryName(path),
-                WindowStyle = ProcessWindowStyle.Minimized,
-            });
+            Log.Info($"Seuil thermique remis à {TccOffset()} °C sous TjMax par le système : relance éclair de ThrottleStop");
+            // un ThrottleStop fermé de force avant 4 s croit avoir planté et affiche « If the last start failed » au lancement suivant
+            ClearStartFailed(path);
+            var started = Clock.ElapsedMilliseconds;
+            if (!StartInBackground(path)) { Log.Info("Seuil thermique : lancement de ThrottleStop impossible"); return; }
             int? off = null;
             for (int i = 0; i < 30; i++)
             {
@@ -607,12 +664,15 @@ public sealed class CpuTuner
                 off = TccOffset();
                 if (off == 0) break;
             }
-            System.Threading.Thread.Sleep(1500); // le temps qu'il finisse d'appliquer le reste
+            // ThrottleStop efface lui-même son repère de démarrage raté au bout de 4 s : on le laisse aller jusque-là
+            var wait = 6500 - (Clock.ElapsedMilliseconds - started);
+            System.Threading.Thread.Sleep((int)Math.Max(1500, wait));
             foreach (var q in Process.GetProcessesByName("ThrottleStop"))
             {
-                try { q.Kill(); } catch { }
+                try { q.Kill(); q.WaitForExit(3000); } catch { }
                 finally { q.Dispose(); }
             }
+            ClearStartFailed(path);
             TsStatus = off == 0 ? null : "ThrottleStop n'a pas réglé le seuil : vérifie le PROCHOT Offset (0) dans ThrottleStop.";
             Log.Info($"Seuil thermique via ThrottleStop : décalage {off} °C");
             Win.Run("powercfg", "/setactive SCHEME_CURRENT", 5000); // Windows remet sa préférence d'énergie
@@ -681,9 +741,10 @@ public sealed class CpuTuner
 
         foreach (var p in Process.GetProcessesByName("ThrottleStop"))
         {
-            try { p.Kill(); notes.Add("ThrottleStop fermé"); } catch (Exception e) { Log.Error("Fermeture de ThrottleStop", e); }
+            try { p.Kill(); p.WaitForExit(3000); notes.Add("ThrottleStop fermé"); } catch (Exception e) { Log.Error("Fermeture de ThrottleStop", e); }
             finally { p.Dispose(); }
         }
+        if (!string.IsNullOrEmpty(cfg.Cpu.TsPath)) ClearStartFailed(cfg.Cpu.TsPath);
         // tâches planifiées qui lancent ThrottleStop au démarrage
         try
         {
