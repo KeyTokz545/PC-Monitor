@@ -139,6 +139,12 @@ public sealed class Controls
             };
         }
         d["winkey"] = WinKey.Enabled;
+        d["osd"] = new Dictionary<string, object>
+        {
+            ["on"] = cfg.Osd.On,
+            ["corner"] = cfg.Osd.Corner,
+            ["accent"] = cfg.Osd.Accent,
+        };
         d["timer"] = Tweaks.TimerAt.HasValue
             ? new Dictionary<string, object> { ["what"] = Tweaks.TimerWhat, ["left"] = (long)Math.Max(0, (Tweaks.TimerAt.Value - DateTime.Now).TotalSeconds) }
             : null;

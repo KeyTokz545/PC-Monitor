@@ -1137,12 +1137,17 @@ html[data-density="compact"] .chips button{height:32px}
 <div class="sheet" id="custom">
   <div class="box tall" role="dialog" aria-modal="true" aria-labelledby="custom-t">
     <p id="custom-t">Personnaliser</p>
-    <div class="sub">Sur ce téléphone seulement.</div>
+    <div class="sub">Réglages de ce téléphone, sauf « Sur l'écran du PC ».</div>
     <div class="sub-h first">Disposition des menus</div>
     <div class="muted small" style="margin:0 4px 10px;line-height:1.4">Reste appuyé sur une fenêtre (sur son titre ou une zone vide), puis glisse-la où tu veux. Les autres se rangent toutes seules, sans trou. Ça marche dans tous les onglets, y compris les cartes du monitoring. Touche le titre d'une fenêtre pour la replier ou la déplier.</div>
     <button class="wide" id="layout-reset">Remettre la disposition d'origine</button>
     <div class="trow"><div><div>Changer d'onglet en glissant</div><div class="muted small">Glisse le doigt vers la gauche ou la droite sur un menu pour passer à l'onglet voisin</div></div><button class="switch" id="swipe-switch" role="switch" aria-checked="true" aria-label="Changer d'onglet en glissant"></button></div>
     <div class="trow"><div><div>HUD automatique en jeu</div><div class="muted small">S'affiche en plein écran quand un jeu avec un profil automatique se lance, et disparaît à sa fermeture</div></div><button class="switch" id="hud-switch" role="switch" aria-checked="true" aria-label="HUD automatique en jeu"></button></div>
+    <div class="sub-h">Sur l'écran du PC</div>
+    <div class="trow"><div><div>Annoncer les changements</div><div class="muted small">Quand tu changes la ventilation, le profil CPU, le micro, le son, le pavé tactile ou la touche Windows, le logo Keystone s'anime dans un coin de l'écran du PC avec ton choix</div></div><button class="switch" id="osd-switch" role="switch" aria-checked="true" aria-label="Annoncer les changements sur l'écran du PC"></button></div>
+    <div class="muted small" style="margin:4px 4px 6px">Coin de l'écran</div>
+    <div class="seg small" id="osd-corner"><button data-v="tl" aria-label="En haut à gauche">↖ Haut</button><button data-v="tr" aria-label="En haut à droite">Haut ↗</button><button data-v="bl" aria-label="En bas à gauche">↙ Bas</button><button data-v="br" aria-label="En bas à droite">Bas ↘</button></div>
+    <button class="wide" id="osd-test" style="margin-top:8px">Montrer sur le PC</button>
     <div class="sub-h">Cartes du monitoring</div>
     <div id="card-list"></div>
     <div class="sub-h">Thème</div>
@@ -1668,6 +1673,7 @@ function renderKeyboard() {
 
 function renderControls() {
   const c = CTL || {};
+  if (c.osd) { syncOsdAccent(); if ($("custom").classList.contains("show")) renderCustom(); }
   // Son
   const a = c.audio || {};
   if (!dragging.vol && a.volume != null) { $("vol").value = a.volume; fill($("vol")); $("vol-val").textContent = a.volume + " %"; }
@@ -1887,6 +1893,7 @@ function applyUI() {
   root.dataset.bg = UI.bg && UI.anim ? "on" : "off";
   const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = THEME_INK[UI.theme] || THEME_INK.nuit;
   setShift(UI.shift);
+  if (typeof syncOsdAccent === "function") syncOsdAccent();
 }
 let shiftTimer = null;
 function setShift(on) {
@@ -1913,6 +1920,10 @@ function renderCustom() {
   setSwitch($("shift-switch"), !!UI.shift);
   setSwitch($("swipe-switch"), UI.swipe !== false);
   setSwitch($("hud-switch"), UI.hudAuto !== false);
+  const osd = (CTL && CTL.osd) || null;
+  setSwitch($("osd-switch"), !osd || osd.on !== false);
+  press($("osd-corner"), osd ? osd.corner : "tr");
+  [$("osd-switch"), $("osd-test"), ...$("osd-corner").querySelectorAll("button")].forEach(b => b.disabled = !osd);
   const perso = !ACCENTS.includes(UI.accent);
   $("accents").innerHTML = ACCENTS.map(c => `<button data-a="${c}" style="background:${c}" aria-pressed="${c === UI.accent}" aria-label="Accent ${c}"></button>`).join("")
     + `<label aria-pressed="${perso}" title="Couleur perso"${perso ? ` style="background:${UI.accent}"` : ""}><input type="color" value="${UI.accent}" aria-label="Choisir une couleur perso"></label>`;
@@ -1954,6 +1965,24 @@ $("density").addEventListener("click", e => { const b = e.target.closest("button
 $("shift-switch").addEventListener("click", () => { UI.shift = !UI.shift; saveUI(); applyUI(); renderCustom(); });
 $("swipe-switch").addEventListener("click", () => { UI.swipe = UI.swipe === false; saveUI(); renderCustom(); });
 $("hud-switch").addEventListener("click", () => { UI.hudAuto = UI.hudAuto === false; saveUI(); renderCustom(); });
+// affichage sur l'écran du PC (réglage gardé par le PC)
+async function osdSet(body, quiet) {
+  if (!CTL || !CTL.osd) return;
+  const r = await act(Object.assign({ action: "osd_set" }, body), quiet);
+  if (r && r.ok) { Object.assign(CTL.osd, body); delete CTL.osd.test; renderCustom(); }
+}
+$("osd-switch").addEventListener("click", () => osdSet({ on: !(CTL && CTL.osd && CTL.osd.on) }));
+$("osd-corner").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) osdSet({ corner: b.dataset.v }, true); });
+$("osd-test").addEventListener("click", () => osdSet({ test: true, accent: UI.accent }, true));
+// la couleur de l'annonce suit la couleur d'accent de l'appli
+let osdAccentT = 0;
+function syncOsdAccent() {
+  clearTimeout(osdAccentT);
+  osdAccentT = setTimeout(() => {
+    const a = String(UI.accent || "").toUpperCase();
+    if (CTL && CTL.osd && /^#[0-9A-F]{6}$/.test(a) && String(CTL.osd.accent || "").toUpperCase() !== a) osdSet({ accent: a }, true);
+  }, 900);
+}
 function redrawAll() { try { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); } catch (e) {} }
 $("alert-temp").addEventListener("input", e => { UI.alert.temp = +e.target.value; fill(e.target); $("alert-label").textContent = `Au-delà de ${UI.alert.temp} °C`; });
 $("alert-temp").addEventListener("change", saveUI);

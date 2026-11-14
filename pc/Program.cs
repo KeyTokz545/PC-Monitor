@@ -7,7 +7,7 @@ namespace PCMonitor;
 
 internal static class Program
 {
-    public const string Version = "2.11.2";
+    public const string Version = "2.12.0";
 
     [STAThread]
     static void Main(string[] args)

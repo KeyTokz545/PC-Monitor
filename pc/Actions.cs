@@ -80,8 +80,21 @@ public sealed class Actions
         {
             case "mode":
             {
-                var (ok, msg) = modes.Apply(S(body, "mode"));
+                var id = S(body, "mode");
+                var (ok, msg) = modes.Apply(id);
+                if (ok) Osd.Mode(id);
                 return R(ok, msg);
+            }
+            case "osd_set":
+            {
+                if (B(body, "on") is bool on) cfg.Osd.On = on;
+                var corner = S(body, "corner");
+                if (corner is "tl" or "tr" or "bl" or "br") cfg.Osd.Corner = corner;
+                var accent = S(body, "accent");
+                if (accent != null && System.Text.RegularExpressions.Regex.IsMatch(accent, "^#[0-9A-Fa-f]{6}$")) cfg.Osd.Accent = accent.ToUpperInvariant();
+                cfg.Save();
+                if (B(body, "test") == true || (Has(body, "corner") && cfg.Osd.On)) Osd.Test();
+                return R(true, Has(body, "on") ? (cfg.Osd.On ? "Affichage sur le PC activé" : "Affichage sur le PC désactivé") : null);
             }
             case "vol_up": Win.Media(Win.VK_VOLUME_UP); return R(true);
             case "vol_down": Win.Media(Win.VK_VOLUME_DOWN); return R(true);
@@ -158,11 +171,16 @@ public sealed class Actions
                 Audio.SetVolume(I(body, "value"));
                 return R(true);
             case "mute_toggle":
-                return R(true, Audio.ToggleMute() ? "Son coupé" : "Son rétabli");
+            {
+                var muted = Audio.ToggleMute();
+                Osd.Toggle("Son", muted ? "Coupé" : "Rétabli", !muted, muted ? Osd.Red : Osd.Green);
+                return R(true, muted ? "Son coupé" : "Son rétabli");
+            }
             case "mic_toggle":
             {
                 var muted = Audio.ToggleMic();
                 if (asus.Connected) asus.Set(Asus.MicMuteLed, muted ? 1 : 0);
+                Osd.Toggle("Micro", muted ? "Coupé" : "Activé", !muted, muted ? Osd.Red : Osd.Green);
                 return R(true, muted ? "Micro coupé" : "Micro activé");
             }
             case "output_set":
@@ -363,7 +381,9 @@ public sealed class Actions
             // ---------------------------------------------------------------- jeu
             case "winkey_set":
             {
-                var (ok, msg) = Tweaks.SetWinKey(cfg, B(body, "on") ?? !cfg.WinKeyLock);
+                var on = B(body, "on") ?? !cfg.WinKeyLock;
+                var (ok, msg) = Tweaks.SetWinKey(cfg, on);
+                if (ok) Osd.Toggle("Touche Windows", on ? "Bloquée" : "Débloquée", on);
                 return R(ok, msg);
             }
             case "capture":
@@ -453,7 +473,9 @@ public sealed class Actions
             }
             case "cpu_profile":
             {
-                var (ok, msg) = Cpu.SetProfile(S(body, "id"));
+                var id = S(body, "id");
+                var (ok, msg) = Cpu.SetProfile(id);
+                if (ok) Osd.CpuProfile(id);
                 return R(ok, msg);
             }
             case "cpu_link":
@@ -532,6 +554,7 @@ public sealed class Actions
             {
                 var on = B(body, "on") ?? !Touchpad.State().enabled;
                 var (ok, msg) = Touchpad.Set(on);
+                if (ok) Osd.Toggle("Pavé tactile", on ? "Activé" : "Désactivé", on);
                 return R(ok, msg);
             }
             case "cpu_takeover":

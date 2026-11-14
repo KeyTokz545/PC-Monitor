@@ -84,6 +84,13 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.12
+
+- **Annonce sur l'écran du PC** : quand on change la ventilation, le profil CPU, le micro, le son, le pavé
+  tactile ou la touche Windows (depuis l'appli ou l'icône), le logo Keystone s'anime dans un coin de l'écran
+  avec le choix. Réglages dans Personnaliser → Sur l'écran du PC (coin, test). Invisible aux clics, ne prend
+  jamais le focus ; un jeu en plein écran exclusif peut le masquer (le mode fenêtré sans bordure l'affiche).
+
 ## 2.10 / 2.11
 
 - **Menus sans trou** : les fenêtres se rangent en colonnes. **Appui long** sur une fenêtre puis glisser pour la

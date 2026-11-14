@@ -38,6 +38,7 @@ public sealed class TrayApp : ApplicationContext
         icon = LoadIcon();
 
         cfg = AppConfig.Load();
+        Osd.Init(ui, cfg);
         asus = new Asus();
         sensors = new Sensors();
         sensors.Open();
@@ -188,7 +189,11 @@ public sealed class TrayApp : ApplicationContext
         {
             var mode = id;
             var item = new ToolStripMenuItem(cfg.ModeLabel(mode)) { Checked = cfg.LastMode == mode };
-            item.Click += (s, e) => Task.Run(() => Balloon(modes.Apply(mode).Message));
+            item.Click += (s, e) => Task.Run(() =>
+            {
+                var (ok, msg) = modes.Apply(mode);
+                if (!(ok && Osd.Mode(mode))) Balloon(msg);
+            });
             m.Items.Add(item);
         }
         if (cfg.Cpu.Enabled)
@@ -198,7 +203,11 @@ public sealed class TrayApp : ApplicationContext
             {
                 var pid = id;
                 var item = new ToolStripMenuItem(CpuTuner.ProfileLabel(pid)) { Checked = cfg.Cpu.Active == pid };
-                item.Click += (s, e) => Task.Run(() => Balloon(cpu.SetProfile(pid).Message));
+                item.Click += (s, e) => Task.Run(() =>
+                {
+                    var (ok, msg) = cpu.SetProfile(pid);
+                    if (!(ok && Osd.CpuProfile(pid))) Balloon(msg);
+                });
                 prof.DropDownItems.Add(item);
             }
             m.Items.Add(prof);
@@ -241,7 +250,11 @@ public sealed class TrayApp : ApplicationContext
         }
         m.Items.Add(colors);
         var winkey = new ToolStripMenuItem("Bloquer la touche Windows") { Checked = WinKey.Enabled };
-        winkey.Click += (s, e) => Task.Run(() => Tweaks.SetWinKey(cfg, !WinKey.Enabled));
+        winkey.Click += (s, e) => Task.Run(() =>
+        {
+            var on = !WinKey.Enabled;
+            if (Tweaks.SetWinKey(cfg, on).Ok) Osd.Toggle("Touche Windows", on ? "Bloquée" : "Débloquée", on);
+        });
         m.Items.Add(winkey);
         m.Items.Add(new ToolStripSeparator());
 

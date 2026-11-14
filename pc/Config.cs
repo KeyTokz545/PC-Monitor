@@ -39,6 +39,16 @@ public sealed class FanProfile
         curve != null && curve.Count == 16 ? curve.Select((v, i) => (byte)Math.Clamp(v, 0, i < 8 ? 120 : 100)).ToArray() : null;
 }
 
+/// <summary>Petit affichage dans un coin de l'écran du PC quand on change un réglage.</summary>
+public sealed class OsdSettings
+{
+    public bool On { get; set; } = true;
+    /// <summary>tl, tr, bl, br (haut/bas, gauche/droite).</summary>
+    public string Corner { get; set; } = "tr";
+    /// <summary>Couleur d'accent de l'appli (envoyée par le téléphone).</summary>
+    public string Accent { get; set; } = "#4FC3E0";
+}
+
 public sealed class GpuLimitSettings
 {
     // Verrouillage de la fréquence max (ancien « bridage »), via le pilote NVIDIA.
@@ -81,6 +91,7 @@ public sealed class AppConfig
     /// <summary>Profils de jeu appliqués automatiquement au lancement du jeu.</summary>
     public List<GameProfile> Games { get; set; } = new();
     public bool WinKeyLock { get; set; }
+    public OsdSettings Osd { get; set; } = new();
     /// <summary>Réglages du processeur (remplace ThrottleStop).</summary>
     public CpuSettings Cpu { get; set; } = new();
     public bool FirstRunDone { get; set; }
