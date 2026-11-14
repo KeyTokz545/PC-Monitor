@@ -136,6 +136,153 @@ html[data-fx="full"] .gh-n{text-shadow:0 0 34px color-mix(in srgb,var(--cool) 45
   .gh-t .num{font-size:clamp(22px,7.5vh,40px)}
 }
 
+/* ---------- Bridage, avant de jouer, undervolt par jeu, courbes, stockage ---------- */
+.thr{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:7px;white-space:nowrap;
+  max-width:60%;overflow:hidden;text-overflow:ellipsis;
+  background:rgba(255,181,71,.14);color:#FFD08A;border:1px solid rgba(255,181,71,.35);margin-right:auto}
+.thr.hot{background:rgba(255,90,78,.15);color:#FFB1AA;border-color:rgba(255,90,78,.45)}
+.thr.info{background:var(--raise);color:var(--muted);border-color:var(--line)}
+.card h2 .thr:not([hidden]){max-width:none}
+.card h2 .thr:not([hidden]) + small{display:none}
+.thr[hidden]{display:none}
+.pg-go{display:flex;align-items:center;justify-content:center;gap:10px;height:56px;margin-top:0;font-size:17px;font-weight:700;border-radius:16px}
+.pg-go svg{width:22px;height:22px}
+.pg-go[disabled]{opacity:.6}
+html[data-fx="full"] .pg-go:not([disabled]){box-shadow:0 8px 24px color-mix(in srgb,var(--cool) 35%,transparent)}
+.pg-sum{font-size:13px;color:var(--muted);text-align:center;margin:8px 4px 2px;line-height:1.4}
+.pg-list button{display:inline-flex;align-items:center;gap:8px;color:var(--text)}
+.pg-list button i{font-style:normal;color:var(--muted);font-size:17px;line-height:1}
+.pg-list:empty::before{content:"Aucun : ajoute ceux que tu fermes souvent avant de jouer (navigateur, Discord…)";font-size:13px;color:var(--muted)}
+#pg-running[hidden]{display:none}
+#pg-running{margin-top:6px}
+.g-tune{display:grid;gap:8px;padding:6px 0 4px}
+.g-tune[hidden]{display:none}
+.tune-row{display:grid;grid-template-columns:80px auto 40px;align-items:center;gap:10px;font-size:14px}
+.mini-step{display:grid;grid-template-columns:44px 72px 44px;align-items:center;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:3px}
+.mini-step button{height:36px;border-radius:9px;background:var(--raise);font-size:20px}
+.mini-step b{text-align:center;font-size:17px}
+.rchart{margin-top:12px}
+.rchart[hidden]{display:none}
+#r-canvas{display:block;width:100%;height:170px;margin-top:10px}
+.rlegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:12.5px;color:var(--muted)}
+.rlegend span{display:inline-flex;align-items:center;gap:6px}
+.rlegend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.disk{padding:10px 0;border-top:1px solid var(--line)}
+.disk:first-child{border-top:0;padding-top:2px}
+.disk-top{display:flex;align-items:center;gap:12px}
+.disk-life{position:relative;width:52px;height:52px;flex:none}
+.disk-life svg{width:100%;height:100%;transform:rotate(-90deg)}
+.disk-life b{position:absolute;inset:0;display:grid;place-items:center;font-size:14px}
+.disk-name{font-weight:600;font-size:14.5px;line-height:1.25}
+.disk-meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.vol{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:13px;margin-top:8px}
+.vol .bar{margin:0}
+
+/* ---------- Options : page plein écran rangée par catégories ---------- */
+#custom.sheet{align-items:stretch;justify-content:center;background:rgba(0,0,0,.55);padding:0}
+.optpage{position:relative;width:100%;max-width:1040px;height:100%;background:var(--ink);display:grid;
+  grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr);
+  padding:var(--safe-t) var(--safe-r) 0 var(--safe-l);overflow:hidden}
+html[data-anim="on"] #custom.show .optpage{animation:ks-opts-in .24s cubic-bezier(.2,.7,.2,1) backwards}
+@keyframes ks-opts-in{from{transform:translateY(22px)}to{transform:none}}
+.opts-h{display:flex;align-items:center;gap:12px;padding:12px 16px 8px}
+.opts-logo{width:42px;height:42px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;flex:none}
+.opts-logo svg{width:34px;height:34px}
+.opts-tt{flex:1;min-width:0}
+.opts-tt p{font-size:20px;font-weight:700;line-height:1.1}
+.opts-ver{font-size:12.5px;color:var(--muted);margin-top:2px}
+.opts-x{width:42px;height:42px;border-radius:13px;background:var(--panel);border:1px solid var(--line);color:var(--muted);display:grid;place-items:center;flex:none}
+.opts-x svg{width:20px;height:20px}
+.opts-nav{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.opts-nav::-webkit-scrollbar{display:none}
+.opts-nav button{position:relative;flex:none;display:flex;align-items:center;gap:7px;height:40px;padding:0 14px 0 11px;border-radius:20px;
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:14px;font-weight:600;white-space:nowrap}
+.opts-nav button svg{width:19px;height:19px;flex:none}
+.opts-nav button[aria-selected="true"]{color:var(--text);border-color:color-mix(in srgb,var(--cool) 60%,transparent);
+  background:color-mix(in srgb,var(--cool) 14%,var(--panel))}
+.opts-nav button[aria-selected="true"] svg{color:var(--cool)}
+.opts-nav .badge{position:absolute;top:5px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--hot);box-shadow:0 0 0 2px var(--panel)}
+.opts-nav .badge[hidden]{display:none}
+.opts-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 16px calc(var(--safe-b) + 28px);overscroll-behavior:contain}
+.opane{max-width:760px;margin:0 auto}
+.opane[hidden]{display:none}
+.og-h{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:16px 6px 8px}
+.opane>.og-h:first-child{margin-top:6px}
+.ogroup{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-outer);padding:12px 14px}
+.ogroup[hidden]{display:none}
+.ogroup>.trow:first-child{border-top:0;padding-top:0;min-height:40px}
+.ogroup>.trow:last-child{padding-bottom:0;min-height:44px}
+.og-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin:14px 2px 8px}
+.og-sub.first{margin-top:2px}
+.og-help{font-size:13px;color:var(--muted);line-height:1.45;margin:2px 2px 12px}
+.wide.ghost{background:transparent;border:1px dashed color-mix(in srgb,var(--cool) 55%,transparent);color:var(--cool)}
+.opts-foot{text-align:center;font-size:12px;color:var(--faint);margin:26px 0 4px;letter-spacing:.04em}
+.seg.wrap{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+/* thèmes perso */
+#mythemes:empty{display:none}
+#mythemes button{position:relative}
+#mythemes .ed{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:8px;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center}
+#mythemes .ed svg{width:14px;height:14px}
+.ted{margin-top:12px;border-color:color-mix(in srgb,var(--cool) 50%,transparent)}
+.ted-top{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+.ted-top b{font-size:16px}
+.te-colors{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.te-colors label{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);font-weight:600;cursor:pointer}
+.te-colors i{display:block;width:100%;height:46px;border-radius:12px;border:1px solid var(--line);box-shadow:inset 0 0 0 2px rgba(255,255,255,.06)}
+.te-colors input{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;cursor:pointer}
+html[data-corners="round"]{--r-outer:18px;--r-inner:11px}
+html[data-corners="soft"]{--r-outer:26px;--r-inner:16px}
+html[data-corners="square"]{--r-outer:4px;--r-inner:3px}
+html[data-corners="cut"]{--r-outer:3px;--r-inner:3px}
+html[data-corners="cut"] .card,html[data-corners="cut"] .panel,html[data-corners="cut"] .btn,html[data-corners="cut"] .ogroup{
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));border-radius:0;
+  background-image:linear-gradient(135deg,transparent calc(100% - 3px),var(--cool) 0)}
+html[data-numfont="narrow"]{--num:"DIN Condensed","DIN Alternate","Avenir Next Condensed","Roboto Condensed","sans-serif-condensed","Bahnschrift",system-ui,sans-serif}
+html[data-numfont="mono"]{--num:ui-monospace,"SF Mono","Roboto Mono","Cascadia Mono",Menlo,Consolas,monospace}
+html[data-numfont="classic"]{--num:var(--ui)}
+/* choix du style des compteurs */
+.gstyles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.gstyles button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px 9px;border-radius:14px;border:1px solid var(--line);
+  background:var(--ink);font-size:12.5px;font-weight:600;color:var(--muted)}
+.gstyles button[aria-pressed="true"]{border-color:var(--cool);color:var(--text);background:color-mix(in srgb,var(--cool) 10%,var(--ink))}
+.gstyles .dial{width:100%;max-width:74px;cursor:inherit;pointer-events:none}
+.rowpick button{position:relative}
+.rowpick button[aria-pressed="true"]{padding-left:34px}
+.rowpick button b{position:absolute;left:6px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--cool);color:var(--ink);
+  font-size:12px;display:grid;place-items:center}
+/* touches dédiées */
+.keyrow{padding:12px 0 4px;border-top:1px solid var(--line)}
+.keyrow:nth-of-type(2){border-top:0;padding-top:4px}
+.keyrow .seg{margin-top:10px}
+.keycap{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;height:56px;padding:0 10px;border-radius:10px;
+  background:linear-gradient(var(--raise),var(--panel));border:1px solid var(--line);box-shadow:0 4px 0 var(--line),0 6px 12px rgba(0,0,0,.25);
+  font-weight:700;font-size:12.5px;line-height:1.15;text-align:center;color:var(--text)}
+.keycap small{font-size:11px;color:var(--muted);font-weight:600}
+/* mise à jour */
+.upd-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.upd-ver{font-size:18px;font-weight:700}
+.upd-dot{width:12px;height:12px;border-radius:50%;background:var(--faint);flex:none}
+.upd-dot.ok{background:var(--good)}
+.upd-dot.new{background:var(--amber);box-shadow:0 0 0 4px rgba(255,181,71,.2)}
+.upbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:2px 0 12px}
+.upbar[hidden]{display:none}
+.upbar i{display:block;height:100%;width:0;background:var(--cool);transition:width .3s}
+.upd .acts{margin-top:0}
+.hbtn{position:relative}
+.hbtn.badge::after{content:"";position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:50%;background:var(--hot);box-shadow:0 0 0 2px var(--ink)}
+@media (orientation:landscape) and (min-width:700px){
+  .optpage{grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+  .opts-h{grid-column:1 / -1}
+  .opts-nav{flex-direction:column;overflow:visible;padding:4px 10px 16px 14px;gap:4px}
+  .opts-nav button{height:44px;border-radius:12px;border-color:transparent;background:transparent}
+  .opts-nav button[aria-selected="true"]{border-color:transparent}
+  .opts-nav .badge{top:50%;right:12px;transform:translateY(-50%)}
+  .opts-body{padding-left:10px}
+}
+html[data-theme="rog"] .opts-nav button,html[data-theme="rog"] .gstyles button,html[data-theme="rog"] .keycap,html[data-theme="rog"] .opts-x,html[data-theme="rog"] .opts-logo{border-radius:3px}
+html[data-theme="rog"] .ogroup{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));border-radius:0;
+  background-image:linear-gradient(135deg,transparent calc(100% - 3px),var(--cool) 0)}
+
 /* ---------- Fond animé (aurore) ---------- */
 .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .8s}
 html[data-bg="on"] .aurora{opacity:1}
@@ -226,10 +373,27 @@ main{grid-area:main;overflow-y:auto;-webkit-overflow-scrolling:touch;
 .dial .t{font-size:27cqi;line-height:1}
 .dial .t sup{font-size:.42em;font-weight:600;vertical-align:.95em;margin-left:1px;color:var(--muted)}
 .dial .lbl{font-size:max(11px,9cqi);color:var(--muted);margin-top:2px}
+/* styles de compteur */
+.dial .val{transition:stroke-dasharray .6s ease,stroke .6s}
+.dial .needle{transition:transform .8s cubic-bezier(.34,1.45,.5,1)}
+.dial .peak{transition:transform .6s ease,cx .6s,cy .6s}
+.dial .led{transition:stroke .35s}
+.dial[data-style="ring"] .read{padding-top:0}
+.dial[data-style="needle"] .read{justify-content:flex-end;padding:0 0 1%}
+.dial[data-style="needle"] .t{font-size:22cqi}
+.dial[data-style="needle"] .lbl{display:none}
+.dial[data-style="digits"] .read{padding-top:0}
+.dial[data-style="digits"] .t{font-size:40cqi;transition:color .6s}
+.dial[data-style="digits"] .t sup{font-size:.36em}
+.dial .dbar{position:relative;width:78%;height:6px;border-radius:3px;background:var(--line);margin-top:8%}
+.dial .dbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;transition:width .6s ease,background .6s}
+.dial .dbar b{position:absolute;top:-3px;width:2px;height:12px;margin-left:-1px;border-radius:1px;background:var(--text);opacity:.8;transition:left .6s}
 .stats{width:100%;display:grid;gap:5px}
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px}
-.row .muted{white-space:nowrap}
-.row .num{font-size:15px;white-space:nowrap}
+.row .muted{white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .num{font-size:15px;white-space:nowrap;flex:none}
+html[data-numfont="mono"] .num{letter-spacing:-.05em}
+html[data-numfont="mono"] .row .num{font-size:14px}
 .bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:-1px}
 .bar i{display:block;height:100%;width:0;background:var(--muted);border-radius:2px;transition:width .5s}
 .spark{width:100%;height:30px;display:block;margin-top:6px}
@@ -668,7 +832,7 @@ html[data-density="compact"] .chips button{height:32px}
       <div class="notes" id="notes"></div>
       <div class="grid">
         <article class="card c-cpu">
-          <h2>CPU <small id="cpu-name"></small></h2>
+          <h2>CPU <span class="thr" id="thr-cpu" hidden></span><small id="cpu-name"></small></h2>
           <div class="chip">
             <div class="dial" id="cpu-dial"></div>
             <div class="stats">
@@ -682,7 +846,7 @@ html[data-density="compact"] .chips button{height:32px}
         </article>
 
         <article class="card c-gpu">
-          <h2>GPU <small id="gpu-name"></small></h2>
+          <h2>GPU <span class="thr" id="thr-gpu" hidden></span><small id="gpu-name"></small></h2>
           <div class="chip">
             <div class="dial" id="gpu-dial"></div>
             <div class="stats">
@@ -779,6 +943,24 @@ html[data-density="compact"] .chips button{height:32px}
             </div>
             <div class="seg small cap-tool" id="cap-tool"><button data-v="gamebar">Xbox Game Bar</button><button data-v="nvidia">NVIDIA</button></div>
             <p class="hint in" id="cap-hint"></p>
+          </div>
+        </div>
+
+        <div class="section" id="sec-pregame">
+          <h3>Avant de jouer</h3>
+          <div class="panel pregame">
+            <button class="wide primary pg-go" id="pg-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg><span>Préparer le PC</span></button>
+            <div class="pg-sum" id="pg-sum">–</div>
+            <div class="sub-h">Fermer ces programmes</div>
+            <div class="chips pg-list" id="pg-close"></div>
+            <button class="link" id="pg-pick">+ Ajouter un programme ouvert</button>
+            <div class="chips" id="pg-running" hidden></div>
+            <div class="trow"><div><div>Forcer si l'appli résiste</div><div class="muted small">Sinon Discord, Steam… restent dans la barre des tâches</div></div><button class="switch" id="pg-force" role="switch" aria-checked="true" aria-label="Forcer la fermeture"></button></div>
+            <div class="trow"><div><div>Vider la mémoire en cache</div><div class="muted small">Libère la RAM gardée en réserve par Windows, contre les saccades</div></div><button class="switch" id="pg-ram" role="switch" aria-checked="true" aria-label="Vider la mémoire en cache"></button></div>
+            <div class="sub-h">Ventilation</div>
+            <div class="seg small" id="pg-mode"><button data-v="">Inchangée</button><button data-v="silent">Silence</button><button data-v="balanced">Équilibré</button><button data-v="turbo">Turbo</button></div>
+            <div class="sub-h cpu-only">Profil CPU</div>
+            <div class="seg small cpu-only" id="pg-cpu"><button data-v="">Inchangé</button><button data-v="silent">Léger</button><button data-v="balanced">Médium</button><button data-v="turbo">Gros</button></div>
           </div>
         </div>
 
@@ -1018,6 +1200,11 @@ html[data-density="compact"] .chips button{height:32px}
           </div>
         </div>
 
+        <div class="section" id="sec-disks">
+          <h3>Stockage</h3>
+          <div class="panel" id="disks"><p class="hint in">Lecture des disques…</p></div>
+        </div>
+
         <div class="section">
           <h3>PC</h3>
           <div class="btns four">
@@ -1138,47 +1325,149 @@ html[data-density="compact"] .chips button{height:32px}
 </div>
 <div class="toast" id="toast" role="status"></div>
 <div class="sheet" id="custom">
-  <div class="box tall" role="dialog" aria-modal="true" aria-labelledby="custom-t">
-    <p id="custom-t">Personnaliser</p>
-    <div class="sub">Réglages de ce téléphone, sauf « Sur l'écran du PC ».</div>
-    <div class="sub-h first">Disposition des menus</div>
-    <div class="muted small" style="margin:0 4px 10px;line-height:1.4">Reste appuyé sur une fenêtre (sur son titre ou une zone vide), puis glisse-la où tu veux. Les autres se rangent toutes seules, sans trou. Ça marche dans tous les onglets, y compris les cartes du monitoring. Touche le titre d'une fenêtre pour la replier ou la déplier.</div>
-    <button class="wide" id="layout-reset">Remettre la disposition d'origine</button>
-    <div class="trow"><div><div>Changer d'onglet en glissant</div><div class="muted small">Glisse le doigt vers la gauche ou la droite sur un menu pour passer à l'onglet voisin</div></div><button class="switch" id="swipe-switch" role="switch" aria-checked="true" aria-label="Changer d'onglet en glissant"></button></div>
-    <div class="trow"><div><div>HUD automatique en jeu</div><div class="muted small">S'affiche en plein écran quand un jeu avec un profil automatique se lance, et disparaît à sa fermeture</div></div><button class="switch" id="hud-switch" role="switch" aria-checked="true" aria-label="HUD automatique en jeu"></button></div>
-    <div class="sub-h">Sur l'écran du PC</div>
-    <div class="trow"><div><div>Annoncer les changements</div><div class="muted small">Quand tu changes la ventilation, le profil CPU, le micro, le son, le pavé tactile ou la touche Windows, le logo Keystone s'anime dans un coin de l'écran du PC avec ton choix</div></div><button class="switch" id="osd-switch" role="switch" aria-checked="true" aria-label="Annoncer les changements sur l'écran du PC"></button></div>
-    <div class="muted small" style="margin:4px 4px 6px">Coin de l'écran</div>
-    <div class="seg small" id="osd-corner"><button data-v="tl" aria-label="En haut à gauche">↖ Haut</button><button data-v="tr" aria-label="En haut à droite">Haut ↗</button><button data-v="bl" aria-label="En bas à gauche">↙ Bas</button><button data-v="br" aria-label="En bas à droite">Bas ↘</button></div>
-    <button class="wide" id="osd-test" style="margin-top:8px">Montrer sur le PC</button>
-    <div class="sub-h">Cartes du monitoring</div>
-    <div id="card-list"></div>
-    <div class="sub-h">Thème</div>
-    <div class="themes" id="themes">
-      <button data-t="nuit"><i style="background:#0E1822"><b style="background:#1C2A38"></b></i>Nuit</button>
-      <button data-t="oled"><i style="background:#000"><b style="background:#0E1216;box-shadow:inset 0 0 0 1px #1E252C"></b></i>OLED noir</button>
-      <button data-t="rog"><i class="cut" style="background:#08080A"><b style="background:#FF2D46"></b></i>ROG</button>
-      <button data-t="abysse"><i style="background:#06121C"><b style="background:#4FC3E0"></b></i>Abysse</button>
-      <button data-t="nebuleuse"><i style="background:#0C0A16"><b style="background:#A98BFF"></b></i>Nébuleuse</button>
-      <button data-t="foret"><i style="background:#07130D"><b style="background:#5BE08A"></b></i>Forêt</button>
-      <button data-t="braise"><i style="background:#130B08"><b style="background:#FF7A59"></b></i>Braise</button>
-      <button data-t="sakura"><i style="background:#130A10"><b style="background:#FF7AC6"></b></i>Sakura</button>
-      <button data-t="ardoise"><i style="background:#111315"><b style="background:#7AA2FF"></b></i>Ardoise</button>
-      <button data-t="cyber"><i style="background:#06050C"><b style="background:#00F0FF;box-shadow:0 0 10px #00F0FF"></b></i>Cyber</button>
+  <div class="optpage" role="dialog" aria-modal="true" aria-labelledby="custom-t">
+    <header class="opts-h">
+      <div class="opts-logo" aria-hidden="true"><svg viewBox="0 0 48 48"><defs><linearGradient id="og" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--cool)"/><stop offset="1" stop-color="color-mix(in srgb,var(--cool) 55%,#fff)"/></linearGradient></defs><path d="M10 14 L38 14 L34 34 L14 34 Z" fill="none" stroke="url(#og)" stroke-width="2.6" stroke-linejoin="round"/><path d="M19 18.5 V29.5 M19 24 L28 18.5 M19 24 L28 29.5" fill="none" stroke="url(#og)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="opts-tt"><p id="custom-t">Options</p><div class="opts-ver" id="opts-ver">Keystone</div></div>
+      <button class="opts-x" id="custom-close" aria-label="Fermer les options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </header>
+    <nav class="opts-nav" id="opts-nav" role="tablist" aria-label="Catégories d'options"><button data-cat="look" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18c1.1 0 1.6-.7 1.6-1.5 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 005-5c0-4.1-4-7.5-9-7.5z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7.2" r="1.2"/><circle cx="15" cy="7.6" r="1.2"/></svg><span>Apparence</span></button><button data-cat="gauges" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 17a8.5 8.5 0 1115 0"/><path d="M12 13l4-4.5"/><circle cx="12" cy="13" r="1.2"/></svg><span>Compteurs</span></button><button data-cat="menus" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="7" height="7" rx="1.6"/><rect x="13.5" y="4" width="7" height="4.5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="8.5" rx="1.6"/><rect x="3.5" y="14" width="7" height="6" rx="1.6"/></svg><span>Menus et gestes</span></button><button data-cat="pc" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/><path d="M14 8.5h3.5V11"/></svg><span>Écran du PC</span></button><button data-cat="keys" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><path d="M6.5 10h1M10 10h1M13.5 10h1M17 10h.5M7 14h10"/></svg><span>Touches</span></button><button data-cat="alerts" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><span>Alertes</span></button><button data-cat="update" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6"/><path d="M20 4v4.5h-4.5"/><path d="M12 8v5l3 2"/></svg><span>Mise à jour</span><i class="badge" id="upd-badge" hidden></i></button></nav>
+    <div class="opts-body" id="opts-body">
+
+      <section class="opane" data-cat="look">
+        <div class="og-h">Thème</div>
+        <div class="ogroup">
+          <div class="themes" id="themes">
+            <button data-t="nuit"><i style="background:#0E1822"><b style="background:#1C2A38"></b></i>Nuit</button>
+            <button data-t="oled"><i style="background:#000"><b style="background:#0E1216;box-shadow:inset 0 0 0 1px #1E252C"></b></i>OLED noir</button>
+            <button data-t="rog"><i class="cut" style="background:#08080A"><b style="background:#FF2D46"></b></i>ROG</button>
+            <button data-t="abysse"><i style="background:#06121C"><b style="background:#4FC3E0"></b></i>Abysse</button>
+            <button data-t="nebuleuse"><i style="background:#0C0A16"><b style="background:#A98BFF"></b></i>Nébuleuse</button>
+            <button data-t="foret"><i style="background:#07130D"><b style="background:#5BE08A"></b></i>Forêt</button>
+            <button data-t="braise"><i style="background:#130B08"><b style="background:#FF7A59"></b></i>Braise</button>
+            <button data-t="sakura"><i style="background:#130A10"><b style="background:#FF7AC6"></b></i>Sakura</button>
+            <button data-t="ardoise"><i style="background:#111315"><b style="background:#7AA2FF"></b></i>Ardoise</button>
+            <button data-t="cyber"><i style="background:#06050C"><b style="background:#00F0FF;box-shadow:0 0 10px #00F0FF"></b></i>Cyber</button>
+          </div>
+          <div class="og-sub">Mes thèmes</div>
+          <div class="themes" id="mythemes"></div>
+          <button class="wide ghost" id="theme-new">+ Créer mon thème</button>
+        </div>
+        <div class="ogroup ted" id="theme-ed" hidden>
+          <div class="ted-top"><b id="te-title">Nouveau thème</b><span class="muted small">L'appli change en direct pendant que tu règles</span></div>
+          <input class="field" id="te-name" maxlength="24" placeholder="Nom du thème" autocomplete="off">
+          <div class="og-sub">Partir de</div>
+          <div class="chips" id="te-base"></div>
+          <div class="og-sub">Couleurs</div>
+          <div class="te-colors">
+            <label><input type="color" id="te-ink"><i></i><span>Fond</span></label>
+            <label><input type="color" id="te-panel"><i></i><span>Fenêtres</span></label>
+            <label><input type="color" id="te-text"><i></i><span>Texte</span></label>
+            <label><input type="color" id="te-accent"><i></i><span>Accent</span></label>
+          </div>
+          <div class="og-sub">Coins des fenêtres</div>
+          <div class="seg small" id="te-corners"><button data-v="soft">Très ronds</button><button data-v="round">Arrondis</button><button data-v="square">Droits</button><button data-v="cut">Coupés</button></div>
+          <div class="og-sub">Chiffres</div>
+          <div class="seg small" id="te-num"><button data-v="rounded">Arrondis</button><button data-v="narrow">Étroits</button><button data-v="mono">Digital</button><button data-v="classic">Classiques</button></div>
+          <div class="acts"><button id="te-cancel">Annuler</button><button class="ok" id="te-save">Enregistrer</button></div>
+          <button class="link danger-l" id="te-del" hidden>Supprimer ce thème</button>
+        </div>
+        <div class="og-h">Couleur d'accent</div>
+        <div class="ogroup"><div class="swatches" id="accents"></div></div>
+        <div class="og-h">Affichage</div>
+        <div class="ogroup">
+          <div class="og-sub first">Taille</div>
+          <div class="seg small" id="density"><button data-v="normal">Confort</button><button data-v="compact">Compacte</button></div>
+          <div class="og-sub">Animations</div>
+          <div class="seg small" id="fx"><button data-v="off">Aucune</button><button data-v="soft">Sobres</button><button data-v="full">Complètes</button></div>
+          <div class="og-help">Sobres : écran de démarrage et indicateur d'onglet. Complètes : en plus, cascade au démarrage, effet d'onde au toucher, halos lumineux.</div>
+          <div class="trow"><div><div>Fond animé</div><div class="muted small">Aurore lumineuse qui dérive lentement derrière les fenêtres</div></div><button class="switch" id="bg-switch" role="switch" aria-checked="false" aria-label="Fond animé"></button></div>
+          <div class="trow"><div><div>Anti-marquage de l'écran</div><div class="muted small">Décale l'affichage de 2 px toutes les 4 min</div></div><button class="switch" id="shift-switch" role="switch" aria-checked="false" aria-label="Anti-marquage de l'écran"></button></div>
+        </div>
+      </section>
+
+      <section class="opane" data-cat="gauges" hidden>
+        <div class="og-h">Compteur du CPU</div>
+        <div class="ogroup">
+          <div class="gstyles" id="gs-cpu"></div>
+          <div class="og-sub">Infos affichées (3 au choix, dans l'ordre touché)</div>
+          <div class="chips rowpick" id="gr-cpu"></div>
+        </div>
+        <div class="og-h">Compteur du GPU</div>
+        <div class="ogroup">
+          <div class="gstyles" id="gs-gpu"></div>
+          <div class="og-sub">Infos affichées (3 au choix, dans l'ordre touché)</div>
+          <div class="chips rowpick" id="gr-gpu"></div>
+        </div>
+        <div class="og-h">Cartes du monitoring</div>
+        <div class="ogroup"><div id="card-list"></div></div>
+      </section>
+
+      <section class="opane" data-cat="menus" hidden>
+        <div class="og-h">Disposition</div>
+        <div class="ogroup">
+          <div class="og-help">Reste appuyé sur une fenêtre (titre ou zone vide), puis glisse-la où tu veux : les autres se rangent sans trou. Touche le titre d'une fenêtre pour la replier.</div>
+          <button class="wide" id="layout-reset">Remettre la disposition d'origine</button>
+        </div>
+        <div class="og-h">Gestes</div>
+        <div class="ogroup">
+          <div class="trow"><div><div>Changer d'onglet en glissant</div><div class="muted small">Glisse vers la gauche ou la droite sur un menu</div></div><button class="switch" id="swipe-switch" role="switch" aria-checked="true" aria-label="Changer d'onglet en glissant"></button></div>
+          <div class="trow"><div><div>HUD automatique en jeu</div><div class="muted small">Plein écran au lancement d'un jeu à profil, fermé à sa fermeture</div></div><button class="switch" id="hud-switch" role="switch" aria-checked="true" aria-label="HUD automatique en jeu"></button></div>
+        </div>
+      </section>
+
+      <section class="opane" data-cat="pc" hidden>
+        <div class="og-h">Annonce sur l'écran du PC</div>
+        <div class="ogroup">
+          <div class="trow"><div><div>Annoncer les changements</div><div class="muted small">Ventilation, profil CPU, micro, son, pavé tactile, touche Windows : le logo Keystone s'anime dans un coin de l'écran du PC</div></div><button class="switch" id="osd-switch" role="switch" aria-checked="true" aria-label="Annoncer les changements sur l'écran du PC"></button></div>
+          <div class="og-sub">Coin de l'écran</div>
+          <div class="seg small" id="osd-corner"><button data-v="tl" aria-label="En haut à gauche">↖ Haut</button><button data-v="tr" aria-label="En haut à droite">Haut ↗</button><button data-v="bl" aria-label="En bas à gauche">↙ Bas</button><button data-v="br" aria-label="En bas à droite">Bas ↘</button></div>
+          <button class="wide" id="osd-test" style="margin-top:10px">Montrer sur le PC</button>
+        </div>
+      </section>
+
+      <section class="opane" data-cat="keys" hidden>
+        <div class="og-h">Touches dédiées du clavier du PC</div>
+        <div class="ogroup">
+          <div class="og-help">Un appui seul, sans autre touche : le réglage passe au suivant et l'annonce s'affiche sur l'écran du PC. Avec Win, Alt ou Ctrl, la touche garde son rôle normal.</div>
+          <div class="keyrow"><span class="keycap">Pause<small>Attn</small></span><div class="seg small wrap" id="key-pause"><button data-v="none">Rien</button><button data-v="mode">Ventilation</button><button data-v="cpu">Profil CPU</button><button data-v="mic">Micro</button><button data-v="pregame">Avant de jouer</button></div></div>
+          <div class="keyrow"><span class="keycap">Impr. écran<small>Syst</small></span><div class="seg small wrap" id="key-print"><button data-v="none">Rien</button><button data-v="mode">Ventilation</button><button data-v="cpu">Profil CPU</button><button data-v="mic">Micro</button><button data-v="pregame">Avant de jouer</button></div></div>
+        </div>
+      </section>
+
+      <section class="opane" data-cat="alerts" hidden>
+        <div class="og-h">Surchauffe</div>
+        <div class="ogroup">
+          <div class="trow"><span id="alert-label">Au-delà de 90 °C</span><button class="switch" id="alert-switch" role="switch" aria-checked="true" aria-label="Alerte surchauffe"></button></div>
+          <input type="range" id="alert-temp" min="70" max="100" step="1" aria-label="Seuil d'alerte">
+        </div>
+        <div class="og-h">Bridage</div>
+        <div class="ogroup">
+          <div class="trow"><div><div>Prévenir quand le PC se bride</div><div class="muted small">Le CPU ou le GPU baisse sa fréquence : la raison s'affiche sur sa carte (chauffe, limite de puissance…), et un bandeau en cas de chauffe</div></div><button class="switch" id="throttle-switch" role="switch" aria-checked="true" aria-label="Prévenir quand le PC se bride"></button></div>
+        </div>
+      </section>
+
+      <section class="opane" data-cat="update" hidden>
+        <div class="og-h">Keystone sur le PC</div>
+        <div class="ogroup upd">
+          <div class="upd-top"><div><div class="upd-ver" id="upd-ver">–</div><div class="muted small" id="upd-status">–</div></div><span class="upd-dot" id="upd-dot"></span></div>
+          <div class="upbar" id="upd-bar" hidden><i></i></div>
+          <div class="note bad" id="upd-err" hidden></div>
+          <div class="acts"><button id="upd-check">Rechercher</button><button class="ok" id="upd-install" disabled>Installer</button></div>
+          <div class="og-help" style="margin-top:10px">Keystone télécharge la nouvelle version, la vérifie, la met à la place de l'ancienne puis redémarre tout seul. L'appli se reconnecte dès qu'il est relancé.</div>
+        </div>
+        <div class="og-h">Accès GitHub</div>
+        <div class="ogroup">
+          <div class="og-help" id="upd-tokhelp">Ton dépôt est privé : le PC a besoin d'un jeton GitHub en lecture seule (GitHub → Settings → Developer settings → Fine-grained tokens, dépôt PC-Monitor, Contents : Read-only). Il est gardé sur le PC, jamais renvoyé au téléphone.</div>
+          <input class="field" id="upd-token" placeholder="github_pat_…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <div class="acts"><button id="upd-token-del">Retirer</button><button class="ok" id="upd-token-save">Enregistrer</button></div>
+        </div>
+        <div class="og-h">Appli du téléphone</div>
+        <div class="ogroup"><div class="og-help" style="margin:0">L'affichage vient du PC : une mise à jour de Keystone change aussi l'appli. L'apk ne se réinstalle que quand une version le précise.</div></div>
+      </section>
+
+      <div class="opts-foot">Keystone · by KeyTokz545</div>
     </div>
-    <div class="sub-h">Couleur d'accent</div>
-    <div class="swatches" id="accents"></div>
-    <div class="sub-h">Taille de l'affichage</div>
-    <div class="seg small" id="density"><button data-v="normal">Confort</button><button data-v="compact">Compacte</button></div>
-    <div class="sub-h">Animations</div>
-    <div class="seg small" id="fx"><button data-v="off">Aucune</button><button data-v="soft">Sobres</button><button data-v="full">Complètes</button></div>
-    <div class="muted small" style="margin:8px 4px 0;line-height:1.4">Sobres : écran de démarrage, transitions, indicateur d'onglet. Complètes : en plus, fenêtres qui arrivent en cascade, effet d'onde au toucher, halos lumineux.</div>
-    <div class="trow"><div><div>Fond animé</div><div class="muted small">Aurore lumineuse qui dérive lentement derrière les fenêtres, dans ta couleur d'accent</div></div><button class="switch" id="bg-switch" role="switch" aria-checked="false" aria-label="Fond animé"></button></div>
-    <div class="trow"><div><div>Anti-marquage de l'écran</div><div class="muted small">Décale l'affichage de 2 px toutes les 4 min, utile si le téléphone reste allumé en permanence</div></div><button class="switch" id="shift-switch" role="switch" aria-checked="false" aria-label="Anti-marquage de l'écran"></button></div>
-    <div class="sub-h">Alerte surchauffe</div>
-    <div class="trow"><span id="alert-label">Au-delà de 90 °C</span><button class="switch" id="alert-switch" role="switch" aria-checked="true" aria-label="Alerte surchauffe"></button></div>
-    <input type="range" id="alert-temp" min="70" max="100" step="1" aria-label="Seuil d'alerte">
-    <div class="acts one"><button id="custom-close">Terminé</button></div>
   </div>
 </div>
 <div class="sheet" id="rsheet">
@@ -1186,6 +1475,11 @@ html[data-density="compact"] .chips button{height:32px}
     <p id="r-title">Bilan de partie</p>
     <div class="sub" id="r-sub"></div>
     <div class="hud r-hud" id="r-hud"></div>
+    <div class="rchart" id="r-chart" hidden>
+      <div class="seg small" id="r-tabs"><button data-v="fps">FPS</button><button data-v="temp">Températures</button><button data-v="watt">Watts</button></div>
+      <canvas id="r-canvas" aria-label="Courbe de la partie"></canvas>
+      <div class="rlegend" id="r-legend"></div>
+    </div>
     <div class="acts one"><button id="r-close">Fermer</button></div>
   </div>
 </div>
@@ -1205,6 +1499,11 @@ html[data-density="compact"] .chips button{height:32px}
     <div class="seg small" id="g-cpu"><button data-v="">Inchangé</button><button data-v="silent">Léger</button><button data-v="balanced">Médium</button><button data-v="turbo">Gros</button></div>
     <div class="sub-h">Carte graphique</div>
     <div class="seg small" id="g-gpu"><button data-v="">Inchangée</button><button data-v="on">Bridée</button><button data-v="off">Normale</button></div>
+    <div class="trow" id="g-tune-row"><div><div>Undervolt GPU pendant le jeu</div><div class="muted small">Décalages appliqués au lancement, remis comme avant à la fermeture</div></div><button class="switch" id="g-tune" role="switch" aria-checked="false" aria-label="Undervolt GPU pendant le jeu"></button></div>
+    <div class="g-tune" id="g-tune-box" hidden>
+      <div class="tune-row"><span>Cœur</span><div class="mini-step" data-k="core"><button data-d="-15" aria-label="Moins">−</button><b class="num" id="g-core">0</b><button data-d="15" aria-label="Plus">+</button></div><span class="muted">MHz</span></div>
+      <div class="tune-row"><span>Mémoire</span><div class="mini-step" data-k="mem"><button data-d="-50" aria-label="Moins">−</button><b class="num" id="g-mem">0</b><button data-d="50" aria-label="Plus">+</button></div><span class="muted">MHz</span></div>
+    </div>
     <div class="sub-h">Couleurs de l'écran</div>
     <div class="chips" id="g-color"></div>
     <div class="trow"><span>Bloquer la touche Windows</span><button class="switch" id="g-winkey" role="switch" aria-checked="false" aria-label="Bloquer la touche Windows"></button></div>
@@ -1278,37 +1577,139 @@ async function api(path, body, ms = 3000) {
   } finally { clearTimeout(tm); }
 }
 
-/* ---------- Cadrans ---------- */
+/* ---------- Compteurs de température : 5 styles au choix, carte par carte ---------- */
 const R = 50, C = 2 * Math.PI * R, SWEEP = C * 0.75, TMIN = 30, TMAX = 100;
-function buildDial(el, label) {
-  let ticks = "";
-  for (let t = TMIN; t <= TMAX; t += 10) {
-    const a = (135 + (t - TMIN) / (TMAX - TMIN) * 270) * Math.PI / 180, r1 = 59.5, r2 = t % 20 === 0 ? 56.5 : 57.8;
-    ticks += `<line x1="${60 + r1 * Math.cos(a)}" y1="${60 + r1 * Math.sin(a)}" x2="${60 + r2 * Math.cos(a)}" y2="${60 + r2 * Math.sin(a)}"/>`;
+const GAUGES = [["arc", "Cadran"], ["ring", "Anneau"], ["needle", "Aiguille"], ["led", "LED"], ["digits", "Chiffres"]];
+const tfrac = t => Math.max(0, Math.min(1, (t - TMIN) / (TMAX - TMIN)));
+const polar = (r, deg, cx = 60, cy = 60) => [cx + r * Math.cos(deg * Math.PI / 180), cy + r * Math.sin(deg * Math.PI / 180)];
+function arcPath(r, a1, a2, cx = 60, cy = 60) {
+  const [x1, y1] = polar(r, a1, cx, cy), [x2, y2] = polar(r, a2, cx, cy);
+  return `M${x1.toFixed(2)} ${y1.toFixed(2)}A${r} ${r} 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+}
+const LED_N = 14;
+function buildDial(el, style) {
+  if (!GAUGES.some(g => g[0] === style)) style = "arc";
+  el.dataset.style = style;
+  let svg = "";
+  const ticks = (cx, cy, from, sweep, r1, r2s, r2l) => {
+    let out = "";
+    for (let t = TMIN; t <= TMAX; t += 10) {
+      const a = from + (t - TMIN) / (TMAX - TMIN) * sweep, r2 = t % 20 === 0 ? r2l : r2s;
+      const [x1, y1] = polar(r1, a, cx, cy), [x2, y2] = polar(r2, a, cx, cy);
+      out += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>`;
+    }
+    return out;
+  };
+  if (style === "arc") svg = `<svg viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--line)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${SWEEP} ${C}" transform="rotate(135 60 60)"/>
+    <circle class="val" cx="60" cy="60" r="${R}" fill="none" stroke="var(--faint)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 ${C}" transform="rotate(135 60 60)"/>
+    <g stroke="var(--faint)" stroke-width="1.4" stroke-linecap="round">${ticks(60, 60, 135, 270, 59.5, 57.8, 56.5)}</g>
+    <line class="peak" x1="60" y1="5" x2="60" y2="15" stroke="var(--text)" stroke-width="2" stroke-linecap="round" opacity="0"/></svg>`;
+  else if (style === "ring") svg = `<svg viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--line)" stroke-width="9"/>
+    <circle class="val" cx="60" cy="60" r="${R}" fill="none" stroke="var(--faint)" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 ${C}" transform="rotate(-90 60 60)"/>
+    <circle class="peak" cx="60" cy="10" r="3.2" fill="var(--text)" opacity="0"/></svg>`;
+  else if (style === "needle") {
+    const zone = (t1, t2, col) => `<path d="${arcPath(47, 180 + tfrac(t1) * 180, 180 + tfrac(t2) * 180, 60, 74)}" stroke="${col}" stroke-width="7" fill="none" opacity=".55"/>`;
+    svg = `<svg viewBox="0 0 120 120" aria-hidden="true">
+      <path d="${arcPath(47, 180, 360, 60, 74)}" stroke="var(--line)" stroke-width="7" fill="none" stroke-linecap="round"/>
+      ${zone(TMIN, 70, "var(--good)")}${zone(70, 85, "var(--amber)")}${zone(85, TMAX, "var(--hot)")}
+      <g stroke="var(--faint)" stroke-width="1.4" stroke-linecap="round">${ticks(60, 74, 180, 180, 56, 53.5, 52)}</g>
+      <line class="peak" x1="60" y1="20" x2="60" y2="31" stroke="var(--text)" stroke-width="2" stroke-linecap="round" opacity="0" style="transform-origin:60px 74px"/>
+      <g class="needle" style="transform-origin:60px 74px;transform:rotate(-90deg)">
+        <path d="M60 30 L62.2 72 L57.8 72 Z" fill="var(--text)"/><circle cx="60" cy="74" r="6" fill="var(--text)"/><circle cx="60" cy="74" r="2.2" fill="var(--panel)"/>
+      </g></svg>`;
+  } else if (style === "led") {
+    const span = 270 / LED_N;
+    let segs = "";
+    for (let i = 0; i < LED_N; i++) segs += `<path class="led" d="${arcPath(R, 135 + i * span + 1.3, 135 + (i + 1) * span - 1.3)}" stroke="var(--line)" stroke-width="10" fill="none"/>`;
+    svg = `<svg viewBox="0 0 120 120" aria-hidden="true">${segs}</svg>`;
   }
-  el.innerHTML = `<svg viewBox="0 0 120 120" aria-hidden="true">
-    <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--line)" stroke-width="8" stroke-linecap="round"
-      stroke-dasharray="${SWEEP} ${C}" transform="rotate(135 60 60)"/>
-    <circle class="val" cx="60" cy="60" r="${R}" fill="none" stroke="var(--faint)" stroke-width="8" stroke-linecap="round"
-      stroke-dasharray="0 ${C}" transform="rotate(135 60 60)" style="transition:stroke-dasharray .6s,stroke .6s"/>
-    <g stroke="var(--faint)" stroke-width="1.4" stroke-linecap="round">${ticks}</g>
-    <line class="peak" x1="60" y1="5" x2="60" y2="15" stroke="var(--text)" stroke-width="2" stroke-linecap="round" opacity="0"/>
-  </svg><div class="read"><div class="t num">–</div><div class="lbl">${label}</div></div>`;
-  return { val: el.querySelector(".val"), peak: el.querySelector(".peak"), t: el.querySelector(".t"), max: null };
+  el.innerHTML = svg + `<div class="read"><div class="t num">–</div><div class="lbl"></div>${style === "digits" ? `<div class="dbar"><i></i><b></b></div>` : ""}</div>`;
+  const q = sel => el.querySelector(sel);
+  const d = { el, style, t: q(".t"), lbl: q(".lbl"), val: q(".val"), peak: q(".peak"), needle: q(".needle"), leds: [...el.querySelectorAll(".led")],
+    bar: q(".dbar i"), bpk: q(".dbar b"), max: null };
+  d.set = (temp, pcMax) => {
+    if (temp == null) {
+      d.t.textContent = "–";
+      if (d.val) d.val.setAttribute("stroke-dasharray", `0 ${C}`);
+      if (d.needle) d.needle.style.transform = "rotate(-90deg)";
+      d.leds.forEach(x => x.setAttribute("stroke", "var(--line)"));
+      if (d.bar) d.bar.style.width = "0";
+      return;
+    }
+    const f = tfrac(temp), col = thermal(temp);
+    d.t.innerHTML = `${Math.round(temp)}<sup>°C</sup>`;
+    d.max = pcMax != null ? pcMax : d.max == null ? temp : Math.max(d.max, temp);
+    const fm = tfrac(d.max);
+    if (style === "arc") {
+      d.val.setAttribute("stroke-dasharray", `${Math.max(0.01, SWEEP * f)} ${C}`); d.val.setAttribute("stroke", col);
+      d.peak.setAttribute("transform", `rotate(${135 + fm * 270 + 90} 60 60)`); d.peak.setAttribute("opacity", ".9");
+    } else if (style === "ring") {
+      d.val.setAttribute("stroke-dasharray", `${Math.max(0.01, C * f)} ${C}`); d.val.setAttribute("stroke", col);
+      const [px, py] = polar(R, -90 + fm * 360); d.peak.setAttribute("cx", px.toFixed(2)); d.peak.setAttribute("cy", py.toFixed(2)); d.peak.setAttribute("opacity", ".9");
+    } else if (style === "needle") {
+      d.needle.style.transform = `rotate(${-90 + f * 180}deg)`;
+      d.peak.style.transform = `rotate(${-90 + fm * 180}deg)`; d.peak.setAttribute("opacity", ".85");
+    } else if (style === "led") {
+      const n = Math.max(1, Math.round(f * LED_N)), pk = Math.min(LED_N - 1, Math.floor(fm * LED_N));
+      d.leds.forEach((x, i) => x.setAttribute("stroke", i < n ? thermal(TMIN + (i + .5) / LED_N * (TMAX - TMIN)) : i === pk ? "var(--faint)" : "var(--line)"));
+    } else {
+      d.t.style.color = col;
+      d.bar.style.width = (f * 100) + "%"; d.bar.style.background = col; d.bpk.style.left = (fm * 100) + "%";
+    }
+  };
+  return d;
 }
-function setDial(d, temp, pcMax) {
-  if (temp == null) { d.t.textContent = "–"; d.val.setAttribute("stroke-dasharray", `0 ${C}`); return; }
-  const f = Math.max(0, Math.min(1, (temp - TMIN) / (TMAX - TMIN)));
-  d.val.setAttribute("stroke-dasharray", `${Math.max(0.01, SWEEP * f)} ${C}`);
-  d.val.setAttribute("stroke", thermal(temp));
-  d.t.innerHTML = `${Math.round(temp)}<sup>°C</sup>`;
-  d.max = pcMax != null ? pcMax : d.max == null ? temp : Math.max(d.max, temp);
-  const fm = Math.max(0, Math.min(1, (d.max - TMIN) / (TMAX - TMIN))), ang = 135 + fm * 270 + 90;
-  d.peak.setAttribute("transform", `rotate(${ang} 60 60)`);
-  d.peak.setAttribute("opacity", ".9");
+function setDial(d, temp, pcMax) { d.set(temp, pcMax); }
+const dials = { cpu: buildDial($("cpu-dial"), "arc"), gpu: buildDial($("gpu-dial"), "arc") };
+function rebuildDials() {
+  const g = UI.gauge || {};
+  dials.cpu = buildDial($("cpu-dial"), g.cpu); dials.gpu = buildDial($("gpu-dial"), g.gpu);
+  buildRows();
+  if (lastStats) { setDial(dials.cpu, lastStats.cpu?.temp, lastStats.cpu?.temp_max); setDial(dials.gpu, lastStats.gpu?.temp, lastStats.gpu?.temp_max); paintRows(lastStats); }
 }
-const dials = { cpu: buildDial($("cpu-dial"), ""), gpu: buildDial($("gpu-dial"), "") };
-dials.cpu.lbl = $("cpu-dial").querySelector(".lbl"); dials.gpu.lbl = $("gpu-dial").querySelector(".lbl");
+
+/* ---------- Infos affichées dans les cartes CPU et GPU (3 au choix) ---------- */
+const fanOf = (s, k) => { const f = (s.fans || []).find(x => new RegExp(k, "i").test(x.name)); return f ? nf(f.rpm) + " tr/min" : "–"; };
+const ROWS = {
+  cpu: {
+    load: ["Charge", s => s.cpu.load != null ? nf(s.cpu.load) + " %" : "–", s => s.cpu.load],
+    power: ["Conso", s => s.cpu.power != null ? nf(s.cpu.power) + " W" : "–"],
+    clock: ["Fréquence", s => s.cpu.clock != null ? nf(s.cpu.clock, 1) + " GHz" : "–"],
+    fan: ["Ventilateur", s => fanOf(s, "cpu")],
+    ram: ["Mémoire", s => s.ram && s.ram.load != null ? nf(s.ram.load) + " %" : "–", s => s.ram && s.ram.load],
+    peaks: ["Max / min", s => s.cpu.temp_max != null ? `${Math.round(s.cpu.temp_max)}° / ${Math.round(s.cpu.temp_min)}°` : "–"],
+  },
+  gpu: {
+    load: ["Charge", s => s.gpu.load != null ? nf(s.gpu.load) + " %" : "–", s => s.gpu.load],
+    power: ["Conso", s => s.gpu.power != null ? nf(s.gpu.power) + " W" : "–"],
+    vram: ["VRAM", s => s.gpu.vram_used != null ? nf(s.gpu.vram_used, 1) + (s.gpu.vram_total ? " / " + nf(s.gpu.vram_total) : "") + " Go" : "–",
+      s => s.gpu.vram_used != null && s.gpu.vram_total ? s.gpu.vram_used / s.gpu.vram_total * 100 : null],
+    clock: ["Fréquence", s => s.gpu.clock != null ? nf(s.gpu.clock) + " MHz" : "–"],
+    fan: ["Ventilateur", s => fanOf(s, "gpu")],
+    peaks: ["Max / min", s => s.gpu.temp_max != null ? `${Math.round(s.gpu.temp_max)}° / ${Math.round(s.gpu.temp_min)}°` : "–"],
+  },
+};
+const ROWS_DEFAULT = { cpu: ["load", "power", "clock"], gpu: ["load", "power", "vram"] };
+function rowKeys(k) {
+  const list = ((UI.rows || {})[k] || ROWS_DEFAULT[k]).filter(x => ROWS[k][x]).slice(0, 3);
+  return list.length ? list : ROWS_DEFAULT[k];
+}
+function buildRows() {
+  for (const k of ["cpu", "gpu"]) {
+    const box = document.querySelector(`.c-${k} .stats`); if (!box) continue;
+    box.innerHTML = rowKeys(k).map((r, i) => `<div class="row"><span class="muted">${ROWS[k][r][0]}</span><span class="num" data-row="${r}">–</span></div>` +
+      (ROWS[k][r][2] && i === 0 ? `<div class="bar"><i data-bar="${r}"></i></div>` : "")).join("");
+  }
+}
+function paintRows(s) {
+  for (const k of ["cpu", "gpu"]) {
+    const box = document.querySelector(`.c-${k} .stats`); if (!box || !s[k]) continue;
+    box.querySelectorAll("[data-row]").forEach(el => { const def = ROWS[k][el.dataset.row]; if (def) el.textContent = def[1](s); });
+    box.querySelectorAll("[data-bar]").forEach(el => { const def = ROWS[k][el.dataset.bar]; if (def && def[2]) setBar(el, def[2](s)); });
+  }
+}
 ["cpu-dial", "gpu-dial"].forEach(id => {
   const el = $(id); el.setAttribute("role", "button"); el.setAttribute("aria-label", "Remettre à zéro les températures max et min");
   el.addEventListener("click", () => {
@@ -1385,12 +1786,10 @@ function render(s) {
   const peaks = (x, d) => x.temp_max != null ? `↑${Math.round(x.temp_max)}° ↓${Math.round(x.temp_min)}°` : d.max != null ? `max ${Math.round(d.max)}°` : "";
   dials.cpu.lbl.textContent = peaks(c, dials.cpu);
   dials.gpu.lbl.textContent = peaks(g, dials.gpu);
-  $("cpu-load").textContent = c.load != null ? nf(c.load) + " %" : "–"; setBar($("cpu-loadbar"), c.load);
-  $("cpu-power").textContent = c.power != null ? nf(c.power) + " W" : "–";
-  $("cpu-clock").textContent = c.clock != null ? nf(c.clock, 1) + " GHz" : "–";
-  $("gpu-load").textContent = g.load != null ? nf(g.load) + " %" : "–"; setBar($("gpu-loadbar"), g.load);
-  $("gpu-power").textContent = g.power != null ? nf(g.power) + " W" : "–";
-  $("gpu-vram").textContent = g.vram_used != null ? nf(g.vram_used, 1) + (g.vram_total ? " / " + nf(g.vram_total) : "") + " Go" : "–";
+  paintRows(s);
+  const thr = throttleState(s);
+  renderThrottle(thr);
+  if (document.body.dataset.view === "v-ctl") renderDisks();
   for (const k of ["cpu", "gpu"]) { hist[k].push(s[k]?.temp ?? null); if (hist[k].length > HMAX) hist[k].shift(); }
   drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu);
   if (document.body.dataset.view === "v-gpu") {
@@ -1445,6 +1844,7 @@ function render(s) {
   if (!s.demo && s.lhm && s.lhm.ok && c.temp == null) notes.push(["Température CPU vide : installe le pilote PawnIO (pawnio.eu) sur le PC, puis relance LibreHardwareMonitor en administrateur.", ""]);
   if (m.ghelper_running === false) notes.push(["G-Helper n'est pas lancé sur le PC : les modes ne changeront pas.", ""]);
   if (m.control_ok === false) notes.push(["Modes ASUS indisponibles : Keystone n'a pas accès au pilote ASUS (ATKACPI).", ""]);
+  notes.push(...throttleNotes(s, thr));
   sensorNotes = notes;
   paintNotes();
 }
@@ -1496,12 +1896,14 @@ function linkState() {
 setInterval(() => { if (!document.hidden) linkState(); }, 500);
 
 /* ---------- Boucle ---------- */
-let busy = false;
+let busy = false, bootVersion = null;
 async function tick() {
   if (busy || document.hidden) return; busy = true;
   try {
     const s = await api("/api/stats", null, 6000);
     if (s && s.cpu) {
+      // Keystone mis à jour sur le PC : on recharge pour avoir la nouvelle appli
+      if (s.version) { if (!bootVersion) bootVersion = s.version; else if (s.version !== bootVersion) { location.reload(); return; } }
       lastOk = Date.now(); lastNet = s.net || null; authBad = false;
       if (!Layout.held()) render(s);
       Hud.update(s);
@@ -1516,6 +1918,7 @@ async function tick() {
   } finally { busy = false; }
 }
 async function init() {
+  rebuildDials();
   try {
     const cfg = await api("/api/config");
     $("pcname").textContent = cfg.pc || "PC";
@@ -1707,6 +2110,7 @@ function renderKeyboard() {
 
 function renderControls() {
   const c = CTL || {};
+  try { renderPregame(); renderDisks(); } catch (e) {}
   if (c.osd) { syncOsdAccent(); if ($("custom").classList.contains("show")) renderCustom(); }
   // Son
   const a = c.audio || {};
@@ -1909,23 +2313,41 @@ const THEME_INK = { nuit: "#0E1822", oled: "#000000", rog: "#08080A", abysse: "#
 const THEME_ACCENT = { nuit: "#4FC3E0", oled: "#4FC3E0", rog: "#FF2D46", abysse: "#4FC3E0", nebuleuse: "#A98BFF", foret: "#5BE08A",
   braise: "#FF7A59", sakura: "#FF7AC6", ardoise: "#7AA2FF", cyber: "#00F0FF" };
 const THEME_DEFAULT_ACCENTS = new Set(Object.values(THEME_ACCENT));
-let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false, anim: true, bg: false, layoutHint: 0, swipe: true, hudAuto: true, collapsed: [] };
+let UI = { order: CARDS.map(c => c[0]), hidden: [], accent: ACCENTS[0], alert: { on: true, temp: 90 }, theme: "nuit", density: "normal", shift: false, anim: true, bg: false, layoutHint: 0, swipe: true, hudAuto: true, collapsed: [],
+  gauge: { cpu: "arc", gpu: "arc" }, rows: { cpu: ROWS_DEFAULT.cpu.slice(), gpu: ROWS_DEFAULT.gpu.slice() }, myThemes: [], throttleAlert: true };
 try { const saved = JSON.parse(localStorage.getItem("pcmon-ui") || "null"); if (saved) UI = Object.assign(UI, saved); } catch (e) {}
 // niveau d'animations : aucune / sobres / complètes (l'ancien réglage oui/non est repris)
 if (!["off", "soft", "full"].includes(UI.fx)) UI.fx = UI.anim === false ? "off" : "full";
 CARDS.forEach(c => { if (!UI.order.includes(c[0])) UI.order.push(c[0]); });
 function saveUI() { try { localStorage.setItem("pcmon-ui", JSON.stringify(UI)); } catch (e) {} }
+function myTheme() {
+  const id = String(UI.theme || "");
+  return id.startsWith("my:") ? (UI.myThemes || []).find(t => "my:" + t.id === id) || null : null;
+}
 function applyUI() {
   UI.order.forEach((id, i) => { const el = document.querySelector(".c-" + id); if (el) { el.style.order = i; el.classList.toggle("off", UI.hidden.includes(id)); } });
   const root = document.documentElement;
   root.style.setProperty("--cool", UI.accent);
-  if (UI.theme && UI.theme !== "nuit") root.dataset.theme = UI.theme; else delete root.dataset.theme;
+  // thème perso : couleurs de base choisies, le reste (lignes, textes secondaires) en est déduit
+  const my = myTheme(), VARS = ["--ink", "--panel", "--text", "--raise", "--line", "--muted", "--faint"];
+  if (my) {
+    const mix = (a, b, k) => `color-mix(in srgb, ${a} ${k}%, ${b})`;
+    root.dataset.theme = "custom";
+    root.dataset.corners = my.corners || "round";
+    root.dataset.numfont = my.numfont || "rounded";
+    [my.ink, my.panel, my.text, mix(my.text, my.panel, 7), mix(my.text, my.panel, 15), mix(my.text, my.ink, 58), mix(my.text, my.ink, 30)]
+      .forEach((v, i) => root.style.setProperty(VARS[i], v));
+  } else {
+    VARS.forEach(k => root.style.removeProperty(k));
+    delete root.dataset.corners; delete root.dataset.numfont;
+    if (UI.theme && UI.theme !== "nuit" && THEME_INK[UI.theme]) root.dataset.theme = UI.theme; else delete root.dataset.theme;
+  }
   if (UI.density === "compact") root.dataset.density = "compact"; else delete root.dataset.density;
   UI.anim = UI.fx !== "off";
   root.dataset.anim = UI.anim ? "on" : "off";
   root.dataset.fx = UI.fx;
   root.dataset.bg = UI.bg && UI.anim ? "on" : "off";
-  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = THEME_INK[UI.theme] || THEME_INK.nuit;
+  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = my ? my.ink : THEME_INK[UI.theme] || THEME_INK.nuit;
   setShift(UI.shift);
   if (typeof syncOsdAccent === "function") syncOsdAccent();
 }
@@ -1965,6 +2387,7 @@ function renderCustom() {
   $("alert-temp").value = UI.alert.temp; fill($("alert-temp"));
   $("alert-label").textContent = `Au-delà de ${UI.alert.temp} °C`;
   $("alert-temp").disabled = !UI.alert.on;
+  renderOptions();
 }
 $("card-list").addEventListener("click", e => {
   const up = e.target.closest("[data-up]"), down = e.target.closest("[data-down]"), sw = e.target.closest("[data-card]");
@@ -1983,7 +2406,7 @@ $("themes").addEventListener("click", e => {
   const b = e.target.closest("button[data-t]"); if (!b) return;
   const prev = UI.theme || "nuit"; UI.theme = b.dataset.t;
   // accent assorti au thème, sauf si l'utilisateur avait choisi une couleur perso
-  if (THEME_DEFAULT_ACCENTS.has(UI.accent)) UI.accent = THEME_ACCENT[UI.theme] || ACCENTS[0];
+  if (THEME_DEFAULT_ACCENTS.has(UI.accent) || String(prev).startsWith("my:")) UI.accent = THEME_ACCENT[UI.theme] || ACCENTS[0];
   if (UI.theme === "oled" && prev !== "oled") UI.shift = true;
   saveUI(); applyUI(); renderCustom(); redrawAll();
 });
@@ -2008,6 +2431,373 @@ async function osdSet(body, quiet) {
 $("osd-switch").addEventListener("click", () => osdSet({ on: !(CTL && CTL.osd && CTL.osd.on) }));
 $("osd-corner").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) osdSet({ corner: b.dataset.v }, true); });
 $("osd-test").addEventListener("click", () => osdSet({ test: true, accent: UI.accent }, true));
+
+/* ---------- Bridage du CPU / GPU ---------- */
+const THR = { thermal: "chauffe", power: "puissance", prochot: "PROCHOT", current: "courant", hw: "alimentation" };
+const thrSeen = { cpu: {}, gpu: {} };
+function throttleState(s) {
+  const out = { cpu: [], gpu: [] }, th = s.throttle || {};
+  for (const k of ["cpu", "gpu"]) {
+    const now = new Set(th[k] || []);
+    for (const r of Object.keys(THR)) thrSeen[k][r] = now.has(r) ? (thrSeen[k][r] || 0) + 1 : 0;
+    out[k] = Object.keys(THR).filter(r => thrSeen[k][r] >= 2); // deux lectures de suite : pas de clignotement
+  }
+  return out;
+}
+function renderThrottle(st) {
+  const on = UI.throttleAlert !== false;
+  for (const k of ["cpu", "gpu"]) {
+    const el = $("thr-" + k), list = on ? st[k] : [];
+    el.hidden = !list.length;
+    if (!list.length) continue;
+    // la raison la plus importante sur la carte, toutes dans l'infobulle
+    const top = ["thermal", "prochot", "hw", "current", "power"].find(r => list.includes(r));
+    const txt = "Bridé · " + THR[top] + (list.length > 1 ? " +" + (list.length - 1) : "");
+    if (el.textContent !== txt) { el.textContent = txt; el.title = "Bridé : " + list.map(r => THR[r]).join(", "); }
+    // limite de puissance seule = normal en charge : discret ; chauffe ou PROCHOT = rouge
+    el.className = "thr" + (list.includes("thermal") || list.includes("prochot") ? " hot" : list.every(r => r === "power") ? " info" : "");
+  }
+}
+function throttleNotes(s, st) {
+  const out = [];
+  if (UI.throttleAlert === false) return out;
+  const c = s.cpu || {}, g = s.gpu || {};
+  if (st.cpu.includes("thermal") && thrSeen.cpu.thermal >= 3)
+    out.push([`Le CPU baisse sa fréquence parce qu'il chauffe${c.temp != null ? ` (${Math.round(c.temp)} °C)` : ""} : passe la ventilation en Turbo, ou un profil CPU plus léger.`, "bad"]);
+  if (st.cpu.includes("prochot") && thrSeen.cpu.prochot >= 3)
+    out.push(["Le CPU est freiné par un signal d'alerte (PROCHOT) : souvent le chargeur. Vérifie que le chargeur d'origine est bien branché.", "bad"]);
+  if (st.gpu.includes("thermal") && thrSeen.gpu.thermal >= 3)
+    out.push([`Le GPU baisse sa fréquence parce qu'il chauffe${g.temp != null ? ` (${Math.round(g.temp)} °C)` : ""} : ventilation en Turbo, ou un plafond de fréquence dans l'onglet GPU.`, "bad"]);
+  if (st.gpu.includes("hw") && thrSeen.gpu.hw >= 3)
+    out.push(["Le GPU est freiné par son alimentation : vérifie que le PC est branché sur son chargeur d'origine.", ""]);
+  return out;
+}
+
+/* ---------- Avant de jouer ---------- */
+function renderPregame() {
+  const p = CTL && CTL.pregame; if (!p) return;
+  $("pg-close").innerHTML = p.close.map(x => `<button data-x="${esc(x)}" aria-label="Ne plus fermer ${esc(x)}">${esc(x.replace(/\.exe$/i, ""))}<i>×</i></button>`).join("");
+  setSwitch($("pg-force"), !!p.force); setSwitch($("pg-ram"), !!p.ram);
+  press($("pg-mode"), p.mode || ""); press($("pg-cpu"), p.cpu || "");
+  const parts = [], lab = [];
+  if (p.close.length) parts.push(`ferme ${p.close.length} programme${p.close.length > 1 ? "s" : ""}`);
+  if (p.ram) parts.push("vide la mémoire en cache");
+  if (p.mode) lab.push(MODE_SHORT[p.mode] || p.mode);
+  if (p.cpu && $("cpuprof").classList.contains("on")) lab.push("CPU " + (CPU_PROFILE[p.cpu] || p.cpu));
+  if (lab.length) parts.push("passe en " + lab.join(" + "));
+  $("pg-sum").textContent = parts.length ? "Un appui : " + parts.join(", ") + "." : "Rien de prévu : choisis ci-dessous.";
+}
+async function pgSet(body) {
+  if (!CTL || !CTL.pregame) return;
+  const r = await act(Object.assign({ action: "pregame_set" }, body), true);
+  if (r && r.ok) { Object.assign(CTL.pregame, body); renderPregame(); }
+}
+$("pg-go").addEventListener("click", async () => {
+  const b = $("pg-go"); b.disabled = true; b.querySelector("span").textContent = "Préparation…";
+  try { const r = await api("/api/action", { action: "pregame_run" }, 20000); toast(r.msg || "Prêt à jouer", !r.ok); }
+  catch (e) { toast("Le PC ne répond pas", true); }
+  finally { b.disabled = false; b.querySelector("span").textContent = "Préparer le PC"; reloadControls(300); }
+});
+$("pg-close").addEventListener("click", e => { const b = e.target.closest("button[data-x]"); if (b && CTL && CTL.pregame) pgSet({ close: CTL.pregame.close.filter(x => x !== b.dataset.x) }); });
+$("pg-pick").addEventListener("click", async () => {
+  const box = $("pg-running"); box.hidden = false; box.innerHTML = `<span class="muted small">Recherche…</span>`;
+  try {
+    const r = await api("/api/procs"), have = new Set(((CTL && CTL.pregame && CTL.pregame.close) || []).map(normExe));
+    const items = (r.items || []).filter(it => !have.has(normExe(it.exe)));
+    box.innerHTML = items.slice(0, 24).map(it => `<button data-exe="${esc(it.exe)}" title="${esc(it.exe)}">${esc((it.title || it.exe).split(/\s[-–—|]\s/).pop().slice(0, 32))}</button>`).join("")
+      || `<span class="muted small">Aucun autre programme ouvert.</span>`;
+  } catch (e) { box.innerHTML = ""; }
+});
+$("pg-running").addEventListener("click", e => {
+  const b = e.target.closest("button[data-exe]"); if (!b || !CTL || !CTL.pregame) return;
+  b.remove(); pgSet({ close: CTL.pregame.close.concat([b.dataset.exe]) });
+});
+$("pg-force").addEventListener("click", () => CTL && CTL.pregame && pgSet({ force: !CTL.pregame.force }));
+$("pg-ram").addEventListener("click", () => CTL && CTL.pregame && pgSet({ ram: !CTL.pregame.ram }));
+$("pg-mode").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) pgSet({ mode: b.dataset.v }); });
+$("pg-cpu").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (b) pgSet({ cpu: b.dataset.v }); });
+
+/* ---------- Undervolt GPU dans un profil de jeu ---------- */
+const gTune = { core: 0, mem: 0 };
+function paintGTune() { $("g-core").textContent = (gTune.core > 0 ? "+" : "") + gTune.core; $("g-mem").textContent = (gTune.mem > 0 ? "+" : "") + gTune.mem; }
+$("g-tune").addEventListener("click", () => { const on = !isOn($("g-tune")); setSwitch($("g-tune"), on); $("g-tune-box").hidden = !on; });
+$("g-tune-box").addEventListener("click", e => {
+  const b = e.target.closest("button[data-d]"); if (!b) return;
+  const k = b.closest(".mini-step").dataset.k, d = +b.dataset.d;
+  gTune[k] = k === "core" ? Math.max(-500, Math.min(1000, gTune[k] + d)) : Math.max(-2000, Math.min(3000, gTune[k] + d));
+  paintGTune();
+});
+
+/* ---------- Courbes du bilan de partie ---------- */
+let rTab = "fps", R_SERIES = null;
+async function loadSeries(r) {
+  R_SERIES = null; $("r-chart").hidden = true;
+  if (!r || (!r.has_series && !r.series)) return;
+  try {
+    const full = r.series ? r : await api("/api/reports?id=" + r.id);
+    if (!full || !full.series || full.series.length < 3) return;
+    R_SERIES = full; $("r-chart").hidden = false; press($("r-tabs"), rTab);
+    requestAnimationFrame(drawReport);
+  } catch (e) {}
+}
+function drawReport() {
+  const cv = $("r-canvas"), r = R_SERIES; if (!r || !cv.clientWidth) return;
+  const w = cv.clientWidth, h = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const css = getComputedStyle(document.documentElement), col = v => css.getPropertyValue(v).trim();
+  const S = r.series, step = r.series_step || 6, warm = "#FFB547", cool = col("--cool");
+  const lines = rTab === "fps" ? [[0, "FPS", cool]] : rTab === "temp" ? [[1, "CPU", warm], [2, "GPU", cool]] : [[3, "CPU", warm], [4, "GPU", cool]];
+  const unit = rTab === "fps" ? " FPS" : rTab === "temp" ? "°" : " W";
+  const vals = lines.flatMap(([i]) => S.map(p => p[i]).filter(v => v != null));
+  if (!vals.length) { $("r-legend").textContent = "Pas de mesure pour cette courbe."; return; }
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = Math.max(2, (hi - lo) * .12); lo = Math.max(0, Math.floor(lo - pad)); hi = Math.ceil(hi + pad);
+  const L = 30, B = 18, T = 6, RR = 6, pw = w - L - RR, ph = h - T - B;
+  const x = i => L + i / (S.length - 1) * pw, y = v => T + ph - (v - lo) / (hi - lo) * ph;
+  g.font = "11px system-ui, sans-serif"; g.fillStyle = col("--muted"); g.strokeStyle = col("--line"); g.lineWidth = 1;
+  for (let k = 0; k <= 3; k++) { const v = lo + (hi - lo) * k / 3, yy = Math.round(y(v)) + .5; g.beginPath(); g.moveTo(L, yy); g.lineTo(w - RR, yy); g.stroke(); g.fillText(String(Math.round(v)), 0, yy + 4); }
+  const total = (S.length - 1) * step / 60;
+  [[0, "left"], [.5, "center"], [1, "right"]].forEach(([f, al]) => { g.textAlign = al; g.fillText(Math.round(total * f) + " min", L + f * pw, h - 3); });
+  g.textAlign = "left";
+  for (const [i, , c] of lines) {
+    const grad = g.createLinearGradient(0, T, 0, T + ph); grad.addColorStop(0, c + "55"); grad.addColorStop(1, c + "00");
+    g.beginPath(); let first = -1, last = -1;
+    S.forEach((p, k) => { if (p[i] == null) return; if (first < 0) { g.moveTo(x(k), y(p[i])); first = k; } else g.lineTo(x(k), y(p[i])); last = k; });
+    if (lines.length === 1 && first >= 0) { g.save(); g.lineTo(x(last), T + ph); g.lineTo(x(first), T + ph); g.closePath(); g.fillStyle = grad; g.fill(); g.restore(); }
+    g.beginPath();
+    S.forEach((p, k) => { if (p[i] == null) return; if (k === first) g.moveTo(x(k), y(p[i])); else g.lineTo(x(k), y(p[i])); });
+    g.strokeStyle = c; g.lineWidth = 2; g.lineJoin = "round"; g.stroke();
+  }
+  $("r-legend").innerHTML = lines.map(([i, name, c]) => {
+    const v = S.map(p => p[i]).filter(z => z != null); if (!v.length) return "";
+    const avg = Math.round(v.reduce((a, b) => a + b, 0) / v.length);
+    return `<span><i style="background:${c}"></i>${name} : moy. ${avg}${unit}, ${rTab === "fps" ? "mini " + Math.min(...v) : "max " + Math.max(...v)}${unit}</span>`;
+  }).join("");
+}
+$("r-tabs").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; rTab = b.dataset.v; press($("r-tabs"), rTab); drawReport(); });
+
+/* ---------- Stockage : santé des disques et place libre ---------- */
+let disksHtml = "";
+function renderDisks() {
+  const box = $("disks"); if (!box) return;
+  const disks = (lastStats && lastStats.disks) || [], vols = (CTL && CTL.volumes) || [];
+  if (!disks.length && !vols.length) return;
+  const ring = life => {
+    const c = 2 * Math.PI * 22, f = Math.max(0, Math.min(100, life)) / 100, col = life >= 90 ? "var(--good)" : life >= 70 ? "var(--amber)" : "var(--hot)";
+    return `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="26" cy="26" r="22" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}"/></svg>`;
+  };
+  const html = disks.map(d => `<div class="disk"><div class="disk-top">
+      <div class="disk-life">${d.life != null ? ring(d.life) + `<b class="num">${d.life}%</b>` : `<b class="num">${d.temp ?? "–"}°</b>`}</div>
+      <div><div class="disk-name">${esc(d.name)}</div><div class="disk-meta">${[d.life != null ? `Santé ${d.life} %` : null, d.temp != null ? `${d.temp} °C` : null,
+        d.written != null ? `${nf(d.written, 1)} To écrits` : null].filter(Boolean).join(" · ")}</div></div>
+    </div></div>`).join("")
+    + vols.map(v => {
+      const used = v.total ? (1 - v.free / v.total) * 100 : 0, col = used > 90 ? "var(--hot)" : used > 75 ? "var(--amber)" : "var(--cool)";
+      return `<div class="vol"><b>${esc(v.name)}</b><div class="bar"><i style="width:${used.toFixed(0)}%;background:${col}"></i></div><span class="muted">${nf(v.free, v.free < 100 ? 1 : 0)} Go libres sur ${nf(v.total, 0)}</span></div>`;
+    }).join("");
+  if (html !== disksHtml) { box.innerHTML = html; disksHtml = html; }
+}
+
+/* ---------- Options : catégories ---------- */
+let optCat = "look";
+function showCat(cat) {
+  optCat = cat;
+  document.querySelectorAll("#opts-nav button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.cat === cat)));
+  document.querySelectorAll(".opane").forEach(p => p.hidden = p.dataset.cat !== cat);
+  $("opts-body").scrollTop = 0;
+  if (cat === "update") updPoll(true);
+}
+$("opts-nav").addEventListener("click", e => { const b = e.target.closest("button[data-cat]"); if (b) showCat(b.dataset.cat); });
+const PEN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>`;
+function renderOptions() {
+  const u = CTL && CTL.update;
+  $("opts-ver").textContent = `Keystone ${u ? u.current : (lastStats && lastStats.version) || ""}`.trim() + " · by KeyTokz545";
+  // thèmes
+  const mine = UI.myThemes || [];
+  $("mythemes").innerHTML = mine.map(t => `<button data-my="${esc(t.id)}" aria-pressed="${UI.theme === "my:" + t.id}"><i class="${t.corners === "cut" ? "cut" : ""}" style="background:${t.ink}"><b style="background:${t.accent}"></b></i>${esc(t.name)}<span class="ed" data-edit="${esc(t.id)}" role="button" aria-label="Modifier ${esc(t.name)}">${PEN}</span></button>`).join("");
+  $("theme-new").hidden = !!teEdit;
+  // compteurs : un aperçu réel de chaque style
+  for (const k of ["cpu", "gpu"]) {
+    const box = $("gs-" + k), cur = (UI.gauge || {})[k] || "arc";
+    if (box.dataset.built !== "1") {
+      box.innerHTML = GAUGES.map(([id, label]) => `<button data-g="${id}" aria-label="Style ${label}"><div class="dial"></div><span>${label}</span></button>`).join("");
+      box.querySelectorAll("button").forEach(b => { const d = buildDial(b.querySelector(".dial"), b.dataset.g); d.set(k === "cpu" ? 74 : 63, k === "cpu" ? 88 : 76); });
+      box.dataset.built = "1";
+    }
+    box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === cur)));
+    const sel = rowKeys(k);
+    $("gr-" + k).innerHTML = Object.entries(ROWS[k]).map(([id, def]) => {
+      const i = sel.indexOf(id);
+      return `<button data-r="${id}" aria-pressed="${i >= 0}">${i >= 0 ? `<b>${i + 1}</b>` : ""}${def[0]}</button>`;
+    }).join("");
+  }
+  // touches dédiées (réglage gardé par le PC)
+  const keys = CTL && CTL.keys;
+  press($("key-pause"), keys ? keys.pause : ""); press($("key-print"), keys ? keys.print : "");
+  document.querySelectorAll("#key-pause button,#key-print button").forEach(b => b.disabled = !keys);
+  setSwitch($("throttle-switch"), UI.throttleAlert !== false);
+  renderUpdate();
+}
+["cpu", "gpu"].forEach(k => {
+  $("gs-" + k).addEventListener("click", e => {
+    const b = e.target.closest("button[data-g]"); if (!b) return;
+    UI.gauge = Object.assign({}, UI.gauge, { [k]: b.dataset.g }); saveUI(); rebuildDials(); renderOptions();
+  });
+  $("gr-" + k).addEventListener("click", e => {
+    const b = e.target.closest("button[data-r]"); if (!b) return;
+    let sel = rowKeys(k).slice(); const id = b.dataset.r;
+    if (sel.includes(id)) { if (sel.length > 1) sel = sel.filter(x => x !== id); else return toast("Garde au moins une info", true); }
+    else { if (sel.length >= 3) return toast("3 infos maximum : retire-en une d'abord", true); sel.push(id); }
+    UI.rows = Object.assign({}, UI.rows, { [k]: sel }); saveUI(); rebuildDials(); renderOptions();
+  });
+});
+const KEY_NAMES = { none: "rien", mode: "ventilation", cpu: "profil CPU", mic: "micro", pregame: "avant de jouer" };
+["pause", "print"].forEach(k => $("key-" + k).addEventListener("click", async e => {
+  const b = e.target.closest("button[data-v]"); if (!b || !CTL || !CTL.keys) return;
+  const r = await act({ action: "keys_set", [k]: b.dataset.v }, true);
+  if (r && r.ok) { CTL.keys[k] = b.dataset.v; renderOptions(); toast(`${k === "pause" ? "Pause/Attn" : "Impr. écran"} : ${KEY_NAMES[b.dataset.v]}`); }
+}));
+$("throttle-switch").addEventListener("click", () => { UI.throttleAlert = UI.throttleAlert === false; saveUI(); renderOptions(); });
+
+/* ---------- Créateur de thème ---------- */
+const PRESET_NAMES = { nuit: "Nuit", oled: "OLED", rog: "ROG", abysse: "Abysse", nebuleuse: "Nébuleuse", foret: "Forêt", braise: "Braise", sakura: "Sakura", ardoise: "Ardoise", cyber: "Cyber" };
+const TVARS = ["--ink", "--panel", "--text", "--raise", "--line", "--muted", "--faint"];
+function toHex(c) {
+  c = String(c || "").trim();
+  if (/^#[0-9a-f]{6}$/i.test(c)) return c.toUpperCase();
+  if (/^#[0-9a-f]{3}$/i.test(c)) return ("#" + c.slice(1).split("").map(x => x + x).join("")).toUpperCase();
+  const m = c.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+  return m ? "#" + m.slice(1, 4).map(x => (+x).toString(16).padStart(2, "0")).join("").toUpperCase() : "#000000";
+}
+// lit les vraies couleurs d'un thème prédéfini en l'appliquant un instant (rien n'est affiché entre-temps)
+function presetColors(t) {
+  const root = document.documentElement, keep = root.dataset.theme, inl = TVARS.map(k => root.style.getPropertyValue(k));
+  TVARS.forEach(k => root.style.removeProperty(k));
+  if (t === "nuit") delete root.dataset.theme; else root.dataset.theme = t;
+  const cs = getComputedStyle(root), get = k => toHex(cs.getPropertyValue(k));
+  const out = { ink: get("--ink"), panel: get("--panel"), text: get("--text"), accent: THEME_ACCENT[t] || ACCENTS[0],
+    corners: t === "rog" ? "cut" : "round", numfont: t === "rog" ? "narrow" : "rounded" };
+  if (keep) root.dataset.theme = keep; else delete root.dataset.theme;
+  TVARS.forEach((k, i) => { if (inl[i]) root.style.setProperty(k, inl[i]); });
+  return out;
+}
+let teEdit = null, teBefore = null;
+function fillThemeEditor() {
+  $("te-title").textContent = (UI.myThemes || []).some(t => t.id === teEdit.id) ? `Modifier « ${teEdit.name} »` : "Nouveau thème";
+  $("te-name").value = teEdit.name;
+  $("te-base").innerHTML = Object.keys(PRESET_NAMES).map(t => `<button data-v="${t}">${PRESET_NAMES[t]}</button>`).join("");
+  for (const k of ["ink", "panel", "text", "accent"]) { $("te-" + k).value = teEdit[k]; $("te-" + k).nextElementSibling.style.background = teEdit[k]; }
+  press($("te-corners"), teEdit.corners || "round"); press($("te-num"), teEdit.numfont || "rounded");
+  $("te-del").hidden = !(UI.myThemes || []).some(t => t.id === teEdit.id);
+}
+function previewTheme() {
+  const keep = UI.myThemes;
+  UI.myThemes = (keep || []).filter(x => x.id !== teEdit.id).concat([teEdit]);
+  UI.theme = "my:" + teEdit.id; UI.accent = teEdit.accent;
+  applyUI(); UI.myThemes = keep;
+}
+function openThemeEditor(t) {
+  teBefore = { theme: UI.theme, accent: UI.accent };
+  const cur = myTheme();
+  teEdit = t ? Object.assign({}, t)
+    : Object.assign({ id: Date.now().toString(36), name: "Mon thème" }, cur ? { ink: cur.ink, panel: cur.panel, text: cur.text, accent: cur.accent, corners: cur.corners, numfont: cur.numfont }
+      : Object.assign(presetColors(UI.theme || "nuit"), { accent: UI.accent }));
+  $("theme-ed").hidden = false; $("theme-new").hidden = true;
+  fillThemeEditor(); previewTheme();
+  setTimeout(() => $("theme-ed").scrollIntoView({ block: "start", behavior: document.documentElement.dataset.anim === "on" ? "smooth" : "auto" }), 30);
+}
+function themeDone() { teEdit = null; teBefore = null; $("theme-ed").hidden = true; renderCustom(); redrawAll(); }
+function themeCancel() { if (teBefore) { UI.theme = teBefore.theme; UI.accent = teBefore.accent; applyUI(); } themeDone(); }
+$("theme-new").addEventListener("click", () => openThemeEditor(null));
+$("mythemes").addEventListener("click", e => {
+  const ed = e.target.closest("[data-edit]");
+  const t = (UI.myThemes || []).find(x => x.id === (ed ? ed.dataset.edit : (e.target.closest("[data-my]") || {}).dataset?.my));
+  if (!t) return;
+  if (ed) { openThemeEditor(t); return; }
+  if (teEdit) themeCancel();
+  UI.theme = "my:" + t.id; UI.accent = t.accent; saveUI(); applyUI(); renderCustom(); redrawAll();
+});
+$("te-name").addEventListener("input", () => { teEdit.name = $("te-name").value.slice(0, 24); });
+$("te-base").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); if (!b) return;
+  Object.assign(teEdit, presetColors(b.dataset.v)); fillThemeEditor(); press($("te-base"), b.dataset.v); previewTheme();
+});
+["ink", "panel", "text", "accent"].forEach(k => $("te-" + k).addEventListener("input", e => {
+  teEdit[k] = e.target.value.toUpperCase(); e.target.nextElementSibling.style.background = teEdit[k]; previewTheme();
+}));
+$("te-corners").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; teEdit.corners = b.dataset.v; press($("te-corners"), b.dataset.v); previewTheme(); });
+$("te-num").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; teEdit.numfont = b.dataset.v; press($("te-num"), b.dataset.v); previewTheme(); });
+$("te-cancel").addEventListener("click", themeCancel);
+$("te-save").addEventListener("click", () => {
+  teEdit.name = ($("te-name").value.trim() || "Mon thème").slice(0, 24);
+  const list = (UI.myThemes || []).filter(x => x.id !== teEdit.id);
+  if (list.length >= 12) return toast("12 thèmes maximum : supprime-en un", true);
+  UI.myThemes = list.concat([teEdit]); UI.theme = "my:" + teEdit.id; UI.accent = teEdit.accent;
+  saveUI(); applyUI(); toast(`Thème « ${teEdit.name} » enregistré`); themeDone();
+});
+$("te-del").addEventListener("click", () => {
+  const t = teEdit; if (!t) return;
+  confirmSheet(`Supprimer le thème « ${t.name} » ?`, "Les autres thèmes ne changent pas.", () => {
+    UI.myThemes = (UI.myThemes || []).filter(x => x.id !== t.id);
+    if (teBefore && teBefore.theme === "my:" + t.id) teBefore = { theme: "nuit", accent: THEME_ACCENT.nuit };
+    themeCancel(); saveUI();
+  }, "Supprimer");
+});
+
+/* ---------- Mise à jour de Keystone ---------- */
+let updT = 0;
+function renderUpdate() {
+  const u = CTL && CTL.update, ready = !!(u && u.state === "ready");
+  $("upd-badge").hidden = !ready;
+  $("custom-btn").classList.toggle("badge", ready);
+  if (!u) { $("upd-ver").textContent = "Keystone"; $("upd-status").textContent = "En attente des infos du PC…"; $("upd-install").disabled = true; return; }
+  $("upd-ver").textContent = `Keystone ${u.current}`;
+  const st = { idle: "Pas encore vérifié", checking: "Recherche en cours…", uptodate: "À jour", ready: `Nouvelle version disponible : ${u.latest}`,
+    downloading: `Téléchargement de ${u.latest}… ${u.progress || 0} %`, installing: "Installation : Keystone redémarre…", error: "Vérification impossible" }[u.state] || u.state;
+  $("upd-status").textContent = st + (u.checked != null && ["uptodate", "error", "ready"].includes(u.state) ? ` · vérifié ${u.checked < 90 ? "à l'instant" : "il y a " + since(u.checked)}` : "");
+  $("upd-dot").className = "upd-dot" + (ready ? " new" : u.state === "uptodate" ? " ok" : "");
+  $("upd-bar").hidden = !["downloading", "installing"].includes(u.state);
+  $("upd-bar").querySelector("i").style.width = (u.state === "installing" ? 100 : u.progress || 0) + "%";
+  $("upd-err").hidden = !u.error; $("upd-err").textContent = u.error || "";
+  $("upd-install").disabled = !ready;
+  $("upd-install").textContent = ready ? `Installer la ${u.latest}` : "Installer";
+  $("upd-check").disabled = ["checking", "downloading", "installing"].includes(u.state);
+  $("upd-token").placeholder = u.has_token ? "Jeton enregistré (colle-en un autre pour le changer)" : "github_pat_…";
+  $("upd-token-del").disabled = !u.has_token;
+}
+function updPoll(now) {
+  clearTimeout(updT);
+  const u = CTL && CTL.update, busy = u && ["checking", "downloading", "installing"].includes(u.state);
+  if (!now && !busy) return;
+  updT = setTimeout(async () => {
+    await loadControls(); renderOptions();
+    if ($("custom").classList.contains("show") && optCat === "update") updPoll(false);
+  }, now ? 0 : 1000);
+}
+$("upd-check").addEventListener("click", async () => {
+  $("upd-check").disabled = true; $("upd-status").textContent = "Recherche en cours…";
+  try { await api("/api/action", { action: "update_check" }, 15000); } catch (e) { toast("Le PC ne répond pas", true); }
+  await loadControls(); renderOptions();
+  const u = CTL && CTL.update;
+  if (u && u.state === "uptodate") toast(`Keystone ${u.current} est la dernière version`);
+});
+$("upd-install").addEventListener("click", () => {
+  const u = CTL && CTL.update; if (!u || u.state !== "ready") return;
+  confirmSheet(`Installer Keystone ${u.latest} ?`, "Keystone se ferme une seconde puis redémarre tout seul sur le PC. L'appli se reconnecte et se recharge d'elle-même.", async () => {
+    const r = await act({ action: "update_install" });
+    if (r && r.ok) { CTL.update.state = "downloading"; renderOptions(); updPoll(false); }
+  }, "Installer");
+});
+$("upd-token-save").addEventListener("click", async () => {
+  const v = $("upd-token").value.trim(); if (!v) return toast("Colle d'abord le jeton GitHub", true);
+  try { const r = await api("/api/action", { action: "update_token", token: v }, 15000); toast(r.msg || "Jeton enregistré", !r.ok); } catch (e) { toast("Le PC ne répond pas", true); }
+  $("upd-token").value = ""; await loadControls(); renderOptions();
+});
+$("upd-token-del").addEventListener("click", () => confirmSheet("Retirer le jeton GitHub ?", "Tant que le dépôt est privé, la mise à jour en un bouton ne marchera plus.", async () => {
+  try { await api("/api/action", { action: "update_token", token: "" }, 15000); } catch (e) {}
+  await loadControls(); renderOptions();
+}, "Retirer"));
 // la couleur de l'annonce suit la couleur d'accent de l'appli
 let osdAccentT = 0;
 function syncOsdAccent() {
@@ -2020,9 +2810,10 @@ function syncOsdAccent() {
 function redrawAll() { try { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); } catch (e) {} }
 $("alert-temp").addEventListener("input", e => { UI.alert.temp = +e.target.value; fill(e.target); $("alert-label").textContent = `Au-delà de ${UI.alert.temp} °C`; });
 $("alert-temp").addEventListener("change", saveUI);
-$("custom-btn").addEventListener("click", () => { renderCustom(); $("custom").classList.add("show"); });
-$("custom-close").addEventListener("click", () => $("custom").classList.remove("show"));
-$("custom").addEventListener("click", e => { if (e.target.id === "custom") $("custom").classList.remove("show"); });
+$("custom-btn").addEventListener("click", () => { renderCustom(); $("custom").classList.add("show"); if (optCat === "update") updPoll(true); });
+function closeOptions() { if (teEdit) themeCancel(); $("custom").classList.remove("show"); clearTimeout(updT); }
+$("custom-close").addEventListener("click", closeOptions);
+$("custom").addEventListener("click", e => { if (e.target.id === "custom") closeOptions(); });
 applyUI();
 
 /* Écran de démarrage Keystone */
@@ -2823,6 +3614,9 @@ function openGame(g, exe) {
   const cols = [{ name: "" }].concat(colProfiles());
   $("g-color").innerHTML = cols.map(p => `<button data-v="${esc(p.name)}" aria-pressed="${(gEdit.color || "") === p.name}">${p.name ? esc(p.name) : "Inchangées"}</button>`).join("");
   setSwitch($("g-winkey"), !!gEdit.winkey);
+  const gpuOk = !!(CTL && CTL.gpu && CTL.gpu.tune_supported), tuneOn = gEdit.gpu_core != null || gEdit.gpu_mem != null;
+  gTune.core = gEdit.gpu_core ?? (CTL && CTL.gpu && CTL.gpu.core) ?? 0; gTune.mem = gEdit.gpu_mem ?? (CTL && CTL.gpu && CTL.gpu.mem) ?? 0;
+  $("g-tune-row").hidden = !gpuOk; setSwitch($("g-tune"), gpuOk && tuneOn); $("g-tune-box").hidden = !(gpuOk && tuneOn); paintGTune();
   $("g-delete").hidden = !g;
   $("g-running").innerHTML = `<span class="muted small">Recherche…</span>`;
   $("gsheet").classList.add("show");
@@ -2853,7 +3647,8 @@ $("g-save").addEventListener("click", async () => {
   const gpu = segVal($("g-gpu"));
   const body = { action: "game_save", old: gEdit && gEdit.exe ? gEdit.exe : undefined, exe, name: $("g-name").value.trim(),
     mode: segVal($("g-mode")) || null, cpu: segVal($("g-cpu")) || null, gpu: gpu === "on" ? true : gpu === "off" ? false : null,
-    color: segVal($("g-color")) || null, winkey: isOn($("g-winkey")), enabled: gEdit ? gEdit.enabled !== false : true };
+    color: segVal($("g-color")) || null, winkey: isOn($("g-winkey")), enabled: gEdit ? gEdit.enabled !== false : true,
+    gpu_core: isOn($("g-tune")) ? gTune.core : null, gpu_mem: isOn($("g-tune")) ? gTune.mem : null };
   const r = await api("/api/action", body).catch(() => null);
   toast(r ? r.msg || "Enregistré" : "Le PC ne répond pas", !r || !r.ok);
   if (r && r.ok) { closeGame(); reloadControls(200); }
@@ -2896,6 +3691,7 @@ function showReport(r) {
     tile(r.cpu_avg != null ? `${r.cpu_avg}° / ${r.gpu_avg ?? "–"}°` : "–", "Moy. CPU / GPU"),
   ].join("") + (r.fps_avg == null ? `<p class="muted small" style="grid-column:1/-1">FPS non mesurés pour cette partie.</p>` : "");
   $("rsheet").classList.add("show");
+  loadSeries(r);
 }
 $("r-close").addEventListener("click", () => $("rsheet").classList.remove("show"));
 $("rsheet").addEventListener("click", e => { if (e.target.id === "rsheet") $("rsheet").classList.remove("show"); });

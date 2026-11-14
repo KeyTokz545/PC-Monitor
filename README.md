@@ -84,6 +84,26 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.13
+
+- **Options** refaites : une page par catégorie (Apparence, Compteurs, Menus et gestes, Écran du PC, Touches,
+  Alertes, Mise à jour).
+- **Compteurs** au choix pour le CPU et le GPU : cadran, anneau, aiguille, LED, chiffres ; et les 3 infos
+  affichées sous le compteur (charge, conso, fréquence, ventilateur, mémoire, max/min, VRAM).
+- **Créateur de thème** : fond, fenêtres, texte, accent, coins (très ronds, arrondis, droits, coupés) et police
+  des chiffres ; thèmes enregistrés sur le téléphone.
+- **Touches dédiées** : Pause/Attn et Impr. écran, seules, changent la ventilation / le profil CPU / le micro
+  ou lancent « Avant de jouer » (réglable). Avec Win, Alt ou Ctrl elles gardent leur rôle normal.
+- **Avant de jouer** (onglet Jeu) : ferme les programmes choisis, vide la mémoire en cache de Windows, met la
+  ventilation et le profil CPU voulus, en un appui.
+- **Bridage** : la raison (chauffe, puissance, PROCHOT…) s'affiche sur la carte du CPU / GPU, bandeau en cas de
+  chauffe.
+- **Profils de jeu** : décalages GPU (undervolt) appliqués pendant le jeu.
+- **Bilan de partie** : courbes FPS, températures et watts sur toute la partie.
+- **Stockage** (onglet Contrôles) : santé des SSD, température, données écrites, place libre.
+- **Mise à jour en un bouton** (Options > Mise à jour) : télécharge, vérifie, remplace Keystone.exe et redémarre.
+  Dépôt privé : il faut un jeton GitHub en lecture seule (fine-grained, Contents : Read-only).
+
 ## 2.12
 
 - **Annonce sur l'écran du PC** : quand on change la ventilation, le profil CPU, le micro, le son, le pavé

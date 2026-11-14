@@ -65,8 +65,14 @@ jobs:
   release:
     name: Publier la dernière version
     needs: [windows, android]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: pc/PCMonitor.csproj
+          sparse-checkout-cone-mode: false
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -77,12 +83,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
+          # le numéro de version dans le titre sert à la mise à jour en un bouton
+          VER=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' pc/PCMonitor.csproj | head -1)
           # GitHub renvoie parfois une erreur 502 passagère : on réessaie
           for i in 1 2 3 4; do
             gh release delete latest --yes --cleanup-tag -R "$REPO" || true
             if gh release create latest dist/Keystone.exe dist/Keystone.apk -R "$REPO" \
               --target "${{ github.sha }}" \
-              --title "Keystone (compilation ${{ github.run_number }})" \
+              --title "Keystone $VER (compilation ${{ github.run_number }})" \
               --notes "Keystone.exe : logiciel pour le PC Windows. Keystone.apk : appli pour le téléphone Android. Voir le README pour l'installation."; then
               exit 0
             fi

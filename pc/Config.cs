@@ -39,6 +39,34 @@ public sealed class FanProfile
         curve != null && curve.Count == 16 ? curve.Select((v, i) => (byte)Math.Clamp(v, 0, i < 8 ? 120 : 100)).ToArray() : null;
 }
 
+/// <summary>Mise à jour depuis GitHub (Releases → latest).</summary>
+public sealed class UpdateSettings
+{
+    /// <summary>Jeton GitHub en lecture seule, nécessaire tant que le dépôt est privé.</summary>
+    public string Token { get; set; } = "";
+}
+
+/// <summary>Touches dédiées : action de Pause/Attn et d'Impr. écran (none, mode, cpu, mic, pregame).</summary>
+public sealed class KeySettings
+{
+    public string Pause { get; set; } = "mode";
+    public string Print { get; set; } = "cpu";
+}
+
+/// <summary>Bouton « Avant de jouer ».</summary>
+public sealed class PreGameSettings
+{
+    /// <summary>Programmes à fermer (ex. chrome.exe).</summary>
+    public List<string> Close { get; set; } = new();
+    /// <summary>Forcer la fermeture des programmes qui restent ouverts (Discord reste dans la barre sinon).</summary>
+    public bool Force { get; set; } = true;
+    /// <summary>Vider la mémoire en cache (liste « en attente » de Windows).</summary>
+    public bool Ram { get; set; } = true;
+    /// <summary>Ventilation et profil CPU à mettre (vide = ne pas toucher).</summary>
+    public string Mode { get; set; } = "turbo";
+    public string Cpu { get; set; } = "turbo";
+}
+
 /// <summary>Petit affichage dans un coin de l'écran du PC quand on change un réglage.</summary>
 public sealed class OsdSettings
 {
@@ -92,6 +120,9 @@ public sealed class AppConfig
     public List<GameProfile> Games { get; set; } = new();
     public bool WinKeyLock { get; set; }
     public OsdSettings Osd { get; set; } = new();
+    public UpdateSettings Update { get; set; } = new();
+    public KeySettings Keys { get; set; } = new();
+    public PreGameSettings PreGame { get; set; } = new();
     /// <summary>Réglages du processeur (remplace ThrottleStop).</summary>
     public CpuSettings Cpu { get; set; } = new();
     public bool FirstRunDone { get; set; }

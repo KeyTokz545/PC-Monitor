@@ -25,6 +25,9 @@ public sealed class GameProfile
     public bool WinKey { get; set; }
     /// <summary>Profil CPU pendant le jeu (null = ne pas toucher), indépendant de la ventilation.</summary>
     public string CpuProfile { get; set; }
+    /// <summary>Décalages GPU (MHz) pendant le jeu (null = ne pas toucher).</summary>
+    public int? GpuCore { get; set; }
+    public int? GpuMem { get; set; }
 
     public static string Norm(string exe)
     {
@@ -157,7 +160,10 @@ public sealed class GameWatcher
     GameProfile active;
     DateTime since;
     string beforeMode, beforeColor, beforeCpu;
-    bool beforeGpu, beforeWinKey;
+    bool beforeGpu, beforeWinKey, beforeTune;
+    int beforeCore, beforeMem;
+    // courbes de la partie : une mesure toutes les 6 s (FPS, temp. CPU/GPU, watts CPU/GPU)
+    readonly List<int?[]> series = new();
 
     public GameWatcher(AppConfig cfg, ModeService modes, CpuTuner cpu)
     {
@@ -207,6 +213,7 @@ public sealed class GameWatcher
                         Fps.PreferredPid = pid;
                         if (Collector?.CpuTemp is float ct) { cpuMax = Math.Max(cpuMax, ct); cpuSum += ct; cpuN++; }
                         if (Collector?.GpuTemp is float gt && gt > 1) { gpuMax = Math.Max(gpuMax, gt); gpuSum += gt; gpuN++; }
+                        if (ticks % 2 == 0) Sample();
                     }
                     else Restore();
                     return;
@@ -234,6 +241,10 @@ public sealed class GameWatcher
         beforeColor = cfg.ActiveColor;
         beforeWinKey = cfg.WinKeyLock;
         beforeCpu = cfg.Cpu.Active;
+        beforeTune = cfg.GpuLimit.TuneOn;
+        beforeCore = cfg.GpuLimit.CoreOffset;
+        beforeMem = cfg.GpuLimit.MemOffset;
+        series.Clear();
         Fps.PreferredPid = pid;
         cpuMax = gpuMax = 0;
         cpuSum = gpuSum = 0;
@@ -245,6 +256,19 @@ public sealed class GameWatcher
         if (!string.IsNullOrEmpty(g.Color) && !string.Equals(g.Color, cfg.ActiveColor, StringComparison.OrdinalIgnoreCase)) Tweaks.SetColor(cfg, g.Color);
         if (g.WinKey && !cfg.WinKeyLock) Tweaks.SetWinKey(cfg, true);
         if (ModeDefs.Known(g.CpuProfile) && g.CpuProfile != cfg.Cpu.Active) cpu.SetProfile(g.CpuProfile);
+        if ((g.GpuCore.HasValue || g.GpuMem.HasValue) && Gpu.TuneSupported)
+            Tweaks.SetGpuTune(cfg, true, g.GpuCore ?? cfg.GpuLimit.CoreOffset, g.GpuMem ?? cfg.GpuLimit.MemOffset, false);
+    }
+
+    void Sample()
+    {
+        int? fps = null;
+        try { if (Fps.State().TryGetValue("fps", out var f) && f is int n) fps = n; } catch { }
+        static int? I(float? v) => v.HasValue ? (int)Math.Round(v.Value) : null;
+        series.Add(new[] { fps, I(Collector?.CpuTemp), I(Collector?.GpuTemp), I(Collector?.CpuPower), I(Collector?.GpuPower) });
+        // partie très longue : on garde une mesure sur deux pour rester léger
+        if (series.Count > 1200)
+            for (var i = series.Count - 1; i > 0; i -= 2) series.RemoveAt(i - 1);
     }
 
     void Restore()
@@ -272,6 +296,11 @@ public sealed class GameWatcher
                 ["cpu_profile"] = cfg.Cpu.Enabled ? cfg.Cpu.Active : null,
             };
             if (fps != null) foreach (var kv in fps) r[kv.Key] = kv.Value;
+            if (series.Count >= 3)
+            {
+                r["series_step"] = (int)Math.Max(6, secs / series.Count);
+                r["series"] = series.Select(x => x.Cast<object>().ToArray()).ToList();
+            }
             GameReports.Add(r);
             Log.Info($"Bilan de partie : {g.Name}, {secs / 60} min, {(fps != null ? fps["fps_avg"] + " FPS" : "FPS non mesurés")}");
         }
@@ -284,6 +313,8 @@ public sealed class GameWatcher
             if (g.Gpu.HasValue && cfg.GpuLimit.On != beforeGpu) Tweaks.SetGpu(cfg, beforeGpu);
             if (!string.IsNullOrEmpty(g.Mode) && ModeDefs.Known(beforeMode) && cfg.LastMode != beforeMode) modes.Apply(beforeMode);
             if (ModeDefs.Known(g.CpuProfile) && ModeDefs.Known(beforeCpu) && cfg.Cpu.Active != beforeCpu) cpu.SetProfile(beforeCpu);
+            if ((g.GpuCore.HasValue || g.GpuMem.HasValue) && Gpu.TuneSupported)
+                Tweaks.SetGpuTune(cfg, beforeTune, beforeCore, beforeMem, false);
         }
         catch (Exception e)
         {

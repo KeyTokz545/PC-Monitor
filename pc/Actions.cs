@@ -85,6 +85,63 @@ public sealed class Actions
                 if (ok) Osd.Mode(id);
                 return R(ok, msg);
             }
+            // ---------------------------------------------------------------- mise à jour
+            case "update_check":
+                Updater.Check().Wait(TimeSpan.FromSeconds(8));
+                return R(true);
+            case "update_install":
+            {
+                var (ok, msg) = Updater.Install();
+                return R(ok, msg);
+            }
+            case "update_token":
+            {
+                Updater.SetToken(S(body, "token"));
+                Updater.Check().Wait(TimeSpan.FromSeconds(8));
+                return R(true, Updater.HasToken ? "Jeton enregistré" : "Jeton retiré");
+            }
+
+            // ---------------------------------------------------------------- touches dédiées
+            case "keys_set":
+            {
+                var pause = S(body, "pause");
+                var print = S(body, "print");
+                if (pause != null && HotKeys.Choices.Contains(pause)) cfg.Keys.Pause = pause;
+                if (print != null && HotKeys.Choices.Contains(print)) cfg.Keys.Print = print;
+                cfg.Save();
+                HotKeys.Apply();
+                return R(true);
+            }
+
+            // ---------------------------------------------------------------- avant de jouer
+            case "pregame_run":
+            {
+                var (ok, msg) = PreGame.Run(cfg, modes, Cpu);
+                return R(ok, msg);
+            }
+            case "pregame_set":
+            {
+                var pg = cfg.PreGame;
+                if (body.ValueKind == JsonValueKind.Object && body.TryGetProperty("close", out var cl) && cl.ValueKind == JsonValueKind.Array)
+                {
+                    var list = new List<string>();
+                    foreach (var x in cl.EnumerateArray())
+                    {
+                        var exe = x.ValueKind == JsonValueKind.String ? (x.GetString() ?? "").Trim() : "";
+                        if (GameProfile.Norm(exe).Length == 0) continue;
+                        if (!exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) exe += ".exe";
+                        if (!list.Any(e => GameProfile.Norm(e) == GameProfile.Norm(exe))) list.Add(Cut(exe, 80));
+                    }
+                    lock (AppConfig.Gate) pg.Close = list.Take(30).ToList();
+                }
+                if (B(body, "force") is bool force) pg.Force = force;
+                if (B(body, "ram") is bool ram) pg.Ram = ram;
+                if (Has(body, "mode")) pg.Mode = ModeDefs.Known(S(body, "mode")) ? S(body, "mode") : "";
+                if (Has(body, "cpu")) pg.Cpu = ModeDefs.Known(S(body, "cpu")) ? S(body, "cpu") : "";
+                cfg.Save();
+                return R(true);
+            }
+
             case "osd_set":
             {
                 if (B(body, "on") is bool on) cfg.Osd.On = on;
@@ -410,6 +467,8 @@ public sealed class Actions
                     Color = string.IsNullOrWhiteSpace(color) ? null : color,
                     WinKey = B(body, "winkey") ?? false,
                     CpuProfile = ModeDefs.Known(S(body, "cpu")) ? S(body, "cpu") : null,
+                    GpuCore = Has(body, "gpu_core") && !IsNull(body, "gpu_core") ? Math.Clamp((int)D(body, "gpu_core", 0), -500, 1000) : null,
+                    GpuMem = Has(body, "gpu_mem") && !IsNull(body, "gpu_mem") ? Math.Clamp((int)D(body, "gpu_mem", 0), -2000, 3000) : null,
                 };
                 var old = S(body, "old");
                 lock (AppConfig.Gate)

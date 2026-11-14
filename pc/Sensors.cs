@@ -178,10 +178,26 @@ public sealed class Sensors : IDisposable
         };
 
         // ---- disques
-        result["disks"] = disks
-            .Select(d => new { d.Name, T = d.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Temperature && s.Value.HasValue) })
-            .Where(x => x.T != null)
-            .Select(x => new Dictionary<string, object> { ["name"] = x.Name, ["temp"] = (int)Math.Round(x.T.Value.Value) })
+        // santé : usure (NVMe « Percentage Used », SATA « Remaining Life »), données écrites, place utilisée
+        result["disks"] = disks.Select(d =>
+            {
+                var t = d.Sensors.FirstOrDefault(x => x.SensorType == SensorType.Temperature && x.Value.HasValue);
+                var used = V(Pick(d, SensorType.Level, "Percentage Used"));
+                var remaining = V(Pick(d, SensorType.Level, "Remaining Life"));
+                var written = V(Pick(d, SensorType.Data, "Data Written", "Total Bytes Written", "Host Writes"));
+                var space = V(Pick(d, SensorType.Load, "Used Space"));
+                var spare = V(Pick(d, SensorType.Level, "Available Spare"));
+                return new Dictionary<string, object>
+                {
+                    ["name"] = d.Name,
+                    ["temp"] = t != null ? (object)(int)Math.Round(t.Value.Value) : null,
+                    ["life"] = remaining.HasValue ? (object)(int)Math.Round(remaining.Value) : used.HasValue ? (object)(int)Math.Round(100 - Math.Min(100, used.Value)) : null,
+                    ["written"] = written.HasValue ? (object)Math.Round(written.Value / 1024.0, 1) : null, // To
+                    ["used"] = space.HasValue ? (object)(int)Math.Round(space.Value) : null,
+                    ["spare"] = spare.HasValue ? (object)(int)Math.Round(spare.Value) : null,
+                };
+            })
+            .Where(x => x["temp"] != null || x["life"] != null)
             .ToList();
 
         return result;

@@ -7,7 +7,7 @@ namespace PCMonitor;
 
 internal static class Program
 {
-    public const string Version = "2.12.1";
+    public const string Version = "2.13.0";
 
     [STAThread]
     static void Main(string[] args)
@@ -18,6 +18,12 @@ internal static class Program
         if (!first && ReplaceOldVersion())
         {
             try { first = mutex.WaitOne(8000); }
+            catch (AbandonedMutexException) { first = true; }
+        }
+        // relancé par une mise à jour : on attend que l'ancienne version ait fini de se fermer
+        if (!first && WaitForPid(args))
+        {
+            try { first = mutex.WaitOne(15000); }
             catch (AbandonedMutexException) { first = true; }
         }
         if (!first)
@@ -37,6 +43,19 @@ internal static class Program
         Log.Info($"Démarrage de Keystone {Version} ({string.Join(' ', args)})");
         Application.Run(new TrayApp(args));
         Log.Info("Arrêt de Keystone");
+    }
+
+    static bool WaitForPid(string[] args)
+    {
+        var i = Array.IndexOf(args, "--wait-pid");
+        if (i < 0 || i + 1 >= args.Length || !int.TryParse(args[i + 1], out var pid)) return false;
+        try
+        {
+            using var p = System.Diagnostics.Process.GetProcessById(pid);
+            p.WaitForExit(15000);
+        }
+        catch { } // déjà fermée
+        return true;
     }
 
     /// <summary>Ferme l'ancien PCMonitor.exe s'il tourne encore. Vrai si un processus a été fermé.</summary>

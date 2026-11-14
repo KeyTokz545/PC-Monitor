@@ -31,6 +31,7 @@ public static class GameReports
                             JsonValueKind.String => kv.Value.GetString(),
                             JsonValueKind.True => true,
                             JsonValueKind.False => false,
+                            JsonValueKind.Array => kv.Value.Clone(), // courbes de la partie
                             _ => null,
                         })));
                 }
@@ -51,9 +52,23 @@ public static class GameReports
         }
     }
 
+    /// <summary>Liste des bilans, sans les courbes (envoyées à part, bilan par bilan).</summary>
     public static List<Dictionary<string, object>> All()
     {
-        lock (Gate) return Items.ToList();
+        lock (Gate)
+            return Items.Select(r => r.Where(kv => kv.Key != "series").ToDictionary(kv => kv.Key, kv => kv.Value)
+                .Also(d => d["has_series"] = r.ContainsKey("series"))).ToList();
+    }
+
+    public static Dictionary<string, object> One(long id)
+    {
+        lock (Gate) return Items.FirstOrDefault(r => r.TryGetValue("id", out var v) && v is long l && l == id);
+    }
+
+    static Dictionary<string, object> Also(this Dictionary<string, object> d, Action<Dictionary<string, object>> f)
+    {
+        f(d);
+        return d;
     }
 
     public static void Add(Dictionary<string, object> report)

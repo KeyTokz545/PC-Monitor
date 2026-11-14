@@ -26,6 +26,7 @@ public sealed class Collector
     public float? CpuTemp { get; private set; }
     public float? GpuTemp { get; private set; }
     public float? CpuPower { get; private set; }
+    public float? GpuPower { get; private set; }
 
     /// <summary>Jeu à profil automatique en cours (nom + secondes depuis son lancement), pour le HUD du téléphone.</summary>
     public Func<object> GameInfo { get; set; }
@@ -176,6 +177,7 @@ public sealed class Collector
         s["cpu_profile"] = cfg.Cpu.Enabled ? cfg.Cpu.Active : null;
         s["last_report"] = GameReports.LatestId;
         try { s["game"] = GameInfo?.Invoke(); } catch { s["game"] = null; }
+        try { s["throttle"] = Throttle.Read(CpuTemp); } catch { }
         s["demo"] = false;
         s["app"] = "pcmonitor";
         s["version"] = Program.Version;
@@ -186,6 +188,7 @@ public sealed class Collector
         CpuTemp = cpuD.GetValueOrDefault("temp") as float?;
         GpuTemp = gpuD.GetValueOrDefault("temp") as float?;
         CpuPower = cpuD.GetValueOrDefault("power") as float?;
+        GpuPower = gpuD.GetValueOrDefault("power") as float?;
         lock (peakGate)
         {
             Peak(ref cpuMin, ref cpuMax, CpuTemp);
