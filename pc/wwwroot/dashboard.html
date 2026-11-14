@@ -182,7 +182,7 @@ html[data-fx="full"] .pg-go:not([disabled]){box-shadow:0 8px 24px color-mix(in s
 #custom.sheet{align-items:stretch;justify-content:center;background:rgba(0,0,0,.55);padding:0}
 .optpage{position:relative;width:100%;max-width:1040px;height:100%;background:var(--ink);display:grid;
   grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr);
-  padding:var(--safe-t) var(--safe-r) 0 var(--safe-l);overflow:hidden}
+  padding:var(--safe-t) var(--safe-r) 0 var(--safe-l);overflow:hidden;overflow:clip}
 html[data-anim="on"] #custom.show .optpage{animation:ks-opts-in .24s cubic-bezier(.2,.7,.2,1) backwards}
 @keyframes ks-opts-in{from{transform:translateY(22px)}to{transform:none}}
 .opts-h{display:flex;align-items:center;gap:12px;padding:12px 16px 8px}
@@ -2705,7 +2705,13 @@ function openThemeEditor(t) {
       : Object.assign(presetColors(UI.theme || "nuit"), { accent: UI.accent }));
   $("theme-ed").hidden = false; $("theme-new").hidden = true;
   fillThemeEditor(); previewTheme();
-  setTimeout(() => $("theme-ed").scrollIntoView({ block: "start", behavior: document.documentElement.dataset.anim === "on" ? "smooth" : "auto" }), 30);
+  // défile seulement la zone des options (scrollIntoView poussait toute la page vers le haut)
+  setTimeout(() => {
+    const body = $("opts-body"), ed = $("theme-ed");
+    const top = body.scrollTop + ed.getBoundingClientRect().top - body.getBoundingClientRect().top - 8;
+    body.scrollTo({ top, behavior: document.documentElement.dataset.anim === "on" ? "smooth" : "auto" });
+    pinOptsTop();
+  }, 30);
 }
 function themeDone() { teEdit = null; teBefore = null; $("theme-ed").hidden = true; renderCustom(); redrawAll(); }
 function themeCancel() { if (teBefore) { UI.theme = teBefore.theme; UI.accent = teBefore.accent; applyUI(); } themeDone(); }
@@ -2810,7 +2816,11 @@ function syncOsdAccent() {
 function redrawAll() { try { drawSpark($("cpu-spark"), hist.cpu); drawSpark($("gpu-spark"), hist.gpu); renderGame(); } catch (e) {} }
 $("alert-temp").addEventListener("input", e => { UI.alert.temp = +e.target.value; fill(e.target); $("alert-label").textContent = `Au-delà de ${UI.alert.temp} °C`; });
 $("alert-temp").addEventListener("change", saveUI);
-$("custom-btn").addEventListener("click", () => { renderCustom(); $("custom").classList.add("show"); if (optCat === "update") updPoll(true); });
+// La page Options ne doit jamais glisser : seul son contenu défile (sinon le haut et la croix sortent de l'écran).
+function pinOptsTop() { for (const el of [$("custom"), document.querySelector(".optpage")]) if (el && (el.scrollTop || el.scrollLeft)) { el.scrollTop = 0; el.scrollLeft = 0; } }
+for (const el of [$("custom"), document.querySelector(".optpage")]) el.addEventListener("scroll", pinOptsTop);
+window.addEventListener("resize", () => { if ($("custom").classList.contains("show")) setTimeout(pinOptsTop, 60); });
+$("custom-btn").addEventListener("click", () => { renderCustom(); $("custom").classList.add("show"); pinOptsTop(); if (optCat === "update") updPoll(true); });
 function closeOptions() { if (teEdit) themeCancel(); $("custom").classList.remove("show"); clearTimeout(updT); }
 $("custom-close").addEventListener("click", closeOptions);
 $("custom").addEventListener("click", e => { if (e.target.id === "custom") closeOptions(); });

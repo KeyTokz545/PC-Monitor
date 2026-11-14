@@ -84,6 +84,11 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.13.1
+
+- Options : le haut de la page (titre, croix) ne sort plus de l'écran après « Créer un thème » ou quand le
+  clavier s'ouvre.
+
 ## 2.13
 
 - **Options** refaites : une page par catégorie (Apparence, Compteurs, Menus et gestes, Écran du PC, Touches,
