@@ -103,6 +103,10 @@ Safari : Partager → **Sur l'écran d'accueil**.
 ## Bon à savoir
 
 - Le téléphone doit être sur le même Wi-Fi que le PC, réglé en réseau **privé** dans Windows.
+- **Gros téléchargement en Wi-Fi** (Steam…) : le Wi-Fi saturé retarde les réponses du PC. Keystone l'indique
+  (point orange, « Le PC répond lentement », bandeau « Téléchargement en cours ») au lieu d'afficher « PC
+  injoignable », réservé à 12 s sans aucune réponse. Pour garder tout fluide, limite la bande passante dans
+  Steam (Paramètres > Téléchargements).
 - **Allumer le PC à distance** (appli Android) fonctionne surtout avec un câble Ethernet et si le BIOS
   autorise le réveil par le réseau.
 - Keystone règle le Turbo Boost Windows par mode (Silencieux : activé, Équilibré et Turbo : agressif).

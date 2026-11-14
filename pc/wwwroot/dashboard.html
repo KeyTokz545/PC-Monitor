@@ -167,6 +167,9 @@ html[data-bg="on"] .aurora i:nth-child(2){animation:ks-drift2 31s ease-in-out in
 .dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none;transition:background .3s}
 .dot.on{background:var(--cool);box-shadow:0 0 0 3px rgba(79,195,224,.18)}
 .dot.off{background:var(--hot)}
+.dot.slow{background:#FFB547;box-shadow:0 0 0 3px rgba(255,181,71,.2)}
+#v-mon .card{transition:opacity .3s}
+body.stale #v-mon .card{opacity:.5}
 .meta{grid-area:meta;display:flex;gap:14px;color:var(--muted);font-size:14px;white-space:nowrap;padding-right:4px}
 .meta .num{font-weight:600;color:var(--text)}
 main{grid-area:main;overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -1264,9 +1267,9 @@ function thermal(t) {
 }
 const latColor = ms => ms == null ? "var(--hot)" : ms <= 40 ? "var(--good)" : ms <= 80 ? "var(--amber)" : "var(--hot)";
 
-async function api(path, body) {
+async function api(path, body, ms = 3000) {
   const url = path + (path.includes("?") ? "&" : "?") + "k=" + encodeURIComponent(KEY);
-  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 3000);
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), ms);
   try {
     const r = await fetch(url, body ? { method: "POST", body: JSON.stringify(body), signal: ctl.signal,
       headers: { "Content-Type": "application/json" } } : { signal: ctl.signal, cache: "no-store" });
@@ -1442,7 +1445,8 @@ function render(s) {
   if (!s.demo && s.lhm && s.lhm.ok && c.temp == null) notes.push(["Température CPU vide : installe le pilote PawnIO (pawnio.eu) sur le PC, puis relance LibreHardwareMonitor en administrateur.", ""]);
   if (m.ghelper_running === false) notes.push(["G-Helper n'est pas lancé sur le PC : les modes ne changeront pas.", ""]);
   if (m.control_ok === false) notes.push(["Modes ASUS indisponibles : Keystone n'a pas accès au pilote ASUS (ATKACPI).", ""]);
-  setNotes(notes);
+  sensorNotes = notes;
+  paintNotes();
 }
 function renderWifi(w) {
   const el = $("wifi");
@@ -1463,22 +1467,52 @@ function setNotes(list) {
   if (html !== lastNotes) { $("notes").innerHTML = html; lastNotes = html; }
 }
 
+/* ---------- Liaison avec le PC ----------
+   Wi-Fi saturé (gros téléchargement) : les réponses arrivent en retard sans que le PC soit éteint.
+   On juge donc sur le temps écoulé depuis la dernière réponse, pas sur le nombre d'échecs. */
+const SLOW_MS = 2500, LOST_MS = 12000, SAT_DOWN = 3 * 1048576;
+let lastOk = Date.now(), lastNet = null, authBad = false, sensorNotes = [];
+const authMsg = () => typeof window.AndroidApp !== "undefined"
+  ? "Code invalide : touche le nom du PC en haut pour te reconnecter."
+  : "Clé invalide : scanne à nouveau le QR code affiché par Keystone sur le PC (clic droit sur l'icône > Connecter un téléphone).";
+function saturated(n) {
+  return !!n && n.down >= SAT_DOWN && ((n.latency != null && n.latency >= 150) || (n.loss || 0) >= 20);
+}
+function connNotes() {
+  if (authBad) return [[authMsg(), "bad"]];
+  const out = [], age = Date.now() - lastOk;
+  if (age > LOST_MS) out.push(["PC injoignable : vérifie que Keystone tourne sur le PC et que le téléphone est sur le même Wi-Fi.", "bad"]);
+  else if (age > SLOW_MS) out.push([`Le PC répond lentement : valeurs d'il y a ${Math.round(age / 1000)} s`, ""]);
+  if (saturated(lastNet)) out.push([`Téléchargement en cours (${nf(lastNet.down / 1048576, 1)} Mo/s) : le Wi-Fi est saturé, d'où la latence et les retards de Keystone. Pour garder tout fluide, limite la bande passante dans Steam (Paramètres > Téléchargements).`, ""]);
+  return out;
+}
+function paintNotes() { setNotes([...connNotes(), ...sensorNotes]); }
+function linkState() {
+  const age = Date.now() - lastOk;
+  $("dot").className = "dot " + (authBad || age > LOST_MS ? "off" : age > SLOW_MS ? "slow" : "on");
+  document.body.classList.toggle("stale", !authBad && age > SLOW_MS);
+  paintNotes();
+}
+setInterval(() => { if (!document.hidden) linkState(); }, 500);
+
 /* ---------- Boucle ---------- */
-let fails = 0, busy = false;
+let busy = false;
 async function tick() {
   if (busy || document.hidden) return; busy = true;
   try {
-    const s = await api("/api/stats");
-    if (s && s.cpu) { if (!Layout.held()) render(s); Hud.update(s); fails = 0; $("dot").className = "dot on"; }
+    const s = await api("/api/stats", null, 6000);
+    if (s && s.cpu) {
+      lastOk = Date.now(); lastNet = s.net || null; authBad = false;
+      if (!Layout.held()) render(s);
+      Hud.update(s);
+      linkState();
+    }
     const view = document.body.dataset.view;
     if ((view === "v-ctl" || view === "v-gpu" || view === "v-game") && Date.now() - ctlAt > 8000 && !Object.values(dragging).some(Boolean) && !colEdit) loadControls();
     if (view === "v-game") loadGame();
     if (view === "v-cpu" && (cpuTick = (cpuTick + 1) % 2) === 0) loadCpu();
   } catch (e) {
-    fails++;
-    if (e.auth) { setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par Keystone sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]); $("dot").className = "dot off"; }
-    if (!e.auth && fails >= 2) { $("dot").className = "dot off";
-      setNotes([["PC injoignable : vérifie que Keystone tourne sur le PC et que le téléphone est sur le même Wi-Fi.", "bad"]]); }
+    if (e.auth) { authBad = true; linkState(); }
   } finally { busy = false; }
 }
 async function init() {
@@ -1488,7 +1522,7 @@ async function init() {
     buildModes(cfg.modes || []);
   } catch (e) {
     buildModes([{ id: "silent", label: "Silencieux" }, { id: "balanced", label: "Équilibré" }, { id: "turbo", label: "Turbo" }]);
-    if (e.auth) setNotes([[(typeof window.AndroidApp !== "undefined" ? "Code invalide : touche le nom du PC en haut pour te reconnecter." : "Clé invalide : scanne à nouveau le QR code affiché par Keystone sur le PC (clic droit sur l'icône > Connecter un téléphone)."), "bad"]]);
+    if (e.auth) { authBad = true; linkState(); }
     setTimeout(init, 4000);
   }
   tick();
@@ -1534,7 +1568,7 @@ $("gpu-tune-reset").addEventListener("click", () => confirmSheet("Remettre le GP
 
 /* ---------- Actions ---------- */
 async function act(body, quiet) {
-  try { const r = await api("/api/action", body); if (!quiet || !r.ok) toast(r.msg || (r.ok ? "Fait" : "Échec"), !r.ok); return r; }
+  try { const r = await api("/api/action", body, 6000); if (!quiet || !r.ok) toast(r.msg || (r.ok ? "Fait" : "Échec"), !r.ok); return r; }
   catch (e) { toast(e.auth ? "Clé invalide" : "Le PC ne répond pas", true); return null; }
 }
 document.querySelectorAll("[data-act]").forEach(b => {
@@ -3127,7 +3161,8 @@ async function keepAwake() {
   try { if ("wakeLock" in navigator && !wake) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => wake = null); } } catch (e) {}
 }
 document.addEventListener("pointerdown", keepAwake, { once: false, passive: true });
-document.addEventListener("visibilitychange", () => { if (!document.hidden) { keepAwake(); tick(); } });
+// retour au premier plan : rien n'a été demandé pendant la pause, on ne compte pas ce temps comme un retard
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { lastOk = Date.now(); linkState(); keepAwake(); tick(); } });
 
 init();
 </script>
