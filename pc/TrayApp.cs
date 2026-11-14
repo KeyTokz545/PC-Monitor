@@ -62,6 +62,11 @@ public sealed class TrayApp : ApplicationContext
         };
         controls = new Controls(cfg, asus, modes, games);
         var actions = new Actions(cfg, modes, asus, games, cpu) { ResetPeaks = collector.ResetPeaks };
+        HotKeys.PreGame = () => PreGame.Run(cfg, modes, cpu);
+        HotKeys.Init(cfg, modes, cpu, asus);
+        Updater.Init(cfg);
+        Updater.Quit = () => OnUi(ExitThread);
+        Updater.Announce = v => Balloon($"Keystone {v} est disponible : Options > Mise à jour dans l'appli, ou clic droit sur l'icône.");
         web = new WebServer(cfg, collector, actions, controls);
         string webError = null;
         try
@@ -106,6 +111,13 @@ public sealed class TrayApp : ApplicationContext
             games.Start();
             await Task.Delay(1500);
             LaunchTools();
+            // nouvelle version ? une minute après le démarrage, puis toutes les 6 heures
+            await Task.Delay(60000);
+            while (true)
+            {
+                await Updater.Check();
+                await Task.Delay(TimeSpan.FromHours(6));
+            }
         });
 
         if (webError != null)
@@ -256,6 +268,13 @@ public sealed class TrayApp : ApplicationContext
             if (Tweaks.SetWinKey(cfg, on).Ok) Osd.Toggle("Touche Windows", on ? "Bloquée" : "Débloquée", on);
         });
         m.Items.Add(winkey);
+        m.Items.Add("Avant de jouer", null, (s, e) => Task.Run(() =>
+        {
+            var (ok, msg) = PreGame.Run(cfg, modes, cpu);
+            if (!ok || !cfg.Osd.On) Balloon(msg);
+        }));
+        if (Updater.State == "ready")
+            m.Items.Add($"Mettre à jour vers {Updater.Latest}", null, (s, e) => Balloon(Updater.Install().Message));
         m.Items.Add(new ToolStripSeparator());
 
         var launch = new ToolStripMenuItem("Lancer avec Keystone");

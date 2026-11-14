@@ -74,14 +74,17 @@ public static class Win
     [DllImport("kernel32.dll")]
     static extern bool CloseHandle(IntPtr handle);
 
-    static void EnableShutdownPrivilege()
+    static void EnableShutdownPrivilege() => EnablePrivilege("SeShutdownPrivilege");
+
+    /// <summary>Active un privilège du compte administrateur (désactivé par défaut dans le jeton).</summary>
+    public static bool EnablePrivilege(string name)
     {
-        if (!OpenProcessToken(GetCurrentProcess(), 0x0028, out var token)) return; // ADJUST_PRIVILEGES | QUERY
+        if (!OpenProcessToken(GetCurrentProcess(), 0x0028, out var token)) return false; // ADJUST_PRIVILEGES | QUERY
         try
         {
-            if (!LookupPrivilegeValue(null, "SeShutdownPrivilege", out var luid)) return;
+            if (!LookupPrivilegeValue(null, name, out var luid)) return false;
             var tp = new TOKEN_PRIVILEGES { Count = 1, Luid = luid, Attributes = 0x2 }; // SE_PRIVILEGE_ENABLED
-            AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+            return AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero) && Marshal.GetLastWin32Error() == 0;
         }
         finally
         {

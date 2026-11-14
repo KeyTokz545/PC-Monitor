@@ -164,6 +164,12 @@ public sealed class WebServer
                     return;
 
                 case "/api/reports":
+                    if (long.TryParse(ctx.Request.QueryString["id"], out var rid))
+                    {
+                        var one = GameReports.One(rid);
+                        SendJson(ctx, one != null ? 200 : 404, (object)one ?? new Dictionary<string, object> { ["error"] = "Bilan introuvable" });
+                        return;
+                    }
                     SendJson(ctx, 200, new Dictionary<string, object> { ["items"] = GameReports.All() });
                     return;
 

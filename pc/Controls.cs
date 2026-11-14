@@ -132,6 +132,8 @@ public sealed class Controls
                     ["color"] = g.Color,
                     ["winkey"] = g.WinKey,
                     ["cpu"] = g.CpuProfile,
+                    ["gpu_core"] = g.GpuCore,
+                    ["gpu_mem"] = g.GpuMem,
                 }).ToList(),
                 ["active"] = games.ActiveName,
                 ["active_exe"] = games.ActiveExe,
@@ -145,10 +147,58 @@ public sealed class Controls
             ["corner"] = cfg.Osd.Corner,
             ["accent"] = cfg.Osd.Accent,
         };
+        d["update"] = new Dictionary<string, object>
+        {
+            ["current"] = Program.Version,
+            ["state"] = Updater.State,
+            ["latest"] = Updater.Latest,
+            ["error"] = Updater.Error,
+            ["progress"] = Updater.Progress,
+            ["checked"] = Updater.CheckedAt.HasValue ? (object)(long)(DateTime.Now - Updater.CheckedAt.Value).TotalSeconds : null,
+            ["has_token"] = Updater.HasToken,
+        };
+        d["keys"] = new Dictionary<string, object> { ["pause"] = cfg.Keys.Pause, ["print"] = cfg.Keys.Print };
+        List<string> close;
+        lock (AppConfig.Gate) close = cfg.PreGame.Close.ToList();
+        d["pregame"] = new Dictionary<string, object>
+        {
+            ["close"] = close,
+            ["force"] = cfg.PreGame.Force,
+            ["ram"] = cfg.PreGame.Ram,
+            ["mode"] = cfg.PreGame.Mode,
+            ["cpu"] = cfg.PreGame.Cpu,
+        };
+        d["volumes"] = Volumes();
         d["timer"] = Tweaks.TimerAt.HasValue
             ? new Dictionary<string, object> { ["what"] = Tweaks.TimerWhat, ["left"] = (long)Math.Max(0, (Tweaks.TimerAt.Value - DateTime.Now).TotalSeconds) }
             : null;
         return d;
+    }
+
+    /// <summary>Lecteurs du PC (C:, D:…) : place totale et libre.</summary>
+    static List<Dictionary<string, object>> Volumes()
+    {
+        var list = new List<Dictionary<string, object>>();
+        try
+        {
+            foreach (var v in System.IO.DriveInfo.GetDrives())
+            {
+                try
+                {
+                    if (v.DriveType != System.IO.DriveType.Fixed || !v.IsReady) continue;
+                    list.Add(new Dictionary<string, object>
+                    {
+                        ["name"] = v.Name.TrimEnd('\\'),
+                        ["label"] = v.VolumeLabel,
+                        ["total"] = Math.Round(v.TotalSize / 1073741824.0, 1),
+                        ["free"] = Math.Round(v.AvailableFreeSpace / 1073741824.0, 1),
+                    });
+                }
+                catch { }
+            }
+        }
+        catch { }
+        return list;
     }
 
     /// <summary>Remet les réglages que le PC oublie au redémarrage (GPU, clavier, batterie).</summary>
