@@ -84,6 +84,11 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.13.2
+
+- Wi-Fi lu sans la localisation de Windows (plus de « netsh » toutes les 5 s) : signal, dBm, bande, canal,
+  vitesse du lien et nom du réseau s'affichent même avec la localisation désactivée.
+
 ## 2.13.1
 
 - Options : le haut de la page (titre, croix) ne sort plus de l'écran après « Créer un thème » ou quand le

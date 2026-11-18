@@ -1854,7 +1854,7 @@ function renderWifi(w) {
   if (w.error) { el.innerHTML = `<div class="row"><span class="muted">${esc(w.error)}</span></div>`; return; }
   const lvl = w.signal == null ? 0 : w.signal >= 80 ? 4 : w.signal >= 60 ? 3 : w.signal >= 40 ? 2 : 1;
   const bars = [5, 8, 11, 14].map((h, i) => `<i class="${i < lvl ? "on" : ""}" style="height:${h}px"></i>`).join("");
-  const rows = [["Signal", w.signal != null ? w.signal + " %" : "–"]];
+  const rows = [["Signal", w.signal != null ? w.signal + " %" + (w.rssi != null ? ` · ${String(w.rssi).replace("-", "−")} dBm` : "") : "–"]];
   if (w.band || w.channel) rows.push(["Bande", [w.band, w.channel && "canal " + w.channel].filter(Boolean).join(", ")]);
   if (w.rx != null) rows.push(["Lien", nf(w.rx) + " Mb/s"]);
   el.innerHTML = `<div class="ssid"><div class="bars">${bars}</div><span>${esc(w.ssid || "Wi-Fi")}</span></div>` +
