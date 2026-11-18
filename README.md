@@ -84,6 +84,11 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.13.5
+
+- Arc-en-ciel (anciens ROG) : les interrupteurs bandeau et logo sont grisés, le clavier les entraîne dans cet effet.
+  En cycle de couleurs, seul le logo est grisé.
+
 ## 2.13.4
 
 - Cycle de couleurs et arc-en-ciel (anciens ROG) : couper le bandeau ou le logo n'éteint plus tout. Le logo suit

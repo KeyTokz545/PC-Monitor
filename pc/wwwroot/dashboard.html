@@ -2106,10 +2106,15 @@ function renderKeyboard() {
   lab.setAttribute("aria-pressed", !match);
   if (!match && /^#[0-9a-f]{6}$/i.test(cur)) { lab.style.background = cur; $("kb-custom").value = cur; }
   else lab.style.background = "";
-  document.querySelectorAll("[data-zone]").forEach(sw => setSwitch(sw, k[sw.dataset.zone] !== false));
-  // anciens ROG (Scar II…) : limites du clavier dans les effets globaux
+  // anciens ROG (Scar II…) : en arc-en-ciel le clavier pilote tout, bandeau et logo ne se coupent pas seuls
+  const locked = k.old && k.mode === 3 ? ["bar", "logo"] : k.old && k.mode === 2 ? ["logo"] : [];
+  document.querySelectorAll("[data-zone]").forEach(sw => {
+    const lock = locked.includes(sw.dataset.zone);
+    sw.disabled = lock;
+    setSwitch(sw, lock ? true : k[sw.dataset.zone] !== false);
+  });
   const note = !k.old ? "" : k.mode === 2 ? "Cycle de couleurs : le logo suit l'effet, ton clavier ne sait pas le couper seul dans ce mode."
-    : k.mode === 3 ? "Arc-en-ciel : le logo suit l'effet, et couper le clavier éteint tout (limite de ton clavier dans ce mode)." : "";
+    : k.mode === 3 ? "Arc-en-ciel : bandeau et logo suivent l'effet, et couper le clavier éteint tout (limite de ton clavier dans ce mode)." : "";
   $("kb-zone-note").textContent = note; $("kb-zone-note").hidden = !note;
 }
 
