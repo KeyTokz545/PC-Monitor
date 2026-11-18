@@ -212,15 +212,14 @@ public static class Keyboard
         if (usesColor)
             for (byte z = 1; z <= 4; z++)
                 list.Add(EffectMessage(s, z, s.Zones != null && s.Zones.Count == 4 ? s.Zones[z - 1] : s.Color));
-        if (old)
+        // Cycle et arc-en-ciel sont des effets globaux : une zone envoyée à part (même en noir) les arrête et tout
+        // s'éteint (testé sur le GL704GW). Le bandeau se coupe alors par l'allumage seul ; le logo suit l'effet.
+        if (old && usesColor)
         {
             // logo : aucun bit d'allumage sur ces modèles, on le coupe en le passant en noir
-            if (!s.Logo) list.Add(BlackZone(ZoneLogo));
-            else if (usesColor) list.Add(EffectMessage(s, ZoneLogo, s.Color));
-            // bandeau : coupé aussi par l'allumage ; le noir évite qu'il suive l'arc-en-ciel
+            list.Add(s.Logo ? EffectMessage(s, ZoneLogo, s.Color) : BlackZone(ZoneLogo));
             foreach (var z in new[] { ZoneBarLeft, ZoneBarRight })
-                if (!s.Bar) list.Add(BlackZone(z));
-                else if (usesColor) list.Add(EffectMessage(s, z, s.Color));
+                list.Add(s.Bar ? EffectMessage(s, z, s.Color) : BlackZone(z));
         }
         return list;
     }
@@ -240,17 +239,23 @@ public static class Keyboard
         return new byte[] { AuraId, 0xBD, 0x01, (byte)(a >> 16), (byte)(a >> 8), (byte)a, 0x00 };
     }
 
+    static bool? oldDevice;
+
     /// <summary>Le clavier trouvé est-il un ROG d'avant 2021 ?</summary>
-    static bool IsOld()
+    public static bool IsOld()
     {
-        try
+        if (oldDevice == null)
         {
-            return Find(AuraId).Any(d => OldPids.Contains(d.ProductID));
+            try
+            {
+                oldDevice = Find(AuraId).Any(d => OldPids.Contains(d.ProductID));
+            }
+            catch
+            {
+                return false;
+            }
         }
-        catch
-        {
-            return false;
-        }
+        return oldDevice.Value;
     }
 
     static byte[] PowerMessage(KeyboardSettings s)
@@ -277,9 +282,9 @@ public static class Keyboard
             s.Brightness = Math.Clamp(s.Brightness, 0, 3);
             s.Speed = Math.Clamp(s.Speed, 0, 2);
             if (s.Zones != null && (s.Zones.Count != 4 || s.Zones.Any(z => z == null))) s.Zones = null;
-            bool old = IsOld();
-            WriteAura(feature, old ? OldPowerMessage(s) : PowerMessage(s));
-            var msgs = EffectMessages(s, old);
+            bool isOld = IsOld();
+            WriteAura(feature, isOld ? OldPowerMessage(s) : PowerMessage(s));
+            var msgs = EffectMessages(s, isOld);
             msgs.Add(new byte[] { AuraId, 0xB5, 0, 0, 0 });
             msgs.Add(new byte[] { AuraId, 0xB4 });
             WriteAura(feature, msgs.ToArray());

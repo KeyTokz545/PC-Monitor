@@ -38,6 +38,7 @@ public sealed class Controls
         ["zones"] = k.Zones,
         ["method"] = k.Method,
         ["device"] = Keyboard.DeviceId,
+        ["old"] = Keyboard.IsOld(),
     };
 
     public Dictionary<string, object> State()

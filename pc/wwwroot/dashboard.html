@@ -1172,6 +1172,7 @@ html[data-density="compact"] .chips button{height:32px}
             <div class="trow"><span>Clavier</span><button class="switch" data-zone="keys" role="switch" aria-checked="true" aria-label="Clavier"></button></div>
             <div class="trow"><span>Bandeau lumineux</span><button class="switch" data-zone="bar" role="switch" aria-checked="true" aria-label="Bandeau lumineux"></button></div>
             <div class="trow"><span>Logo</span><button class="switch" data-zone="logo" role="switch" aria-checked="true" aria-label="Logo"></button></div>
+            <p class="hint in" id="kb-zone-note" hidden></p>
             <div class="sub-h">Compatibilité du clavier</div>
             <div class="seg small" id="kb-method"><button data-v="1">Méthode 1</button><button data-v="2">Méthode 2</button><button data-v="3">Méthode 3</button></div>
             <p class="hint in" id="kb-hint">Si l'effet Fixe reste noir, mets l'effet Fixe puis essaie une autre méthode : le clavier se met à jour tout de suite.</p>
@@ -2106,6 +2107,10 @@ function renderKeyboard() {
   if (!match && /^#[0-9a-f]{6}$/i.test(cur)) { lab.style.background = cur; $("kb-custom").value = cur; }
   else lab.style.background = "";
   document.querySelectorAll("[data-zone]").forEach(sw => setSwitch(sw, k[sw.dataset.zone] !== false));
+  // anciens ROG (Scar II…) : limites du clavier dans les effets globaux
+  const note = !k.old ? "" : k.mode === 2 ? "Cycle de couleurs : le logo suit l'effet, ton clavier ne sait pas le couper seul dans ce mode."
+    : k.mode === 3 ? "Arc-en-ciel : le logo suit l'effet, et couper le clavier éteint tout (limite de ton clavier dans ce mode)." : "";
+  $("kb-zone-note").textContent = note; $("kb-zone-note").hidden = !note;
 }
 
 function renderControls() {

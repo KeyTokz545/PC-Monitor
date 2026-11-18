@@ -84,6 +84,11 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.13.4
+
+- Cycle de couleurs et arc-en-ciel (anciens ROG) : couper le bandeau ou le logo n'éteint plus tout. Le logo suit
+  ces deux effets (pas de bouton pour le couper seul sur ces claviers) ; en arc-en-ciel, couper le clavier éteint tout.
+
 ## 2.13.3
 
 - Éclairage des ROG d'avant 2021 (Scar II GL504/GL704) : le logo et le bandeau s'allument aussi en fixe,
