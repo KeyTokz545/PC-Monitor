@@ -43,6 +43,13 @@ public static class Keyboard
         0x1abe, 0x1b4c, 0x1b6e, 0x1b2c, 0x8854, 0x1CE7, 0x1ce6, 0x1bf2, 0x1bf3, 0x1cd7, 0x1cd8, 0x4b42,
     };
 
+    /// <summary>
+    /// Claviers ROG d'avant 2021 (Scar II GL504/GL704…) : autre format pour l'allumage des zones, et logo + bandeau
+    /// pilotés comme des zones de couleur à part (5 = logo, 6 et 7 = moitiés du bandeau). Liste reprise d'asusctl.
+    /// </summary>
+    static readonly int[] OldPids = { 0x1866, 0x18c6, 0x1869, 0x1854 };
+    const byte ZoneLogo = 5, ZoneBarLeft = 6, ZoneBarRight = 7;
+
     static readonly object Gate = new object();
     static bool? supported;
     static bool initialized;
@@ -188,12 +195,16 @@ public static class Keyboard
         return msg;
     }
 
+    /// <summary>Zone fixe noire : éteint une zone que l'allumage ne sait pas couper (logo des anciens ROG).</summary>
+    static byte[] BlackZone(byte zone) => new byte[] { AuraId, 0xB3, zone, 0x00, 0, 0, 0, 0xEB, 0x00, 0x00, 0, 0, 0 };
+
     /// <summary>
     /// Messages d'effet. Les claviers 4 zones (ROG 2018-2019, comme le Scar II) gardent une couleur par zone pour
     /// les effets fixe, respiration et stroboscope : la zone 0 seule ne suffit pas et le clavier reste noir.
-    /// On envoie donc la zone 0 puis les zones 1 à 4.
+    /// On envoie donc la zone 0 puis les zones 1 à 4, et sur les anciens ROG le logo (5) et le bandeau (6, 7),
+    /// sinon ils restent éteints en fixe et en respiration. Cycle et arc-en-ciel passent par la zone 0 pour tout.
     /// </summary>
-    static List<byte[]> EffectMessages(KeyboardSettings s)
+    static List<byte[]> EffectMessages(KeyboardSettings s, bool old)
     {
         bool usesColor = s.Mode == 0 || s.Mode == 1 || s.Mode == 10;
         var list = new List<byte[]>();
@@ -201,7 +212,45 @@ public static class Keyboard
         if (usesColor)
             for (byte z = 1; z <= 4; z++)
                 list.Add(EffectMessage(s, z, s.Zones != null && s.Zones.Count == 4 ? s.Zones[z - 1] : s.Color));
+        if (old)
+        {
+            // logo : aucun bit d'allumage sur ces modèles, on le coupe en le passant en noir
+            if (!s.Logo) list.Add(BlackZone(ZoneLogo));
+            else if (usesColor) list.Add(EffectMessage(s, ZoneLogo, s.Color));
+            // bandeau : coupé aussi par l'allumage ; le noir évite qu'il suive l'arc-en-ciel
+            foreach (var z in new[] { ZoneBarLeft, ZoneBarRight })
+                if (!s.Bar) list.Add(BlackZone(z));
+                else if (usesColor) list.Add(EffectMessage(s, z, s.Color));
+        }
         return list;
+    }
+
+    /// <summary>
+    /// Allumage des anciens ROG (format 0x1866 d'asusctl) : 3 octets de bits.
+    /// Éveillé 00 00 02 (obligatoire pour tout), clavier 08 00 00, bandeau 04 05 00,
+    /// démarrage c3 12 09 et veille 30 08 04 (valent pour clavier et bandeau ensemble).
+    /// </summary>
+    static byte[] OldPowerMessage(KeyboardSettings s)
+    {
+        uint a = 0;
+        if (s.Keys || s.Bar || s.Logo) a |= 0x000002;
+        if (s.Keys) a |= 0x080000;
+        if (s.Bar) a |= 0x040500;
+        if (s.Keys && s.Bar) a |= 0xC31209 | 0x300804; // animations de démarrage et de veille seulement si tout est allumé
+        return new byte[] { AuraId, 0xBD, 0x01, (byte)(a >> 16), (byte)(a >> 8), (byte)a, 0x00 };
+    }
+
+    /// <summary>Le clavier trouvé est-il un ROG d'avant 2021 ?</summary>
+    static bool IsOld()
+    {
+        try
+        {
+            return Find(AuraId).Any(d => OldPids.Contains(d.ProductID));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     static byte[] PowerMessage(KeyboardSettings s)
@@ -228,8 +277,9 @@ public static class Keyboard
             s.Brightness = Math.Clamp(s.Brightness, 0, 3);
             s.Speed = Math.Clamp(s.Speed, 0, 2);
             if (s.Zones != null && (s.Zones.Count != 4 || s.Zones.Any(z => z == null))) s.Zones = null;
-            WriteAura(feature, PowerMessage(s));
-            var msgs = EffectMessages(s);
+            bool old = IsOld();
+            WriteAura(feature, old ? OldPowerMessage(s) : PowerMessage(s));
+            var msgs = EffectMessages(s, old);
             msgs.Add(new byte[] { AuraId, 0xB5, 0, 0, 0 });
             msgs.Add(new byte[] { AuraId, 0xB4 });
             WriteAura(feature, msgs.ToArray());

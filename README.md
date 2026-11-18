@@ -84,6 +84,12 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.13.3
+
+- Éclairage des ROG d'avant 2021 (Scar II GL504/GL704) : le logo et le bandeau s'allument aussi en fixe,
+  respiration et stroboscope, et leurs interrupteurs (clavier, bandeau, logo) marchent séparément, dans tous les
+  effets (format d'allumage et zones repris d'asusctl).
+
 ## 2.13.2
 
 - Wi-Fi lu sans la localisation de Windows (plus de « netsh » toutes les 5 s) : signal, dBm, bande, canal,
