@@ -84,6 +84,11 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.14.1
+
+- Options en paysage sur téléphone : « Mise à jour » n'est plus coupée en bas, la colonne des catégories est resserrée
+  et défile si besoin.
+
 ## 2.14.0
 
 - GPU : nouveau choix **Plafond / Fixe** dans « Fréquence du GPU ». Fixe bloque la fréquence (minimum = maximum,

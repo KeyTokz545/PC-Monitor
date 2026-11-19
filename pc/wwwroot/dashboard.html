@@ -273,11 +273,20 @@ html[data-numfont="classic"]{--num:var(--ui)}
 @media (orientation:landscape) and (min-width:700px){
   .optpage{grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
   .opts-h{grid-column:1 / -1}
-  .opts-nav{flex-direction:column;overflow:visible;padding:4px 10px 16px 14px;gap:4px}
+  .opts-nav{flex-direction:column;overflow-x:hidden;overflow-y:auto;min-height:0;overscroll-behavior:contain;padding:4px 10px 16px 14px;gap:4px}
   .opts-nav button{height:44px;border-radius:12px;border-color:transparent;background:transparent}
   .opts-nav button[aria-selected="true"]{border-color:transparent}
   .opts-nav .badge{top:50%;right:12px;transform:translateY(-50%)}
   .opts-body{padding-left:10px}
+}
+/* téléphone en paysage : peu de hauteur, on resserre pour que les 7 catégories tiennent (et la colonne défile au besoin) */
+@media (orientation:landscape) and (min-width:700px) and (max-height:500px){
+  .opts-h{padding:6px 16px 4px}
+  .opts-logo,.opts-x{width:36px;height:36px;border-radius:11px}
+  .opts-logo svg{width:28px;height:28px}
+  .opts-tt p{font-size:18px}
+  .opts-nav{gap:2px;padding-bottom:10px}
+  .opts-nav button{height:38px}
 }
 html[data-theme="rog"] .opts-nav button,html[data-theme="rog"] .gstyles button,html[data-theme="rog"] .keycap,html[data-theme="rog"] .opts-x,html[data-theme="rog"] .opts-logo{border-radius:3px}
 html[data-theme="rog"] .ogroup{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));border-radius:0;
