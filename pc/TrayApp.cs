@@ -237,16 +237,10 @@ public sealed class TrayApp : ApplicationContext
             if (cfg.LastMode == "turbo") Task.Run(() => modes.Apply("turbo"));
         };
         m.Items.Add(fans);
-        var gpu = new ToolStripMenuItem($"Limiter le GPU à {cfg.GpuLimit.Mhz} MHz") { Checked = cfg.GpuLimit.On };
+        var gpu = new ToolStripMenuItem($"{(cfg.GpuLimit.Fixed ? "Bloquer" : "Limiter")} le GPU à {cfg.GpuLimit.Mhz} MHz") { Checked = cfg.GpuLimit.On };
         gpu.Click += (s, e) => Task.Run(() =>
         {
-            var on = !cfg.GpuLimit.On;
-            var (ok, msg) = Gpu.SetLimit(on ? cfg.GpuLimit.Mhz : 0);
-            if (ok)
-            {
-                cfg.GpuLimit.On = on;
-                cfg.Save();
-            }
+            var (ok, msg) = Tweaks.SetGpu(cfg, !cfg.GpuLimit.On);
             Balloon(msg);
         });
         m.Items.Add(gpu);

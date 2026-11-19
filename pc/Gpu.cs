@@ -34,17 +34,20 @@ public static class Gpu
         return maxClock;
     }
 
-    /// <summary>Bride la fréquence (MHz) ou rend la main au pilote (mhz &lt;= 0). Renvoie (réussi, message).</summary>
-    public static (bool Ok, string Message) SetLimit(int mhz)
+    /// <summary>
+    /// Bride la fréquence (MHz) ou rend la main au pilote (mhz &lt;= 0). fixedClock : minimum = maximum, le GPU reste
+    /// à cette fréquence (il ne descend en dessous que sur sa limite de puissance ou de température).
+    /// </summary>
+    public static (bool Ok, string Message) SetLimit(int mhz, bool fixedClock = false)
     {
         if (!Supported) return (false, "Carte graphique NVIDIA introuvable (nvidia-smi)");
-        var args = mhz > 0 ? $"-lgc 0,{mhz}" : "-rgc";
+        var args = mhz <= 0 ? "-rgc" : fixedClock ? $"-lgc {mhz},{mhz}" : $"-lgc 0,{mhz}";
         var (code, output) = Win.Run("nvidia-smi", args, 15000);
         var text = Win.Decode(output).Trim();
         Log.Info($"nvidia-smi {args} : {code} {text}");
         if (code != 0)
             return (false, text.Length > 0 && text.Length < 160 ? "NVIDIA : " + text : "Le pilote NVIDIA a refusé le réglage");
-        return (true, mhz > 0 ? $"GPU limité à {mhz} MHz" : "GPU en fréquence normale");
+        return (true, mhz <= 0 ? "GPU en fréquence normale" : fixedClock ? $"GPU bloqué à {mhz} MHz" : $"GPU limité à {mhz} MHz");
     }
 
     // ---------------------------------------------------------------- NVAPI (décalage de courbe)

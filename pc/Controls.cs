@@ -68,6 +68,7 @@ public sealed class Controls
             ["supported"] = Gpu.Supported,
             ["on"] = cfg.GpuLimit.On,
             ["mhz"] = cfg.GpuLimit.Mhz,
+            ["fixed"] = cfg.GpuLimit.Fixed,
             ["max"] = Gpu.MaxClock(),
             ["tune_supported"] = Gpu.Supported && Gpu.TuneSupported,
             ["tune_on"] = cfg.GpuLimit.TuneOn,

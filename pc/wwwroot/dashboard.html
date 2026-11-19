@@ -1268,21 +1268,22 @@ html[data-density="compact"] .chips button{height:32px}
         </div>
 
         <div class="section" id="sec-gpu">
-          <h3>Plafond de fréquence</h3>
+          <h3>Fréquence du GPU</h3>
           <div class="panel">
             <div class="trow big">
               <div>
-                <div class="strong">Limiter la fréquence</div>
+                <div class="strong" id="gpu-title">Limiter la fréquence</div>
                 <div class="muted small" id="gpu-now">Fréquence actuelle : –</div>
               </div>
               <button class="switch" id="gpu-switch" role="switch" aria-checked="false" aria-label="Limiter la fréquence du GPU"></button>
             </div>
+            <div class="seg small" id="gpu-kind"><button data-v="cap">Plafond</button><button data-v="fixed">Fixe</button></div>
             <div class="stepper">
               <button id="gpu-minus" aria-label="Moins 15 MHz">−</button>
               <div><span class="num" id="gpu-mhz">1755</span><small> MHz</small></div>
               <button id="gpu-plus" aria-label="Plus 15 MHz">+</button>
             </div>
-            <div class="chips center" id="gpu-presets"><button data-v="1500">1500</button><button data-v="1755">1755</button><button data-v="1900">1900</button></div>
+            <div class="chips center" id="gpu-presets"><button data-v="1500">1500</button><button data-v="1710">1710</button><button data-v="1740">1740</button><button data-v="1755">1755</button><button data-v="1900">1900</button></div>
             <p class="hint in" id="gpu-hint">Plafonne la fréquence pour maîtriser la chauffe. Avec un décalage cœur positif, ce plafond est atteint à moins de tension — c'est là que l'undervolt opère.</p>
           </div>
         </div>
@@ -2189,14 +2190,19 @@ function renderGpu() {
   $("gpu-mhz").textContent = gpuMhz;
   press($("gpu-presets"), gpuMhz);
   $("gpu-mhz").closest(".stepper").classList.toggle("dim", !(ok && g.on));
-  $("gpu-hint").textContent = ok
-    ? "Plafonne la fréquence pour maîtriser la chauffe. Avec un décalage cœur positif, ce plafond est atteint à moins de tension : c'est là que l'undervolt opère."
-    : "Carte graphique NVIDIA introuvable : le bridage n'est pas disponible sur ce PC.";
+  press($("gpu-kind"), g.fixed ? "fixed" : "cap");
+  $("gpu-kind").querySelectorAll("button").forEach(b => b.disabled = !ok);
+  $("gpu-title").textContent = g.fixed ? "Bloquer la fréquence" : "Limiter la fréquence";
+  $("gpu-switch").setAttribute("aria-label", g.fixed ? "Bloquer la fréquence du GPU" : "Limiter la fréquence du GPU");
+  $("gpu-hint").textContent = !ok ? "Carte graphique NVIDIA introuvable : le bridage n'est pas disponible sur ce PC."
+    : g.fixed ? "Fixe : le GPU reste à cette fréquence, ni plus ni moins, même au bureau (un peu plus de chauffe au repos : idéal dans un profil de jeu). "
+      + "Il ne descend que s'il touche sa limite de puissance ou de température, la sécurité de la carte. Réglage par pas de 15 MHz : vérifie la fréquence actuelle au-dessus."
+    : "Plafond : le GPU ne monte pas au-dessus, mais descend librement au repos. Avec un décalage cœur positif, ce plafond est atteint à moins de tension : c'est là que l'undervolt opère.";
 }
 function gpuSend() {
   const g = CTL && CTL.gpu; if (!g || !g.on) return;
   clearTimeout(gpuTimer);
-  gpuTimer = setTimeout(async () => { await act({ action: "gpu_limit", on: true, mhz: gpuMhz }); gpuTimer = null; reloadControls(300); }, 700);
+  gpuTimer = setTimeout(async () => { await act({ action: "gpu_limit", on: true, mhz: gpuMhz, fixed: !!g.fixed }); gpuTimer = null; reloadControls(300); }, 700);
 }
 function gpuStep(d) {
   const g = (CTL && CTL.gpu) || {};
@@ -2212,7 +2218,14 @@ $("gpu-switch").addEventListener("click", async () => {
   const on = !isOn($("gpu-switch")); setSwitch($("gpu-switch"), on);
   if (CTL && CTL.gpu) CTL.gpu.on = on;
   renderGpu();
-  await act({ action: "gpu_limit", on, mhz: gpuMhz }); reloadControls(300);
+  await act({ action: "gpu_limit", on, mhz: gpuMhz, fixed: !!(CTL && CTL.gpu && CTL.gpu.fixed) }); reloadControls(300);
+});
+$("gpu-kind").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-v]"); if (!b || !CTL || !CTL.gpu) return;
+  const fixed = b.dataset.v === "fixed";
+  if (!!CTL.gpu.fixed === fixed) return;
+  CTL.gpu.fixed = fixed; renderGpu();
+  await act({ action: "gpu_limit", on: !!CTL.gpu.on, mhz: gpuMhz, fixed }); reloadControls(300);
 });
 
 /* Ventilateurs : éditeur de courbe tactile */
@@ -3500,7 +3513,7 @@ function renderGameCtl() {
   const c = CTL || {};
   const gpu = c.gpu || {};
   setSwitch($("q-gpu"), !!(gpu.supported && gpu.on)); $("q-gpu").disabled = !gpu.supported;
-  $("q-gpu-sub").textContent = gpu.supported ? `à ${gpu.mhz || 1755} MHz (réglable dans l'onglet GPU)` : "NVIDIA introuvable";
+  $("q-gpu-sub").textContent = gpu.supported ? `${gpu.fixed ? "bloqué" : "plafond"} à ${gpu.mhz || 1755} MHz (réglable dans l'onglet GPU)` : "NVIDIA introuvable";
   setSwitch($("q-winkey"), !!c.winkey);
   renderColors();
   renderGames();

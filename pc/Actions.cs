@@ -308,7 +308,7 @@ public sealed class Actions
             case "gpu_limit":
             {
                 var on = B(body, "on") ?? cfg.GpuLimit.On;
-                var (ok, msg) = Tweaks.SetGpu(cfg, on, I(body, "mhz"));
+                var (ok, msg) = Tweaks.SetGpu(cfg, on, I(body, "mhz"), B(body, "fixed"));
                 return R(ok, msg);
             }
             case "gpu_tune":

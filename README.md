@@ -84,6 +84,12 @@ Safari : Partager → **Sur l'écran d'accueil**.
   veille, puis fermé (le module PawnIO ne permet pas d'écrire ce réglage).
 - **Thèmes** Nuit, OLED noir, ROG ; taille Confort ou Compacte ; anti-marquage pour un écran toujours allumé.
 
+## 2.14.0
+
+- GPU : nouveau choix **Plafond / Fixe** dans « Fréquence du GPU ». Fixe bloque la fréquence (minimum = maximum,
+  `nvidia-smi -lgc X,X`) : le GPU ne monte ni ne descend, sauf s'il touche sa limite de puissance ou de température.
+  Repris par les profils de jeu, le raccourci de l'onglet Jeu et le menu de l'icône.
+
 ## 2.13.5
 
 - Arc-en-ciel (anciens ROG) : les interrupteurs bandeau et logo sont grisés, le clavier les entraîne dans cet effet.

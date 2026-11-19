@@ -42,15 +42,25 @@ public sealed class GameProfile
 /// <summary>Réglages partagés par le téléphone et les profils de jeu.</summary>
 public static class Tweaks
 {
-    public static (bool Ok, string Message) SetGpu(AppConfig cfg, bool on, int mhz = -1)
+    public static (bool Ok, string Message) SetGpu(AppConfig cfg, bool on, int mhz = -1, bool? fixedClock = null)
     {
         if (mhz < 0) mhz = cfg.GpuLimit.Mhz;
         mhz = Math.Clamp(mhz, 300, 3000);
-        var (ok, msg) = Gpu.SetLimit(on ? mhz : 0);
+        var fix = fixedClock ?? cfg.GpuLimit.Fixed;
+        if (!on && !cfg.GpuLimit.On)
+        {
+            // déjà libre : on garde juste les choix (fréquence, plafond ou fixe) pour la prochaine fois
+            cfg.GpuLimit.Mhz = mhz;
+            cfg.GpuLimit.Fixed = fix;
+            cfg.Save();
+            return (true, fix ? "Mode fixe choisi" : "Mode plafond choisi");
+        }
+        var (ok, msg) = Gpu.SetLimit(on ? mhz : 0, fix);
         if (ok)
         {
             cfg.GpuLimit.On = on;
             cfg.GpuLimit.Mhz = mhz;
+            cfg.GpuLimit.Fixed = fix;
             cfg.Save();
         }
         return (ok, msg);
@@ -80,7 +90,7 @@ public static class Tweaks
             if (cfg.GpuLimit.TuneOn && Gpu.TuneSupported)
                 Gpu.SetOffsets(cfg.GpuLimit.CoreOffset, cfg.GpuLimit.MemOffset);
             if (cfg.GpuLimit.On)
-                Gpu.SetLimit(cfg.GpuLimit.Mhz);
+                Gpu.SetLimit(cfg.GpuLimit.Mhz, cfg.GpuLimit.Fixed);
         }
         catch (Exception e) { Log.Error("Réapplication GPU", e); }
     }

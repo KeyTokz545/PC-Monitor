@@ -82,6 +82,8 @@ public sealed class GpuLimitSettings
     // Verrouillage de la fréquence max (ancien « bridage »), via le pilote NVIDIA.
     public bool On { get; set; }
     public int Mhz { get; set; } = 1755;
+    /// <summary>false = plafond (ne monte pas au-dessus) ; true = fréquence fixe (ni plus, ni moins).</summary>
+    public bool Fixed { get; set; }
     // Undervolt par décalage de courbe (NVAPI) : décalage cœur positif + plafond de fréquence
     // = la fréquence plafonnée est atteinte à une tension plus basse → moins de chauffe sans perte.
     public bool TuneOn { get; set; }
