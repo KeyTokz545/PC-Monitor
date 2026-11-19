@@ -103,7 +103,7 @@ public static class WinKey
     static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extraInfo);
 
     const uint KEYEVENTF_EXTENDEDKEY = 0x1, KEYEVENTF_KEYUP = 0x2;
-    const byte VK_MENU = 0x12, VK_SNAPSHOT = 0x2C, VK_G = 0x47, VK_R = 0x52, VK_F1 = 0x70, VK_F9 = 0x78, VK_F10 = 0x79;
+    const byte VK_SHIFT = 0x10, VK_MENU = 0x12, VK_SNAPSHOT = 0x2C, VK_G = 0x47, VK_R = 0x52, VK_F1 = 0x70, VK_F9 = 0x78, VK_F10 = 0x79;
 
     static void Combo(params byte[] keys)
     {
@@ -135,6 +135,11 @@ public static class WinKey
             case "rec":
                 if (nvidia) Combo(VK_MENU, VK_F9); else Combo((byte)VK_LWIN, VK_MENU, VK_R);
                 return (true, "Enregistrement démarré ou arrêté");
+            case "replay":
+                // NVIDIA : Alt+Maj+F10 allume ou coupe la relecture instantanée (la seule partie qui tourne en continu)
+                if (!nvidia) return (false, "Avec la Game Bar, ça se règle dans Paramètres > Jeux > Captures");
+                Combo(VK_MENU, VK_SHIFT, VK_F10);
+                return (true, "Relecture instantanée allumée ou coupée (NVIDIA l'affiche à l'écran)");
         }
         return (false, "Capture inconnue");
     }

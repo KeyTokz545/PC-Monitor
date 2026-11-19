@@ -143,6 +143,7 @@ public sealed class Controls
             };
         }
         d["winkey"] = WinKey.Enabled;
+        d["gamedvr"] = GameDvr.State();
         d["osd"] = new Dictionary<string, object>
         {
             ["on"] = cfg.Osd.On,

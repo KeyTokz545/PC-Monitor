@@ -622,6 +622,10 @@ body.alarm .dot{background:var(--hot);box-shadow:0 0 0 4px rgba(255,90,78,.25);a
 .btn.sm{min-height:72px;font-size:12.5px;gap:5px;background:var(--raise)}
 .btn.sm svg{width:24px;height:24px}
 .cap-tool{margin-top:10px}
+.cap-nv{margin-top:10px}
+.cap-nv[hidden]{display:none}
+.cap-nv .btn.wide{width:100%;flex-direction:row;justify-content:center;gap:9px;min-height:46px;height:auto;padding:10px 14px}
+.cap-nv .btn.wide svg{margin:0}
 .field{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--text);
   font:16px var(--ui);padding:0 12px;-webkit-user-select:text;user-select:text;outline:none}
 .field:focus{border-color:var(--cool)}
@@ -951,6 +955,10 @@ html[data-density="compact"] .chips button{height:32px}
               <button class="btn sm" data-cap="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6" fill="var(--hot)" stroke="none"/></svg>Enregistrer</button>
             </div>
             <div class="seg small cap-tool" id="cap-tool"><button data-v="gamebar">Xbox Game Bar</button><button data-v="nvidia">NVIDIA</button></div>
+            <div class="cap-nv" id="cap-nv" hidden>
+              <button class="btn sm wide" data-cap="replay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v7"/><path d="M6.3 6.3a8 8 0 1011.4 0"/></svg>Allumer / couper le replay instantané</button>
+            </div>
+            <div class="trow"><div><div>Captures de la Game Bar</div><div class="muted small" id="q-dvr-sub"></div></div><button class="switch" id="q-dvr" role="switch" aria-checked="true" aria-label="Captures de la Game Bar"></button></div>
             <p class="hint in" id="cap-hint"></p>
           </div>
         </div>
@@ -3510,16 +3518,30 @@ $("q-winkey").addEventListener("click", async () => {
 document.querySelectorAll("[data-cap]").forEach(b => b.addEventListener("click", () =>
   act({ action: "capture", what: b.dataset.cap, tool: UI.capTool || "gamebar" })));
 function renderCapTool() {
-  press($("cap-tool"), UI.capTool || "gamebar");
-  $("cap-hint").textContent = (UI.capTool || "gamebar") === "nvidia"
-    ? "Raccourcis NVIDIA (Alt+F1, Alt+F10, Alt+F9) : active l'overlay NVIDIA et la relecture instantanée pour garder les clips."
+  const nv = (UI.capTool || "gamebar") === "nvidia";
+  press($("cap-tool"), nv ? "nvidia" : "gamebar");
+  $("cap-nv").hidden = !nv;
+  const dvr = CTL ? CTL.gamedvr : null;
+  setSwitch($("q-dvr"), dvr !== false); $("q-dvr").disabled = dvr == null;
+  $("q-dvr-sub").textContent = dvr == null ? "État illisible"
+    : nv ? (dvr ? "Actives : coupe-les, NVIDIA s'occupe des captures" : "Coupées : Windows ne filme plus rien pendant les jeux")
+    : (dvr ? "Nécessaires pour les boutons ci-dessus" : "Coupées : rallume-les pour capturer avec la Game Bar");
+  $("cap-hint").textContent = nv
+    ? "Le plus léger : laisse le replay instantané coupé et allume-le seulement quand tu veux garder des clips (c'est la seule partie qui tourne en continu). Capture (Alt+F1) et Enregistrer (Alt+F9) ne coûtent rien tant que tu ne t'en sers pas."
     : "Raccourcis de la Xbox Game Bar (Win+Alt+Impr, Win+Alt+G, Win+Alt+R) : active l'enregistrement en arrière-plan pour garder les clips.";
 }
+$("q-dvr").addEventListener("click", async () => {
+  const on = !isOn($("q-dvr")); setSwitch($("q-dvr"), on);
+  if (CTL) CTL.gamedvr = on;
+  renderCapTool();
+  await act({ action: "gamedvr_set", on }); reloadControls(300);
+});
 $("cap-tool").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; UI.capTool = b.dataset.v; saveUI(); renderCapTool(); });
 renderCapTool();
 
 function renderGameCtl() {
   const c = CTL || {};
+  renderCapTool();
   const gpu = c.gpu || {};
   setSwitch($("q-gpu"), !!(gpu.supported && gpu.on)); $("q-gpu").disabled = !gpu.supported;
   $("q-gpu-sub").textContent = gpu.supported ? `${gpu.fixed ? "bloqué" : "plafond"} à ${gpu.mhz || 1755} MHz (réglable dans l'onglet GPU)` : "NVIDIA introuvable";

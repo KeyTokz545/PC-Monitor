@@ -436,6 +436,11 @@ public sealed class Actions
             }
 
             // ---------------------------------------------------------------- jeu
+            case "gamedvr_set":
+            {
+                var (ok, msg) = GameDvr.Set(B(body, "on") ?? true);
+                return R(ok, msg);
+            }
             case "winkey_set":
             {
                 var on = B(body, "on") ?? !cfg.WinKeyLock;
